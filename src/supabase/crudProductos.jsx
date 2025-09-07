@@ -1,6 +1,7 @@
 import { supabase } from "../index";
 import Swal from "sweetalert2";
 
+
 export async function InsertarProductos(p) {
     console.log("Enviando a insertarproductos:", p); 
 const { data, error } = await supabase.rpc("insertarproductos", p);
@@ -32,11 +33,7 @@ const { data, error } = await supabase.rpc("insertarproductos", p);
 }
 
 export async function MostrarProductos (p){
-    const {data} = await supabase
-    .from("productos")
-    .select()
-    .eq("id_empresa",p.id_empresa)
-    .order("id",{ascending:true});
+    const {data} = await supabase.rpc("mostrarproductos", p)
     return data;
 }
 
@@ -59,11 +56,56 @@ export async function EditarProductos(p){
     }
 }
 export async function BuscarProductos(p) {
-  const { data } = await supabase
-    .from("productos")
-    .select()
-    .eq("id_empresa", p.id_empresa)
-    .ilike("descripcion", "%" + p.descripcion + "%");
-
+  const { data, error } = await supabase.rpc("buscarproductos", {
+    _id_empresa: p.id_empresa || p._id_empresa,   // soporta ambas formas
+    buscador: p.descripcion || p.buscador || ""   // soporta ambas formas
+  });
   return data;
 }
+
+// reportes
+export async function ReportStockProductosTodos(p){
+const {data, error} = await supabase
+.from("productos")
+.select()
+.eq("id_empresa", p.id_empresa);
+    if (error){
+        return;
+    }
+return data;
+}
+export async function ReportStockXProducto(p){
+const {data, error} = await supabase
+.from("productos")
+.select()
+.eq("id_empresa", p.id_empresa)
+.eq("id", p.id);
+    if (error){
+        return;
+    }
+return data;
+}
+export async function ReportStockBajoMinimo(p){
+const {data, error} = await supabase.rpc("reportproductosbajominimo", p)
+    if (error){
+        return;
+    }
+return data;
+}
+export async function ReportKardexEntradaSalida(p){
+const {data, error} = await supabase.rpc("mostrarkardexempresa", p)
+    if (error){
+        return;
+    }
+return data;
+}
+export async function ReportInventarioValorado(p){
+const {data, error} = await supabase.rpc("inventariovalorado", p)
+    if (error){
+        return;
+    }
+return data;
+}
+
+  
+

@@ -1,26 +1,29 @@
 import styled from "styled-components";
 import { BtnCerrar } from "../atomos/BtnCerrar";
 import {Device} from "../../styles/breackpoints"
-import { BsBagHeartFill } from "react-icons/bs";
-export function ListaGenerica({data,setState,funcion,scroll,bottom}){
-    const seleccionar = (p) => {
-        funcion(p);
-        setState();
-    }
-    return (<Container $scroll={scroll} $bottom={bottom}>
-        <section className="contentClose">
-            <BtnCerrar funcion={setState}/>
-        </section>
-        <section className="contentItems">
-            {data.map((item,index)=>{
-                return(<ItemContainer key={index} 
-                onClick={()=>seleccionar(item)}>
-                    <span>{<BsBagHeartFill />}</span>
-                    <span>{item.descripcion}</span>
-                </ItemContainer>)
-            })}
-        </section>
-    </Container>)
+export function ListaGenerica({ data, setState, funcion, scroll, bottom, icono }) {
+  const seleccionar = (p) => {
+    funcion(p);
+    setState();
+  };
+
+  return (
+    <Container $scroll={scroll} $bottom={bottom}>
+      <section className="contentClose">
+        <BtnCerrar funcion={setState} />
+      </section>
+      <section className="contentItems">
+        {data?.map((item, index) => {
+          return (
+            <ItemContainer key={index} onClick={() => seleccionar(item)}>
+              <span>{icono}</span> 
+              <span>{item.descripcion}</span>
+            </ItemContainer>
+          );
+        })}
+      </section>
+    </Container>
+  );
 }
 const Container =styled.div`
 display:flex;
@@ -41,6 +44,14 @@ height: 230px;
 }
 .contentItems{
     overflow-y: ${(props)=> props.$scroll};
+    &::-webkit-scrollbar{
+    width: 6px;
+    border-radius: 10px;
+    }
+    &::-webkit-scrollbar-thumb{
+    background-color: #484848;
+    border-radius: 10px;
+    }
 }
 `;
 const ItemContainer = styled.div`

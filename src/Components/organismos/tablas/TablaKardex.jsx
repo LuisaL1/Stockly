@@ -7,15 +7,16 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import styled from "styled-components";
-import { ColorContent, ColorContentTabla, ContentAccionesTabla, Paginacion, useProductosStore, v } from "../../../index";
+import {ContentAccionesTabla, Paginacion, useKardexStore, useMarcaStore, v } from "../../../index";
 import Swal from "sweetalert2";
 import {FaArrowsAltV} from "react-icons/fa"
 import { useState } from "react";
-export function TablaProductos({ data, SetopenRegistro,
+import {Device} from "../../../styles/breackpoints"
+export function TablaKardex({ data, SetopenRegistro,
   setdataSelect, setAccion
  }) {
   const [pagina, setPagina] = useState(1);
-  const { EliminarProductos } = useProductosStore();
+  const { EliminarKardex } = useKardexStore();
 
   const editar = (data) => {
     if (data.descripcion === "Generica"){
@@ -24,17 +25,16 @@ export function TablaProductos({ data, SetopenRegistro,
         text: "Este registro no se permite editar ya que es valor por defecto.",
         icon: "error",
       });
-      return;
     }
     SetopenRegistro(true); 
     setdataSelect(data);
     setAccion("Editar");
   };
   const eliminar = (p) => {
-    if (p.descripcion === "Generica") {
+    if (p.estado === "inactivo") {
       Swal.fire({
         title: "Oops...",
-        text: "Este registro no se permite eliminar ya que es valor por defecto.",
+        text: "Este registro ya fue eliminado",
         icon: "error",
       });
       return;
@@ -51,7 +51,7 @@ export function TablaProductos({ data, SetopenRegistro,
       cancelButtonText: "Cancelar",
     }).then(async (result) => {
       if (result.isConfirmed) {
-        await EliminarProductos({ id: p.id });
+        await EliminarKardex({ id: p.id });
       }
     });
   };
@@ -61,58 +61,64 @@ export function TablaProductos({ data, SetopenRegistro,
   const columns = [
     {
       accessorKey: "descripcion",
-      header: "Descripción",
-      cell: (info) => <td data-title="Descripción"
+      header: "Producto",
+      cell: (info) => <td data-title="Producto"
+      className="ContentCell">
+        <span 
+        style={{textDecoration:info.row.original.estado!=='activo'?"line-through":""}}>{info.getValue()}</span>
+        </td>
+    },
+        {
+      accessorKey: "fecha",
+      header: "Fecha",
+      cell: (info) => <td data-title="Fecha"
       className="ContentCell">
         <span>{info.getValue()}</span>
         </td>
     },
         {
-      accessorKey: "stock",
-      header: "Stock",
-      enableSorting: false,
-      cell: (info) => <td data-title="Stock"
+      accessorKey: "tipo",
+      header: "Tipo",
+      cell: (info) => <td data-title="Tipo"
       className="ContentCell">
-        <span>{info.getValue()}</span>
+        {
+      info.getValue().toLowerCase() === "salida"
+      ? (<Colorcontent $color="#ed4d4d">{info.getValue()}</Colorcontent>)
+      : (<Colorcontent $color="#30c85b">{info.getValue()}</Colorcontent>)
+        }
         </td>
     },
             {
-      accessorKey: "precioventa",
-      header: "Precio Venta",
-      enableSorting: false,
-      cell: (info) => <td data-title="Precio Venta"
+      accessorKey: "detalle",
+      header: "Detalle",
+      cell: (info) => <td data-title="Detalle"
       className="ContentCell">
         <span>{info.getValue()}</span>
         </td>
     },
                 {
-      accessorKey: "preciocompra",
-      header: "Precio Compra",
-      enableSorting: false,
-      cell: (info) => <td data-title="Precio Compra"
+      accessorKey: "nombres",
+      header: "Usuario",
+      cell: (info) => <td data-title="Usuario"
       className="ContentCell">
         <span>{info.getValue()}</span>
         </td>
     },
-    {
-      accessorKey: "categoria",
-      header: "Categoría",
-      enableSorting: false,
-      cell: (info) => <td data-title="Categoría"
-      className="ContentCell">
-        <ColorContentTabla $color={info.row.original.color} className="contentCategoria">
-        {info.getValue()}
-        </ColorContentTabla>
-        </td>
-    },
-     {
-      accessorKey: "marca",
-      header: "Marca",
-      enableSorting: false,
-      cell: (info) => (<td data-title="Marca"
+                    {
+      accessorKey: "cantidad",
+      header: "Cantidad",
+      cell: (info) => <td data-title="Cantidad"
       className="ContentCell">
         <span>{info.getValue()}</span>
-        </td>)
+        </td>
+    },
+                        {
+      accessorKey: "stock",
+      header: "Stock",
+      cell: (info) => <td data-title="Stock"
+      className="ContentCell">
+        <span>{info.getValue()}</span>
+        </td>
     },
 {
   accessorKey: "acciones",
@@ -165,8 +171,7 @@ export function TablaProductos({ data, SetopenRegistro,
           {table.getRowModel().rows.map((item) => (
             <tr key={item.id}>
               {item.getVisibleCells().map((cell) => (
-                <td 
-                  key={cell.id}>
+                <td key={cell.id}>
                   {flexRender(cell.column.columnDef.cell, cell.getContext())}
                 </td>
               ))}
@@ -323,3 +328,17 @@ const Container = styled.div`
     }
   }
 `;
+
+const Colorcontent = styled.div`
+color: ${(props)=> props.$color};
+border-radius: 8px;
+border: 1px dashed ${(props)=> props.$color};
+text-align: center;
+padding: 3px;
+width: 70;
+font-weight: 700;
+@media ${Device.tablet}{
+  width: 100%
+}
+`
+

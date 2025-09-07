@@ -45,7 +45,7 @@ export function MenuHambur() {
   );
 }
 
-// Estilos
+
 const Container = styled.div`
   background-color: ${(props) => props.theme.body};
 `;
@@ -61,7 +61,7 @@ const HamburgerMenu = styled.span`
   position: fixed;
   top: 2rem;
   left: 1rem;
-  z-index: 9999;
+  z-index: 100;
 
   .toggle {
     position: relative;

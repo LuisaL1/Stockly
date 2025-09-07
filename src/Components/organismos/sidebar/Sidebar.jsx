@@ -69,12 +69,15 @@ const Container = styled.div`
   background: ${(props) => props.theme.bg};
   position: fixed;
   padding-top: 20px;
-  z-index: 10000;
+  z-index: 100;
   height: 100%;
   width: 65px;
   transition: 0.1s ease-in-out;
   overflow-y: auto;
   overflow-x: hidden;
+  display: fleX;
+  flex-direction: column; 
+  
   &::-webkit-scrollbar {
     width: 6px;
     border-radius: 10px;
@@ -173,7 +176,7 @@ const Main = styled.div`
   .Sidebarbutton {
     position: fixed;
     top: 70px;
-    left: 42px;
+    left: 45px;
     width: 32px;
     height: 32px;
     border-radius: 50%;
@@ -185,7 +188,7 @@ const Main = styled.div`
     justify-content: center;
     cursor: pointer;
     transition: all 0.2s;
-    z-index: 2;
+    z-index: 200;
     transform: ${({ $isopen }) =>
       $isopen==="true" ? `translateX(162px) rotate(3.142rad)` : `initial`};
     color: ${(props) => props.theme.text};

@@ -20,8 +20,8 @@ export const useCategoriasStore = create ((set, get) =>({
         return response;
     },
 
-    selectMarca:(p) =>{
-        set({categoriasItemSelect})
+    selectCategoria:(p) =>{
+        set({categoriasItemSelect : p});
     },
     InsertarCategorias: async (p)=>{
         await InsertarCategorias(p)

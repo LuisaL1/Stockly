@@ -29,7 +29,7 @@ const Container = styled.div`
     font-size: 3rem;
     border-radius: 50%;
     top: -8px;
-    right: 50%;
+    right: 20%;
     transform: translate(50%);
     z-index: 100;
   }

@@ -1,7 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
-import { CategoriaTemplate, SpinnerLoader, useEmpresaStore, useCategoriasStore } from "../index";
+import { CategoriaTemplate, SpinnerLoader, useEmpresaStore, useCategoriasStore, useUsuariosStore, BloqueoPagina } from "../index";
 
 export function Categorias() {
+      const {datapermisos} = useUsuariosStore();
+      const statePermiso = datapermisos.some((objeto) => objeto.modulos.nombre.includes("Categoria de productos"))
     const { MostrarCategorias, datacategorias, BuscarCategorias, buscador } = useCategoriasStore();
     const { dataempresa } = useEmpresaStore();
 
@@ -18,6 +20,9 @@ export function Categorias() {
         queryFn: () => BuscarCategorias({ id_empresa: dataempresa?.id, descripcion: buscador }),
         enabled: dataempresa?.id !=null,
     });
+    if (statePermiso == false){
+      return <BloqueoPagina/>;
+    }
     if (isLoading){
       return <SpinnerLoader />;
     } 
