@@ -17,7 +17,7 @@ export const useMarcaStore = create ((set, get) =>({
     },
 
     selectMarca:(p) =>{
-        set({marcaItemSelect})
+        set({marcaItemSelect : p})
     },
     insertarMarca: async (p)=>{
         await InsertarMarca(p)

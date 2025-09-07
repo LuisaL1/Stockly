@@ -7,18 +7,18 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import styled from "styled-components";
-import { ColorContent, ColorContentTabla, ContentAccionesTabla, Paginacion, useProductosStore, v } from "../../../index";
+import { ContentAccionesTabla, Paginacion, useUsuariosStore, v } from "../../../index";
 import Swal from "sweetalert2";
 import {FaArrowsAltV} from "react-icons/fa"
 import { useState } from "react";
-export function TablaProductos({ data, SetopenRegistro,
+export function TablaUsuarios({ data, SetopenRegistro,
   setdataSelect, setAccion
  }) {
   const [pagina, setPagina] = useState(1);
-  const { EliminarProductos } = useProductosStore();
+  const { EliminarUsuarios } = useUsuariosStore();
 
   const editar = (data) => {
-    if (data.descripcion === "Generica"){
+    if (data.tipouser === "Dueño"){
       Swal.fire({
         title: "Oops...",
         text: "Este registro no se permite editar ya que es valor por defecto.",
@@ -31,7 +31,7 @@ export function TablaProductos({ data, SetopenRegistro,
     setAccion("Editar");
   };
   const eliminar = (p) => {
-    if (p.descripcion === "Generica") {
+    if (p.tipouser === "Dueño") {
       Swal.fire({
         title: "Oops...",
         text: "Este registro no se permite eliminar ya que es valor por defecto.",
@@ -51,7 +51,7 @@ export function TablaProductos({ data, SetopenRegistro,
       cancelButtonText: "Cancelar",
     }).then(async (result) => {
       if (result.isConfirmed) {
-        await EliminarProductos({ id: p.id });
+        await EliminarUsuarios({ id: p.id });
       }
     });
   };
@@ -60,60 +60,31 @@ export function TablaProductos({ data, SetopenRegistro,
 
   const columns = [
     {
-      accessorKey: "descripcion",
-      header: "Descripción",
-      cell: (info) => <td data-title="Descripción"
+      accessorKey: "nombres",
+      header: "Nombres",
+      cell: (info) => <td data-title="Nombres"
       className="ContentCell">
         <span>{info.getValue()}</span>
         </td>
     },
         {
-      accessorKey: "stock",
-      header: "Stock",
-      enableSorting: false,
-      cell: (info) => <td data-title="Stock"
+      accessorKey: "tipouser",
+      header: "Tipo user",
+      cell: (info) => <td data-title="Tipo user"
       className="ContentCell">
         <span>{info.getValue()}</span>
         </td>
     },
             {
-      accessorKey: "precioventa",
-      header: "Precio Venta",
+      accessorKey: "estado",
+      header: "Estado",
       enableSorting: false,
-      cell: (info) => <td data-title="Precio Venta"
+      cell: (info) => <td data-title="Estado"
       className="ContentCell">
         <span>{info.getValue()}</span>
         </td>
     },
-                {
-      accessorKey: "preciocompra",
-      header: "Precio Compra",
-      enableSorting: false,
-      cell: (info) => <td data-title="Precio Compra"
-      className="ContentCell">
-        <span>{info.getValue()}</span>
-        </td>
-    },
-    {
-      accessorKey: "categoria",
-      header: "Categoría",
-      enableSorting: false,
-      cell: (info) => <td data-title="Categoría"
-      className="ContentCell">
-        <ColorContentTabla $color={info.row.original.color} className="contentCategoria">
-        {info.getValue()}
-        </ColorContentTabla>
-        </td>
-    },
-     {
-      accessorKey: "marca",
-      header: "Marca",
-      enableSorting: false,
-      cell: (info) => (<td data-title="Marca"
-      className="ContentCell">
-        <span>{info.getValue()}</span>
-        </td>)
-    },
+    
 {
   accessorKey: "acciones",
   header: "",
@@ -165,8 +136,7 @@ export function TablaProductos({ data, SetopenRegistro,
           {table.getRowModel().rows.map((item) => (
             <tr key={item.id}>
               {item.getVisibleCells().map((cell) => (
-                <td 
-                  key={cell.id}>
+                <td key={cell.id}>
                   {flexRender(cell.column.columnDef.cell, cell.getContext())}
                 </td>
               ))}

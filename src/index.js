@@ -26,7 +26,7 @@ export {useAuthStore} from './store/AuthStore.jsx'
 export {FooterLogin} from './Components/organismos/sidebar/FooterLogin.jsx'
 export {InputText} from './Components/organismos/formularios/InputText.jsx'
 export {Header} from './Components/organismos/Header.jsx'
-export { BtnCircular } from './Components/moleculas/BtnCircular.jsx';
+export {BtnCircular } from './Components/moleculas/BtnCircular.jsx';
 export {ListaMenuDesplegable} from './Components/organismos/sidebar/ListaMenuDesplegable.jsx'
 export {Title} from './Components/atomos/Title.jsx'
 export {BannerEmpresa} from './Components/organismos/BannerEmpresa.jsx'
@@ -63,3 +63,26 @@ export {useProductosStore} from './store/ProductosStore.jsx'
 export {ContainerSelector} from './Components/atomos/ContainerSelector.jsx'
 export {Selector} from './Components/organismos/Selector.jsx'
 export {BtnCerrar} from './Components/atomos/BtnCerrar.jsx'
+export {ColorContentTabla} from './Components/atomos/ColorContenTabla.jsx'
+export {Usuarios} from './pages/Usuarios.jsx'
+export {UsuariosTemplate} from './Components/templatesReact/UsuariosTemplate.jsx'
+export {RegistrarUsuarios} from './Components/organismos/formularios/RegistrarUsuarios.jsx'
+export {ListaModulos} from './Components/organismos/ListaModulos.jsx'
+export {TablaUsuarios} from './Components/organismos/tablas/TablaUsuarios.jsx'
+export {Mensaje} from './Components/moleculas/Mensaje.jsx'
+export {BloqueoPagina} from './Components/moleculas/BloqueoPagina.jsx'
+export {Kardex} from './pages/Kardex.jsx'
+export {KardexTemplate} from './Components/templatesReact/KardexTemplate.jsx'
+export {Tabs} from './Components/organismos/Tabs.jsx'
+export {TablaKardex} from './Components/organismos/tablas/TablaKardex.jsx'
+export {useKardexStore} from './store/KardexStore.jsx'
+export {RegistrarKardex} from './Components/organismos/formularios/RegistrarKardex.jsx'
+export {CardProductoSelect} from './Components/moleculas/CardProductoSelect.jsx'
+export {Reportes} from './pages/Reportes.jsx.jsx'
+export {ReportesTemplate} from './Components/templatesReact/ReportesTemplate.jsx'
+export { default as StockActualTodos } from './Components/organismos/reportes/StockActualTodos';
+export { default as StockActualPorProducto } from './Components/organismos/reportes/StockActualPorProducto';
+export { default as StockBajoMinimo } from './Components/organismos/reportes/StockBajoMinimo';
+export { default as KardexEntradasSalidas } from './Components/organismos/reportes/KardexEntradasSalidas';
+export { default as StockInventarioValorado } from './Components/organismos/reportes/StockInventarioValorado';
+
