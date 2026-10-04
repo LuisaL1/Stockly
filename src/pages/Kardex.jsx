@@ -1,48 +1,22 @@
-import { useQuery } from "@tanstack/react-query";
-import { SpinnerLoader, useEmpresaStore, useMarcaStore, useUsuariosStore, BloqueoPagina, KardexTemplate, useKardexStore, useProductosStore } from "../index";
+import { KardexTemplate } from "../Components/templatesReact/KardexTemplate";
+import { ConPermiso } from "../Components/moleculas/ConPermiso";
+import { SpinnerLoader } from "../Components/moleculas/SpinnerLoader";
+import { ErrorMolecula } from "../Components/moleculas/ErrorMolecula";
+import { useKardexStore } from "../store/KardexStore";
+import { usePaginaCrud } from "../hooks/usePaginaCrud";
+import { MODULOS } from "../utils/permisos";
 
 export function Kardex() {
-  const {BuscarProductos, buscador: buscarproductos} = useProductosStore();
-        const {datapermisos} = useUsuariosStore();
-        const statePermiso = datapermisos.some((objeto) => objeto.modulos.nombre.includes("Marca de productos"))
-    const { MostrarKardex, datakardex, BuscarKardex, buscador } = useKardexStore();
-    const { dataempresa } = useEmpresaStore();
+  return (
+    <ConPermiso modulo={MODULOS.productos}>
+      <Contenido />
+    </ConPermiso>
+  );
+}
 
-  const { isLoading, error } = useQuery({
-  queryKey: ["mostrar kardex", { _id_empresa: dataempresa?.id}],
-  queryFn: () =>  MostrarKardex({ _id_empresa: dataempresa?.id }),
-  enabled: dataempresa?.id != null,
-    });
-
-//buscar en la lista de kardex
-    const { data: buscarkardexlista } = useQuery({
-        queryKey: [
-          "buscar kardex", 
-          { _id_empresa: dataempresa?.id, buscador: buscador }
-        ],
-        queryFn: () => BuscarKardex({ _id_empresa: dataempresa?.id, buscador: buscador}),
-        enabled: dataempresa?.id !=null,
-    });
-
-// buscamos en la lista de productos
-const { data: buscardata } = useQuery({
-        queryKey: [
-          "buscar productos", 
-          { id_empresa: dataempresa?.id, descripcion: buscarproductos }
-        ],
-        queryFn: () => BuscarProductos({ _id_empresa: dataempresa?.id, buscador: buscarproductos }),
-        enabled: dataempresa?.id !=null,
-    });
-    
-    if (statePermiso == false){
-      return <BloqueoPagina/>;
-    }
-    if (isLoading){
-      return <SpinnerLoader />;
-    } 
-    if (error) {
-      return <span>Error: {error.message}</span>;
-    }
-
-    return <KardexTemplate data={datakardex} />;
+function Contenido() {
+  const { data, isLoading, error, refetch } = usePaginaCrud("kardex", useKardexStore);
+  if (isLoading) return <SpinnerLoader />;
+  if (error) return <ErrorMolecula mensaje={error.message} reintentar={refetch} />;
+  return <KardexTemplate data={data} />;
 }

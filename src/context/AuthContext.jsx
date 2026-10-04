@@ -1,47 +1,26 @@
-import { createContext, useContext, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "../supabase/supabase.config";
-import { useNavigate } from "react-router-dom";
-import { SpinnerLoader } from "../index"; 
-const AuthContext = createContext();
-export { AuthContext };
+import { SpinnerLoader } from "../Components/moleculas/SpinnerLoader";
+import { AuthContext } from "./contextoAuth";
 
-export const AuthContextProvider = ({ children }) => {
+export function AuthContextProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  const navigate = useNavigate();
 
   useEffect(() => {
-
     supabase.auth.getSession().then(({ data }) => {
       setUser(data.session?.user ?? null);
       setLoading(false);
     });
 
-    const { data: authListener } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
-        setUser(session?.user ?? null);
-        if (!session?.user) navigate("/login");
-      }
-    );
+    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
 
-    return () => {
-      authListener.subscription.unsubscribe();
-    };
-  }, [navigate]);
+    return () => authListener.subscription.unsubscribe();
+  }, []);
 
-  
-  if (loading) {
-    return <SpinnerLoader />;
-  }
+  if (loading) return <SpinnerLoader pantallaCompleta />;
 
-  return (
-    <AuthContext.Provider value={{ user }}>
-      {children}
-    </AuthContext.Provider>
-  );
-};
-
-export const UserAuth = () => useContext(AuthContext);
-
-
-
+  return <AuthContext.Provider value={{ user }}>{children}</AuthContext.Provider>;
+}

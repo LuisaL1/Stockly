@@ -1,34 +1,38 @@
-import { useQuery } from "@tanstack/react-query";
-import { CategoriaTemplate, SpinnerLoader, useEmpresaStore, useCategoriasStore, useUsuariosStore, BloqueoPagina } from "../index";
+import { CrudTemplate } from "../Components/templatesReact/CrudTemplate";
+import { TablaCategorias } from "../Components/organismos/tablas/TablaCategorias";
+import { RegistrarCategorias } from "../Components/organismos/formularios/RegistrarCategorias";
+import { ConPermiso } from "../Components/moleculas/ConPermiso";
+import { SpinnerLoader } from "../Components/moleculas/SpinnerLoader";
+import { ErrorMolecula } from "../Components/moleculas/ErrorMolecula";
+import { useCategoriasStore } from "../store/CategoriasStore";
+import { usePaginaCrud } from "../hooks/usePaginaCrud";
+import { MODULOS } from "../utils/permisos";
 
 export function Categorias() {
-      const {datapermisos} = useUsuariosStore();
-      const statePermiso = datapermisos.some((objeto) => objeto.modulos.nombre.includes("Categoria de productos"))
-    const { MostrarCategorias, datacategorias, BuscarCategorias, buscador } = useCategoriasStore();
-    const { dataempresa } = useEmpresaStore();
+  return (
+    <ConPermiso modulo={MODULOS.categorias}>
+      <Contenido />
+    </ConPermiso>
+  );
+}
 
-  const { isLoading, error } = useQuery({
-  queryKey: ["mostrar categorias", { id_empresa: dataempresa?.id}],
-  queryFn: () =>  MostrarCategorias({ id_empresa: dataempresa?.id }),
-  enabled: dataempresa?.id != null,
-    });
-    const { data: buscardata } = useQuery({
-        queryKey: [
-          "buscar categorias", 
-          { id_empresa: dataempresa?.id, descripcion: buscador }
-        ],
-        queryFn: () => BuscarCategorias({ id_empresa: dataempresa?.id, descripcion: buscador }),
-        enabled: dataempresa?.id !=null,
-    });
-    if (statePermiso == false){
-      return <BloqueoPagina/>;
-    }
-    if (isLoading){
-      return <SpinnerLoader />;
-    } 
-    if (error) {
-      return <span>Error: {error.message}</span>;
-    }
+function Contenido() {
+  const { setBuscador } = useCategoriasStore();
+  const { data, isLoading, error, refetch } = usePaginaCrud("categorias", useCategoriasStore);
 
-    return <CategoriaTemplate data={datacategorias} />;
+  if (isLoading) return <SpinnerLoader />;
+  if (error) return <ErrorMolecula mensaje={error.message} reintentar={refetch} />;
+
+  return (
+    <CrudTemplate
+      titulo="Categorías"
+      descripcion="Agrupa tus productos para encontrarlos y analizarlos mejor."
+      textoNuevo="Nueva categoría"
+      placeholderBusqueda="Buscar categoría..."
+      setBuscador={setBuscador}
+      data={data}
+      Tabla={TablaCategorias}
+      Formulario={RegistrarCategorias}
+    />
+  );
 }

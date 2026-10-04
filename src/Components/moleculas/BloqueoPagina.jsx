@@ -1,45 +1,54 @@
 import styled from "styled-components";
-import { CiNoWaitingSign } from "react-icons/ci";
+import { Link } from "react-router-dom";
+import { LuLock } from "react-icons/lu";
 
-export function BloqueoPagina({ state }) {
-   if (!state) return null;
+export function BloqueoPagina({ modulo }) {
   return (
     <Container>
       <span className="icono">
-        <CiNoWaitingSign />
+        <LuLock />
       </span>
-      <span className="texto">No tienes permisos a este módulo</span>
+      <h2>No tienes acceso a este módulo</h2>
+      <p>
+        {modulo ? `El módulo "${modulo}" no está habilitado para tu usuario. ` : ""}
+        Pide al administrador de tu empresa que te asigne el permiso.
+      </p>
+      <Link to="/">Volver al inicio</Link>
     </Container>
   );
 }
 
 const Container = styled.div`
-  position: absolute;
-  z-index: 10;
-  background: rgba(26, 9, 9, 0.9);
-  border: 1px solid rgba(248, 42, 45, 0.5);
-  padding: 15px;
+  min-height: 70vh;
   display: flex;
-  width: 100%;
-  height: 100%;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  flex-direction: column;
-  opacity: 1;
-  z-index: 100000;
-
-  /* Texto e icono siempre en blanco */
-  color: #fff;
-
+  text-align: center;
+  gap: 10px;
+  padding: 24px;
   .icono {
-    font-size: 50px;
-    color: #fff; /* forzado blanco */
-    margin-bottom: 10px;
+    display: grid;
+    place-items: center;
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: ${({ theme }) => theme.warningSoft};
+    color: ${({ theme }) => theme.warning};
+    font-size: 30px;
+    margin-bottom: 6px;
   }
-
-  .texto {
-    font-size: 18px;
-    font-weight: 500;
-    text-align: center;
+  h2 {
+    font-size: 1.25rem;
+  }
+  p {
+    color: ${({ theme }) => theme.textMuted};
+    max-width: 420px;
+  }
+  a {
+    margin-top: 8px;
+    color: ${({ theme }) => theme.primary};
+    font-weight: 600;
+    text-decoration: none;
   }
 `;

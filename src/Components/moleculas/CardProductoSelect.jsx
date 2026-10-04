@@ -1,28 +1,33 @@
 import styled from "styled-components";
-import { CiNoWaitingSign } from "react-icons/ci";
 
-export function CardProductoSelect({text1, text2}) {
+export function CardProductoSelect({ text1, text2, alerta }) {
   return (
-    <Container>
+    <Container $alerta={alerta}>
       <span className="descripcion">{text1}</span>
-      <span className="stock">Stock actual: {text2}</span>
+      <span className="stock">
+        Stock actual: <strong>{text2}</strong>
+      </span>
     </Container>
   );
 }
-const Container =styled.div`
-    margin-top: 10px;
-    display: flex;
-    flex-direction: column;
-    border-radius: 16px;
-    border: 1px dashed #54f04f;
-    background-color: rgba(84, 240, 79, 0.1);
-    padding: 10px;
-    margin-bottom:10px; 
-.descripcion{
-color: #1fee61;
-font-weight: 700;
-}
-.stock{
-color: ${({theme})=>theme.text}
-}
-`
+
+const Container = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 12px 14px;
+  border-radius: ${({ theme }) => theme.radiusSm};
+  background: ${({ theme, $alerta }) => ($alerta ? theme.warningSoft : theme.successSoft)};
+  .descripcion {
+    font-weight: 600;
+  }
+  .stock {
+    font-size: 0.9rem;
+    color: ${({ theme }) => theme.textMuted};
+    strong {
+      color: ${({ theme, $alerta }) => ($alerta ? theme.warning : theme.success)};
+    }
+  }
+`;

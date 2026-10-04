@@ -1,157 +1,125 @@
 import { create } from "zustand";
-import { DataModulosConfiguracion, InsertarUsuarios } from "../index";
-import { supabase } from "../supabase/supabase.config";
-import { InsertarAsignaciones, MostrarModulos, MostrarPermisos, MostrarUsuarios, MostrarUsuariosTodos, InsertarPermisos, BuscarUsuarios, EditarUsuarios, EliminarPermisos, EliminarUsuarios } from "../supabase/crudUsuarios";
+import { supabaseRegistro } from "../supabase/supabase.config";
+import { manejarError } from "../supabase/manejarError";
+import { notificarExito } from "../utils/notificaciones";
+import {
+  BuscarUsuarios,
+  EditarUsuarios,
+  EliminarPermisos,
+  EliminarUsuarios,
+  InsertarAsignaciones,
+  InsertarPermisos,
+  InsertarUsuarios,
+  MostrarModulos,
+  MostrarPermisos,
+  MostrarUsuarios,
+  MostrarUsuariosTodos,
+} from "../supabase/crudUsuarios";
+
+const permisosSeleccionados = (idUsuario, modulos) =>
+  modulos.filter((m) => m.check).map((m) => ({ id_usuario: idUsuario, idmodulo: m.id }));
 
 export const useUsuariosStore = create((set, get) => ({
+  // --- Usuario en sesión ---
+  idusuario: 0,
+  datausuario: null,
+  datapermisos: [],
+  permisosCargados: false,
+
+  MostrarUsuarios: async () => {
+    const usuario = await MostrarUsuarios();
+    set({ idusuario: usuario?.id ?? 0, datausuario: usuario });
+    return usuario;
+  },
+
+  // El usuario en sesión actualiza sus propios datos (no puede cambiar su rol).
+  EditarPerfil: async (cambios) => {
+    const { datausuario } = get();
+    const ok = await EditarUsuarios({ id: datausuario.id, ...cambios });
+    if (ok) set({ datausuario: { ...datausuario, ...cambios } });
+    return ok;
+  },
+
+  MostrarPermisos: async (p) => {
+    try {
+      const permisos = await MostrarPermisos(p);
+      set({ datapermisos: permisos, permisosCargados: true });
+      return permisos;
+    } catch (error) {
+      // Sin permisos legibles se bloquean los módulos en lugar de quedar cargando.
+      set({ datapermisos: [], permisosCargados: true });
+      throw error;
+    }
+  },
+
+  // --- Personal de la empresa ---
+  data: [],
+  buscador: "",
+  idEmpresa: null,
   datamodulos: [],
-  insertarUsuarioAdmin: async (p) => {
-    if (!p.email || !p.pass || p.pass.length < 6) {
-      console.error("Email o contraseña inválidos");
-      return;
-    }
+  setBuscador: (texto) => set({ buscador: texto }),
 
-    const { data, error } = await supabase.auth.signUp({
+  Cargar: async (idEmpresa, texto = "") => {
+    const data = texto
+      ? await BuscarUsuarios({ _id_empresa: idEmpresa, buscador: texto })
+      : await MostrarUsuariosTodos({ _id_empresa: idEmpresa });
+    set({ data, idEmpresa });
+    return data;
+  },
+  recargar: async () => {
+    const { idEmpresa, buscador, Cargar } = get();
+    if (idEmpresa != null) await Cargar(idEmpresa, buscador);
+  },
+
+  MostrarModulos: async () => {
+    const modulos = await MostrarModulos();
+    set({ datamodulos: modulos });
+    return modulos;
+  },
+
+  MostrarPermisosEdit: (p) => MostrarPermisos(p),
+
+  // Crea la cuenta de acceso, el registro en Usuarios, la asignación a la
+  // empresa y los permisos. Usa un cliente sin sesión para no cerrar la del admin.
+  Insertar: async ({ email, pass }, p, modulos) => {
+    const { data, error } = await supabaseRegistro.auth.signUp({ email, password: pass });
+    if (manejarError(error, "No se pudo crear el acceso del usuario")) return false;
+
+    const nuevo = await InsertarUsuarios({
+      nombres: p.nombres,
       email: p.email,
-      password: p.pass,
-    });
-
-    console.log("data del registro del userath", data);
-    if (error) {
-      console.error("Error al registrar usuario:", error.message);
-      return;
-    }
-
-    const datauser = await InsertarUsuarios({
-      idauth: data.user.id,
+      nro_docum: p.nro_docum,
+      telefono: p.telefono,
+      direccion: p.direccion,
       fecharegistro: new Date(),
-      tipouser: "Dueño",
+      estado: "activo",
+      idauth: data.user.id,
+      tipouser: p.tipouser,
     });
+    if (!nuevo) return false;
 
+    await InsertarAsignaciones({ id_empresa: p.id_empresa, id_usuario: nuevo.id });
+    const permisos = permisosSeleccionados(nuevo.id, modulos);
+    if (permisos.length) await InsertarPermisos(permisos);
 
-    return datauser;
+    notificarExito("Usuario registrado");
+    await get().recargar();
+    return true;
   },
-  idusuario :0,
-  MostrarUsuarios: async()=>{
-    const response = await MostrarUsuarios();
-    set({idusuario:response.id});
-    return response;
-  },
-      buscador: "",
-      setBuscador: (p) =>{
-          set ({buscador: p})
-      },
-      datausuarios: [],
-      usuariosItemSelect: [],
-      parametros: {},
-      MostrarUsuariosTodos: async (p) =>{
-          const response = await MostrarUsuariosTodos(p);
-          set ({parametros:p})
-          set ({datausuarios:response})
-          set ({usuariosItemSelect: response [0]});
-          return response;
-      },
-  
-      selectUsuarios:(p) =>{
-          set({usuariosItemSelect : p})
-      },
-      insertarUsuarios: async (parametrosAuth, p, datacheckpermisos)=>{
-        console.log("👉 parametrosAuth:", parametrosAuth);
-          const {data, error} = await supabase.auth.signUp({
-            email: parametrosAuth.email,
-            password: parametrosAuth.pass
-            
-          })
-          if (error){
-            return null
-          }
-          const dataUserNew = await InsertarUsuarios({
-            nombres: p.nombres,
-            email: p.email,
-            nro_docum: p.nrodoc,
-            telefono: p.telefono,
-            direccion: p.direccion,
-            fecharegistro: new Date(),
-            estado: "activo",
-            idauth: data.user.id,
-            tipouser: p.tipouser
-          })
-          console.log(datacheckpermisos)
-      await InsertarAsignaciones({
-        id_empresa: p.id_empresa,
-        id_usuario: dataUserNew.id
-      });
 
-    
-      datacheckpermisos.forEach(async(item)=>{
-        if (item.check){
-          let parametrospermisos ={
-            id_usuario: dataUserNew.id,
-            idmodulo: item.id
-          }
-          await InsertarPermisos(parametrospermisos);
-        }
-      });
-      
-      await supabase.auth.signOut(); 
-      },
-      EliminarUsuarios: async (p) =>{
-          await EliminarUsuarios(p);
-          const {MostrarUsuarios} =get();
-          const {parametros} = get();
-          set(MostrarUsuarios(parametros));
-      },
-      EditarUsuarios: async (p, datacheckpermisos, idempresa) =>{
-          await EliminarPermisos({id_usuario:p.id});
-          datacheckpermisos.forEach(async(item)=>{
-          if (item.check){
-          let parametrospermisos ={
-            id_usuario: p.id,
-            idmodulo: item.id,
-          };
-          await InsertarPermisos(parametrospermisos);
-        }
-      });
-          await EditarUsuarios(p);
-          const {MostrarUsuariosTodos} =get();
-          set(MostrarUsuariosTodos({_id_empresa:idempresa}));
-      },
-      BuscarUsuarios: async (p) =>{
-          const response = await BuscarUsuarios(p);
-          set({datausuarios: response});
-          console.log("buscando personas")
-          return response;
-      },
-      MostrarModulos: async()=>{
-        const response = await MostrarModulos()
-        set({datamodulos:response})
-        return response;
-      },
-      datapermisos: [],
-      MostrarPermisos: async(p)=>{
-        const response = await MostrarPermisos(p);
-        set({datapermisos: response});
-        let allDocs = [];
-        DataModulosConfiguracion.map((element)=>{
-          const statePermiso = response.some((objeto)=>
-          objeto.modulos.nombre.includes(element.title)
-        );
-          if(statePermiso){
-            allDocs.push({...element,state:true})
-          } else{
-            allDocs.push({...element,state:false})
-          }
-        });
-        DataModulosConfiguracion.splice(0,DataModulosConfiguracion.length)
-        DataModulosConfiguracion.push(...allDocs)
-        
-        return response;
-      },
-      datapermisosEdit: [],
-      MostrarPermisosEdit: async(p)=>{
-        const response = await MostrarPermisos(p);
-        set({datapermisosEdit: response});
-        console.log("dato seleccionado")
-        return response;
-      }
-  }));
+  Editar: async (p, modulos) => {
+    const ok = await EditarUsuarios(p);
+    if (!ok) return false;
+    await EliminarPermisos({ id_usuario: p.id });
+    const permisos = permisosSeleccionados(p.id, modulos);
+    if (permisos.length) await InsertarPermisos(permisos);
+    await get().recargar();
+    return true;
+  },
+
+  Eliminar: async (p) => {
+    const ok = await EliminarUsuarios(p);
+    if (ok) await get().recargar();
+    return ok;
+  },
+}));

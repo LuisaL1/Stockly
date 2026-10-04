@@ -1,153 +1,115 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import styled from "styled-components";
-import { v } from "../../../styles/variables";
-import { InputText, Btnsave, useCategoriasStore, CovertirCapitalize } from "../../../index";
 import { useForm } from "react-hook-form";
+import { Modal } from "../../moleculas/Modal";
+import { InputText } from "./InputText";
+import { Boton } from "../../atomos/Boton";
+import { Formulario } from "./Formulario";
+import { useCategoriasStore } from "../../../store/CategoriasStore";
 import { useEmpresaStore } from "../../../store/EmpresaStore";
-import { InsertarCategorias } from "../../../supabase/crudCategorias";
-import {CirclePicker} from "react-color"
+import { CovertirCapitalize } from "../../../utils/conversiones";
+import { v } from "../../../styles/variables";
 
-export function RegistrarCategorias({ onClose, dataSelect, accion }) {
-const [currentColor, setColor] = useState("#F44336");
-  const { InsertarCategorias, EditarCategorias } = useCategoriasStore(); 
+const COLORES = [
+  "#EF4444", "#F97316", "#F59E0B", "#EAB308", "#84CC16", "#22C55E",
+  "#14B8A6", "#06B6D4", "#3B82F6", "#6366F1", "#8B5CF6", "#EC4899",
+];
+
+export function RegistrarCategorias({ onClose, dataSelect = {}, accion }) {
+  const { Insertar, Editar } = useCategoriasStore();
   const { dataempresa } = useEmpresaStore();
-  
+  const editando = accion === "Editar";
+  const [color, setColor] = useState(editando && dataSelect.color ? dataSelect.color : COLORES[8]);
   const {
     register,
-    formState: { errors },
     handleSubmit,
-    setValue, 
-  } = useForm();
-  const elegirColor = (color) =>{
-setColor(color.hex)
-  }
+    watch,
+    formState: { errors, isSubmitting },
+  } = useForm({ defaultValues: { nombre: editando ? dataSelect.descripcion : "" } });
 
-  async function insertar(data) {
-    if (accion === "Editar") {
-      const p = {
-        id: dataSelect.id,
-        descripcion: CovertirCapitalize (data.nombre),
-        color:currentColor
-      };
-      await EditarCategorias(p);
-      onClose();
-    } else {
-      const p = {
-        _descripcion: CovertirCapitalize (data.nombre),
-        _idempresa: dataempresa.id,
-        _color: currentColor
-      };
-      await InsertarCategorias(p);
-      onClose();
-    }
+  async function guardar({ nombre }) {
+    const descripcion = CovertirCapitalize(nombre);
+    const ok = editando
+      ? await Editar({ id: dataSelect.id, descripcion, color })
+      : await Insertar({ _descripcion: descripcion, _idempresa: dataempresa.id, _color: color });
+    if (ok) onClose();
   }
-
- 
-  useEffect(() => {
-    if (accion === "Editar" && dataSelect?.descripcion) {
-      setValue("nombre", dataSelect.descripcion);
-    }
-  }, [accion, dataSelect, setValue]);
 
   return (
-    <Container>
-      <div className="sub-contenedor">
-        <div className="headers">
-          <section>
-            <h1>
-              {accion == "Editar" ? "Editar categoría" : "Registrar nueva categoría"}
-            </h1>
-          </section>
-
-          <section>
-            <span onClick={onClose}>x</span>
-          </section>
-        </div>
-
-        <form className="formulario" onSubmit={handleSubmit(insertar)}>
-          <section>
-            <article>
-              <InputText icono={<v.iconomarca />}>
-                <input
-                  className="form__field"
-                 
-                  type="text"
-                  placeholder=""
-                  {...register("nombre", {
-                    required: true,
-                  })}
+    <Modal titulo={editando ? "Editar categoría" : "Nueva categoría"} onClose={onClose} ancho="460px">
+      <Formulario onSubmit={handleSubmit(guardar)}>
+        <InputText label="Nombre de la categoría" icono={<v.iconocategorias />} error={errors.nombre?.message}>
+          <input
+            autoFocus
+            placeholder="Ej. Bebidas"
+            {...register("nombre", { validate: (t) => !!t?.trim() || "Escribe el nombre de la categoría" })}
+          />
+        </InputText>
+        <div>
+          <span className="etiqueta">Color</span>
+          <Paleta>
+            <div className="muestras" role="radiogroup" aria-label="Color">
+              {COLORES.map((c) => (
+                <button
+                  key={c}
+                  type="button"
+                  role="radio"
+                  aria-checked={c.toLowerCase() === color.toLowerCase()}
+                  aria-label={c}
+                  style={{ background: c }}
+                  onClick={() => setColor(c)}
                 />
-                <label className="form__label">categoría</label>
-                {errors.nombre?.type === "required" && <p>Campo requerido</p>}
-              </InputText>
-            </article>
-            <article className="colorContainer">
-            <CirclePicker onChange={elegirColor}/>
-            </article>
-          
-            <div className="btnguardarContent">
-              <Btnsave
-                icono={<v.iconoguardar />}
-                titulo="Guardar"
-                bgcolor="#ef552b"
-              />
+              ))}
             </div>
-          </section>
-        </form>
-      </div>
-    </Container>
+            <Vista $color={color}>{watch("nombre") || "Vista previa"}</Vista>
+          </Paleta>
+        </div>
+        <div className="acciones">
+          <Boton variante="secundario" funcion={onClose}>
+            Cancelar
+          </Boton>
+          <Boton type="submit" icono={<v.iconoguardar />} cargando={isSubmitting}>
+            Guardar
+          </Boton>
+        </div>
+      </Formulario>
+    </Modal>
   );
 }
 
-const Container = styled.div`
-  transition: 0.5s;
-  top: 0;
-  left: 0;
-  position: fixed;
-  background-color: rgba(10, 9, 9, 0.5);
+const Paleta = styled.div`
   display: flex;
-  width: 100%;
-  min-height: 100vh;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-
-  .sub-contenedor {
-    width: 500px;
-    max-width: 85%;
-    border-radius: 20px;
-    background: ${({ theme }) => theme.bgtotal};
-    box-shadow: -10px 15px 30px rgba(10, 9, 9, 0.4);
-    padding: 13px 36px 20px 36px;
-    z-index: 100;
-
-    .headers {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 20px;
-
-      h1 {
-        font-size: 20px;
-        font-weight: 500;
-      }
-      span {
-        font-size: 20px;
-        cursor: pointer;
-      }
+  flex-direction: column;
+  gap: 14px;
+  margin-top: 10px;
+  .muestras {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .muestras button {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: none;
+    cursor: pointer;
+    transition: transform 0.1s;
+    &:hover {
+      transform: scale(1.1);
     }
-    .formulario {
-      section {
-        gap: 20px;
-        display: flex;
-        flex-direction: column;
-        .colorContainer {
-          .colorPickerContent {
-            padding-top: 15px;
-            min-height: 50px;
-          }
-        }
-      }
+    &[aria-checked="true"] {
+      box-shadow: 0 0 0 3px ${({ theme }) => theme.surface}, 0 0 0 5px currentColor;
+      color: ${({ theme }) => theme.text};
     }
   }
+`;
+
+const Vista = styled.span`
+  align-self: flex-start;
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: ${({ $color }) => $color};
+  background: color-mix(in srgb, ${({ $color }) => $color} 14%, transparent);
 `;

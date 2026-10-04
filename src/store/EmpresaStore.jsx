@@ -1,18 +1,22 @@
 import { create } from "zustand";
-import { supabase } from "../supabase/supabase.config";
-import { ContarUsuariosXempresa, MostrarEmpresa } from "../supabase/crudEmpresa";
+import { ContarUsuariosXempresa, EditarEmpresa, MostrarEmpresa } from "../supabase/crudEmpresa";
 
 export const useEmpresaStore = create((set, get) => ({
+  dataempresa: null,
   contadorusuarios: 0,
-  dataempresa: null, 
   MostrarEmpresa: async (p) => {
-    const empresa = await MostrarEmpresa(p); 
+    const empresa = await MostrarEmpresa(p);
     set({ dataempresa: empresa });
     return empresa;
   },
+  EditarEmpresa: async (p) => {
+    const guardado = await EditarEmpresa(p);
+    if (guardado) set({ dataempresa: { ...get().dataempresa, ...guardado } });
+    return !!guardado;
+  },
   ContarUsuariosXempresa: async (p) => {
-    const response = await ContarUsuariosXempresa(p);
-    set({ contadorusuarios: response ?? 0 });
-    return response ?? 0;
-  }
+    const total = await ContarUsuariosXempresa(p);
+    set({ contadorusuarios: total });
+    return total;
+  },
 }));

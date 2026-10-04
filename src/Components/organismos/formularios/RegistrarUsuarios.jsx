@@ -1,343 +1,176 @@
 import { useEffect, useState } from "react";
-import styled from "styled-components";
-import { v } from "../../../styles/variables";
-import { IoPerson } from "react-icons/io5";
-import { FaUnlockKeyhole } from "react-icons/fa6";
-import {
-  InputText,
-  Btnsave,
-  CovertirCapitalize,
-  ContainerSelector,
-  Selector,
-  Device,
-  TipouserData,
-  ListaModulos,
-  useUsuariosStore
-} from "../../../index";
 import { useForm } from "react-hook-form";
-import { BsBagHeartFill } from "react-icons/bs";
-import { AiFillProduct } from "react-icons/ai";
-import { useEmpresaStore } from "../../../store/EmpresaStore";
-import { ListaGenerica } from "../ListaGenerica";
 import { useQuery } from "@tanstack/react-query";
+import { LuIdCard, LuKeyRound, LuMapPin, LuPhone } from "react-icons/lu";
+import { Modal } from "../../moleculas/Modal";
+import { SpinnerLoader } from "../../moleculas/SpinnerLoader";
+import { InputText } from "./InputText";
+import { Formulario } from "./Formulario";
+import { Boton } from "../../atomos/Boton";
+import { Selector } from "../Selector";
+import { ListaModulos } from "../ListaModulos";
+import { useUsuariosStore } from "../../../store/UsuariosStore";
+import { useEmpresaStore } from "../../../store/EmpresaStore";
+import { TipouserData } from "../../../utils/dataEstatica";
+import { v } from "../../../styles/variables";
 
-export function RegistrarUsuarios({ onClose, dataSelect, accion }) {
-  const { isLoading } = useQuery({
-  queryKey: ["mostrar permisos edit", { id_usuario: dataSelect?.id }],
-  queryFn: () => MostrarPermisosEdit({ id_usuario: dataSelect.id }),
-  enabled: !!dataSelect?.id, // solo corre si hay id_usuario
-});
+const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-  const {dataempresa,} = useEmpresaStore();
+export function RegistrarUsuarios({ onClose, dataSelect = {}, accion }) {
+  const editando = accion === "Editar";
+  const { Insertar, Editar, MostrarModulos, MostrarPermisosEdit } = useUsuariosStore();
+  const { dataempresa } = useEmpresaStore();
+  const [tipouser, setTipouser] = useState(
+    TipouserData.find((t) => t.descripcion === dataSelect.tipouser) ?? TipouserData[0]
+  );
   const [checkboxs, setcheckboxs] = useState([]);
-  const [tipouser, setTipouser] = useState({
-    icono: "",
-    descripcion: "empleado"
-  })
-  const {insertarUsuarios,MostrarPermisosEdit, EditarUsuarios, selectUsuarios } = useUsuariosStore();
-  const [stateTipouser, setStateTipouser] = useState(false);
-  const [openRegistroMarca, SetopenRegistroMarca] = useState(false);
-  const [openRegistroCategoria, SetopenRegistroCategoria] = useState(false);
-  const [subaccion, setAccion] = useState("");
 
-  const nuevoRegistroMarca = () => {
-    SetopenRegistroMarca(!openRegistroMarca);
-    setAccion("Nuevo");
-  };
+  const modulos = useQuery({ queryKey: ["modulos"], queryFn: MostrarModulos, staleTime: Infinity });
+  const permisos = useQuery({
+    queryKey: ["permisos edit", dataSelect.id],
+    queryFn: () => MostrarPermisosEdit({ id_usuario: dataSelect.id }),
+    enabled: editando && !!dataSelect.id,
+    gcTime: 0,
+  });
 
-  const nuevoRegistroCategoria = () => {
-    SetopenRegistroCategoria(!openRegistroCategoria);
-    setAccion("Nuevo");
-  };
+  // Marca los módulos que el usuario ya tiene asignados.
+  useEffect(() => {
+    if (!modulos.data) return;
+    const asignados = new Set((permisos.data ?? []).map((p) => p.idmodulo));
+    setcheckboxs(modulos.data.map((m) => ({ ...m, check: asignados.has(m.id) })));
+  }, [modulos.data, permisos.data]);
 
   const {
     register,
-    formState: { errors },
     handleSubmit,
-  } = useForm();
+    formState: { errors, isSubmitting },
+  } = useForm({
+    defaultValues: {
+      email: dataSelect.email ?? "",
+      nombres: dataSelect.nombres ?? "",
+      nro_docum: dataSelect.nro_docum ?? "",
+      telefono: dataSelect.telefono ?? "",
+      direccion: dataSelect.direccion ?? "",
+    },
+  });
 
-  async function insertar(data) {
-    if (accion === "Editar") {
-      const p = {
-            id: dataSelect.id,
-            nombres: data.nombres,
-            email: data.email,
-            nro_docum: data.nrdoc,
-            telefono: data.telefono,
-            direccion: data.direccion,
-            tipouser: tipouser.descripcion
-            
-      };
-      await EditarUsuarios(p, checkboxs, dataempresa.id);
-      onClose();
-    } else {
-      const p = {
-            nombres: data.nombres,
-            email: data.email,
-            nro_docum: data.nrdoc,
-            telefono: data.telefono,
-            direccion: data.direccion,
-            tipouser: tipouser.descripcion,
-            id_empresa: dataempresa.id
-            
-      };
-      const parametrosAuth = {
-        email:data.email,
-        pass:data.pass
-      }
-      await insertarUsuarios(parametrosAuth, p , checkboxs);
-      onClose();
-    }
+  async function guardar(data) {
+    const datos = {
+      nombres: data.nombres.trim(),
+      nro_docum: data.nro_docum,
+      telefono: data.telefono,
+      direccion: data.direccion,
+      tipouser: tipouser.descripcion,
+    };
+    const ok = editando
+      ? await Editar({ id: dataSelect.id, ...datos }, checkboxs)
+      : await Insertar(
+          { email: data.email.trim().toLowerCase(), pass: data.pass },
+          { ...datos, email: data.email.trim().toLowerCase(), id_empresa: dataempresa.id },
+          checkboxs
+        );
+    if (ok) onClose();
   }
 
-useEffect(() => {
-  if (accion === "Editar") {
-    setTipouser({icono:"",descripcion:dataSelect.tipouser})
-  }
-}, []); 
-if (isLoading)
-{
-  return <span>Cargando...</span>
-}  
-return (
-    <Container>
-      <div className="sub-contenedor">
-        <div className="headers">
-          <section>
-            <h1>
-              {accion === "Editar" ? "Editar usuario" : "Registrar nuevo usuario"}
-            </h1>
-          </section>
+  const cargando = modulos.isLoading || permisos.isLoading;
+  const requerido = (mensaje) => ({ validate: (t) => !!String(t ?? "").trim() || mensaje });
 
-          <section>
-            <span onClick={onClose}>x</span>
-          </section>
-        </div>
-        <form className="formulario" onSubmit={handleSubmit(insertar)}>
-          <section className="seccion1">
-              {
-                accion!="Editar"?(<article>
-              <InputText icono={<v.icononombre />}>
-                <input 
-                  className={accion === "Editar" ? "form__field disabled" : "form__field"}
-                  defaultValue={dataSelect.email}
-                  type="text"
-                  placeholder=""
-                  {...register("email", {
-                    required: true,
-                  })}
-                />
-                <label className="form__label">correo</label>
-                {errors.email?.type === "required" && <p>Campo requerido</p>}
-              </InputText>
-            </article>):(<span className="form__field disabled">{dataSelect.email}</span>)
-              }
-  
-            {
-              accion!="Editar"?(            <article>
-              <InputText icono={<v.icononombre />}>
-                <input
-                  className="form__field"
-                  defaultValue={dataSelect.pass}
-                  type="text"
-                  placeholder=""
-                  {...register("pass", {
-                    required: true, minLenght: 8
-                  })}
-                />
-                <label className="form__label">contraseña</label>
-                {errors.pass?.type === "required" && <p>Campo requerido</p>}
-                {errors.pass?.type === "minLenght" && <p>Debe tener al menos 8 caracteres</p>}
-              </InputText>
-            </article> ):(null)
-            } 
+  return (
+    <Modal
+      titulo={editando ? "Editar usuario" : "Nuevo usuario"}
+      subtitulo={editando ? dataSelect.email : "Se creará una cuenta de acceso para esta persona."}
+      onClose={onClose}
+      ancho="820px"
+    >
+      {cargando ? (
+        <SpinnerLoader texto="Cargando permisos..." />
+      ) : (
+        <Formulario onSubmit={handleSubmit(guardar)}>
+          <div className="grid">
+            <div className="columna">
+              <span className="titulo-seccion">Acceso</span>
+              <div>
+                <InputText label="Correo electrónico" icono={<v.iconoemail />} error={errors.email?.message}>
+                  <input
+                    type="email"
+                    readOnly={editando}
+                    placeholder="persona@empresa.com"
+                    {...register("email", {
+                      required: "Escribe el correo",
+                      pattern: { value: EMAIL, message: "El correo no es válido" },
+                    })}
+                  />
+                </InputText>
+              </div>
+              {!editando && (
+                <div>
+                  <InputText
+                    label="Contraseña"
+                    icono={<v.iconopass />}
+                    error={errors.pass?.message}
+                    ayuda="Mínimo 8 caracteres. Compártela de forma segura con la persona."
+                  >
+                    <input
+                      type="password"
+                      autoComplete="new-password"
+                      {...register("pass", {
+                        required: "Escribe una contraseña",
+                        minLength: { value: 8, message: "Debe tener al menos 8 caracteres" },
+                      })}
+                    />
+                  </InputText>
+                </div>
+              )}
 
-            <article>
-              <InputText icono={<v.icononombre />}>
-                <input
-                  className="form__field"
-                  defaultValue={dataSelect.nombres}
-                  type="text"
-                  placeholder=""
-                  {...register("nombres", {
-                    required: true,
-                  })}
-                />
-                <label className="form__label">nombres</label>
-                {errors.nombres?.type === "required" && <p>Campo requerido</p>}
+              <span className="titulo-seccion">Datos personales</span>
+              <div>
+                <InputText label="Nombres" icono={<v.icononombre />} error={errors.nombres?.message}>
+                  <input {...register("nombres", requerido("Escribe el nombre"))} />
+                </InputText>
+              </div>
+              <InputText label="Nro. de documento" icono={<LuIdCard />} error={errors.nro_docum?.message}>
+                <input {...register("nro_docum", requerido("Escribe el documento"))} />
               </InputText>
-            </article>                   
-            <article>
-              <InputText icono={<v.icononombre />}>
-                <input
-                  className="form__field"
-                  defaultValue={dataSelect.nro_docum}
-                  type="text"
-                  placeholder=""
-                  {...register("nrdoc", {
-                    required: true,
-                  })}
-                />
-                <label className="form__label">nro. documento</label>
-                {errors.nrdoc?.type === "required" && <p>Campo requerido</p>}
+              <InputText label="Teléfono" icono={<LuPhone />} error={errors.telefono?.message}>
+                <input type="tel" {...register("telefono", requerido("Escribe el teléfono"))} />
               </InputText>
-            </article>
-            <article>
-              <InputText icono={<v.icononombre />}>
-                <input
-                  className="form__field"
-                  defaultValue={dataSelect.telefono}
-                  type="text"
-                  placeholder=""
-                  {...register("telefono", {
-                    required: true,
-                  })}
-                />
-                <label className="form__label">teléfono</label>
-                {errors.telefono?.type === "required" && <p>Campo requerido</p>}
-              </InputText>
-            </article>  
-            <article>
-              <InputText icono={<v.icononombre />}>
-                <input
-                  className="form__field"
-                  defaultValue={dataSelect.direccion}
-                  type="text"
-                  placeholder=""
-                  {...register("direccion", {
-                    required: true,
-                  })}
-                />
-                <label className="form__label">dirección</label>
-                {errors.direccion?.type === "required" && <p>Campo requerido</p>}
-              </InputText>
-            </article>  
-          </section>
-          <section className="seccion2">
-            <ContainerSelector>
-              <label>Tipo: </label>
-              <Selector color="#fc6027" 
-              texto1={<IoPerson />} 
-              texto2={tipouser.descripcion} funcion ={()=>setStateTipouser
-              (!stateTipouser)}
-              />
-              {
-                stateTipouser && (
-                  <ListaGenerica data={TipouserData}
-                  funcion={(p)=>setTipouser(p)}
-                  bottom="-150px"
-                  setState={()=>setStateTipouser(!stateTipouser)}/>
-                )
-              }
-            </ContainerSelector>    
-            <span>PERMISOS {<FaUnlockKeyhole />}</span> 
-            <ListaModulos 
-            accion ={accion}
-            checkboxs={checkboxs}
-            setcheckboxs={setcheckboxs}/>
-            
-          </section>
-            <div className="btnguardarContent">
-              <Btnsave
-                icono={<v.iconoguardar />}
-                titulo="Guardar"
-                bgcolor="#ef552b"
-              />
+              <div>
+                <InputText label="Dirección" icono={<LuMapPin />} error={errors.direccion?.message}>
+                  <input {...register("direccion", requerido("Escribe la dirección"))} />
+                </InputText>
+              </div>
             </div>
-        </form> 
-      
-      </div>
-    </Container>
+
+            <div className="columna">
+              <span className="titulo-seccion">Rol</span>
+              <Selector
+                opciones={TipouserData}
+                valor={tipouser}
+                onChange={setTipouser}
+                renderOpcion={(o) => (
+                  <>
+                    <span>{o.icono}</span>
+                    <span style={{ textTransform: "capitalize" }}>{o.descripcion}</span>
+                  </>
+                )}
+              />
+              <span className="titulo-seccion" style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                <LuKeyRound /> Permisos por módulo
+              </span>
+              <ListaModulos checkboxs={checkboxs} setcheckboxs={setcheckboxs} />
+            </div>
+          </div>
+
+          <div className="acciones">
+            <Boton variante="secundario" funcion={onClose}>
+              Cancelar
+            </Boton>
+            <Boton type="submit" icono={<v.iconoguardar />} cargando={isSubmitting}>
+              {editando ? "Guardar cambios" : "Crear usuario"}
+            </Boton>
+          </div>
+        </Formulario>
+      )}
+    </Modal>
   );
 }
-const Container = styled.div`
-  transition: 0.5s;
-  top: 0;
-  left: 0;
-  position: fixed;
-  background-color: rgba(10, 9, 9, 0.5);
-  display: flex;
-  width: 100%;
-  min-height: 100vh;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-    .form__field {
-    font-family: inherit;
-    width: 100%;
-    border: none;
-    border-bottom: 2px solid #9b9b9b;
-    outline: 0;
-    font-size: 17px;
-    color: ${(props)=>props.theme.text};
-    padding: 7px 0;
-    background: transparent;
-    transition: border-color 0.2s;
-    &.disabled{
-      color: #696969;
-      background: #2d2d2d;
-      border-radius:8px;
-      margin-top:8px;
-      border-bottom: 1px dashed #656565;
-    }
-  }
-
-  .sub-contenedor {
-    width: 90%;
-    max-width: 90%;
-    border-radius: 20px;
-    background: ${({ theme }) => theme.bgtotal};
-    box-shadow: -10px 15px 30px rgba(10, 9, 9, 0.4);
-    padding: 13px 36px 20px 36px;
-    z-index: 100;
-    height: 90vh;
-    overflow-y: auto;
-    overflow-x: hidden;
-    &::-webkit-scrollbar{
-      width:6px;
-      border-radius: 10px;
-    }
-    &::-webkit-scrollbar-thumb{
-    background-color: #484848;
-    border-radius: 10px;
-    }
-
-    .headers {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 20px;
-
-      h1 {
-        font-size: 20px;
-        font-weight: 500;
-      }
-      span {
-        font-size: 20px;
-        cursor: pointer;
-      }
-    }
-    .formulario {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 15px;
-      align-items: start;
-      @media ${Device.tablet}{
-        grid-template-columns: repeat(2, 1fr);
-      }
-      section {
-        gap: 20px;
-        display: flex;
-        flex-direction: column;
-      }
-      .btnguardarContent{
-        display: flex;
-        justify-content: end;
-        grid-column: 1;
-        @media ${Device.tablet}{
-          grid-column: 2;
-        }
-      }
-    }
-  }
-`;

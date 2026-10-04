@@ -1,145 +1,102 @@
 import styled from "styled-components";
 import { NavLink, Outlet } from "react-router-dom";
-import fondo from "../../assets/reportesStockly.png";
+import { PaginaTemplate } from "./PaginaTemplate";
+import { Device } from "../../styles/breackpoints";
+
+const SECCIONES = [
+  {
+    titulo: "Stock actual",
+    items: [
+      { to: "stock-actual-todos", texto: "Todos los productos" },
+      { to: "stock-actual-por-producto", texto: "Por producto" },
+      { to: "stock-bajo-minimo", texto: "Bajo el mínimo" },
+    ],
+  },
+  { titulo: "Movimientos", items: [{ to: "kardex-entradas-salidas", texto: "Entradas y salidas" }] },
+  { titulo: "Valorizado", items: [{ to: "inventario-valorado", texto: "Inventario valorizado" }] },
+];
 
 export function ReportesTemplate() {
   return (
-    <Container>
-        <PageContainer>
-            <Content>
-                <Outlet/>
-            </Content>
-            <Sidebar>
-                <SidebarSection>
-                  <SidebarTitle>Stock Actual</SidebarTitle>
-                  <SidebarItem to="stock-actual-por-producto">Por producto</SidebarItem>
-                  <SidebarItem to="stock-actual-todos">Todos</SidebarItem>
-                  <SidebarItem to="stock-bajo-minimo">Bajo del mínimo</SidebarItem>
-                </SidebarSection>
-                <SidebarSection>
-                  <SidebarTitle>Entradas y salidas</SidebarTitle>
-                  <SidebarItem to ="kardex-entradas-salidas">Por producto</SidebarItem>
-                </SidebarSection>
-                <SidebarSection>
-                  <SidebarTitle>Valorizado</SidebarTitle>
-                  <SidebarItem to="inventario-valorado">Todos</SidebarItem>
-                </SidebarSection>
-            </Sidebar>
-        </PageContainer>
-    </Container>
+    <PaginaTemplate titulo="Reportes" descripcion="Genera, visualiza y descarga reportes en PDF.">
+      <Contenedor>
+        <nav aria-label="Reportes">
+          {SECCIONES.map((s) => (
+            <div key={s.titulo} className="seccion">
+              <span className="titulo">{s.titulo}</span>
+              {s.items.map((i) => (
+                <NavLink key={i.to} to={i.to} className="item">
+                  {i.texto}
+                </NavLink>
+              ))}
+            </div>
+          ))}
+        </nav>
+        <div className="contenido">
+          <Outlet />
+        </div>
+      </Contenedor>
+    </PaginaTemplate>
   );
 }
 
-const Container = styled.div`
-  position: relative;
-  min-height: 100vh;
-  width: 100%;
-  padding: 15px;
-  color: ${({ theme }) => theme.text};
-
-  /* Fondo adaptable */
-  background-image: url(${fondo});
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-  display: flex;
-  justify-content: center;
-  align-items: flex-start;
-
-  /* Overlay semitransparente */
-  &::before {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0,0,0,0.3); /* negro 30% */
-    z-index: 0;
+const Contenedor = styled.div`
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 20px;
+  align-items: start;
+  @media ${Device.laptop} {
+    grid-template-columns: 240px 1fr;
   }
-`;
-
-const PageContainer = styled.div`
+  nav {
+    display: flex;
+    gap: 16px;
+    overflow-x: auto;
+    padding: 16px;
+    background: ${({ theme }) => theme.surface};
+    border: 1px solid ${({ theme }) => theme.border};
+    border-radius: ${({ theme }) => theme.radius};
+    @media ${Device.laptop} {
+      flex-direction: column;
+      position: sticky;
+      top: 24px;
+    }
+  }
+  .seccion {
     display: flex;
     flex-direction: column;
-    max-width: 1200px;
-    justify-content: center;
-    align-items: center; /* centra las cards horizontalmente */
-    width: 100%;
-    position: relative;
-    z-index: 1;
-
-    @media(min-width: 768px){
-        flex-direction: row;
-        align-items: flex-start; /* alinea al top en desktop */
-    }
-`;
-
-const Content = styled.div`
-    padding: 20px;
-    border-radius: 8px;
-    margin: 20px;
-    flex: 1;
-`;
-
-const Sidebar = styled.div`
-  padding: 20px;
-  display: flex;
-  flex-direction: column;
-  align-items: center; /* centra las cards dentro del sidebar */
-
-  @media (min-width: 768px) {
-    width: 250px;
-    order: 2;
-    align-items: flex-start; /* alinea al inicio en escritorio */
+    gap: 2px;
+    min-width: max-content;
   }
-`;
-
-const SidebarSection = styled.div`
-  margin-bottom: 20px;
-  border-radius: 10px;
-  border: 2px solid #ffffff; /* borde blanco fijo */
-  padding: 20px;
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center; /* centra el contenido dentro de la card */
-  text-align: center;  /* centra el texto */
-  box-shadow: 0 4px 6px rgba(0,0,0,0.1); /* sombra suave */
-  color: #ffffff;
-
-  /* Fondo oscuro semitransparente para destacar sobre el fondo */
-  background-color: rgba(47, 41, 41, 0.85);
-`;
-
-const SidebarTitle = styled.div`
-  margin-bottom: 15px;
-  font-size: 1.2em;
-  font-weight: 600;
-`;
-
-const SidebarItem = styled(NavLink)`
-    display: flex;
-    justify-content: center; /* centra el texto dentro del item */
-    align-items: center;
-    gap: 10px;
-    padding: 12px;
-    border-radius: 12px;
-    cursor: pointer;
-    margin: 5px 0;
+  .titulo {
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: ${({ theme }) => theme.textMuted};
+    padding: 0 10px 6px;
+  }
+  .item {
+    padding: 8px 10px;
+    border-radius: ${({ theme }) => theme.radiusSm};
+    color: ${({ theme }) => theme.text};
     text-decoration: none;
-    color: #ffffff;
-    width: 100%; /* que tome todo el ancho de la card */
-    font-weight: 500;
-
-    &:hover{
-        color: ${(props) => props.theme.colorSubtitle};
+    font-size: 0.9rem;
+    &:hover {
+      background: ${({ theme }) => theme.surfaceAlt};
     }
-
-    &.active{
-        background: ${(props)=> props.theme.bg6};
-        border: 2px solid ${(props)=> props.theme.bg5};
-        color: ${(props)=> props.theme.color1};
-        font-weight: 600;
+    &.active {
+      background: ${({ theme }) => theme.primarySoft};
+      color: ${({ theme }) => theme.primary};
+      font-weight: 600;
     }
+  }
+  .contenido {
+    min-width: 0;
+    padding: 20px;
+    background: ${({ theme }) => theme.surface};
+    border: 1px solid ${({ theme }) => theme.border};
+    border-radius: ${({ theme }) => theme.radius};
+    box-shadow: ${({ theme }) => theme.shadow};
+  }
 `;

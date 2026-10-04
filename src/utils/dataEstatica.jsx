@@ -1,133 +1,176 @@
 import { v } from "../styles/variables";
-import {
-  AiOutlineHome,
-  AiOutlineSetting,
-} from "react-icons/ai";
+import { MODULOS } from "./permisos";
 
-export const DesplegableUser = [
+// Navegación lateral agrupada por área de trabajo.
+export const NavGrupos = [
   {
-    text: "Mi perfil",
-    icono: <v.iconoUser/>,
-    tipo: "miperfil",
+    titulo: "General",
+    enlaces: [
+      { label: "Inicio", icon: <v.iconoinicio />, to: "/" },
+      { label: "Inteligencia", icon: <v.iconointeligencia />, to: "/inteligencia" },
+    ],
   },
   {
-    text: "Configuracion",
-    icono: <v.iconoSettings/>,
-    tipo: "configuracion",
+    titulo: "Operación",
+    enlaces: [
+      { label: "Vender", icon: <v.iconoventas />, to: "/ventas" },
+      { label: "Facturas", icon: <v.iconofacturas />, to: "/ventas/facturas" },
+      { label: "Compras", icon: <v.iconocompras />, to: "/compras" },
+      { label: "Kardex", icon: <v.iconokardex />, to: "/kardex" },
+    ],
   },
   {
-    text: "Cerrar sesión",
-    icono: <v.iconoCerrarSesion/>,
-    tipo: "cerrarsesion",
+    titulo: "Inventario",
+    enlaces: [
+      { label: "Productos", icon: <v.iconostock />, to: "/configurar/productos" },
+      { label: "Sucursales", icon: <v.iconosucursales />, to: "/sucursales" },
+      { label: "Bodegas", icon: <v.iconobodegas />, to: "/bodegas" },
+      { label: "Reportes", icon: <v.iconoreportes />, to: "/reportes" },
+    ],
+  },
+  {
+    titulo: "Contactos",
+    enlaces: [
+      { label: "Clientes", icon: <v.iconoclientes />, to: "/clientes" },
+      { label: "Proveedores", icon: <v.iconoproveedores />, to: "/proveedores" },
+    ],
+  },
+  {
+    titulo: "Ajustes",
+    enlaces: [
+      { label: "Auditoría", icon: <v.iconoauditoria />, to: "/auditoria", soloAdmin: true },
+      { label: "Notificaciones", icon: <v.icononotificaciones />, to: "/notificaciones" },
+      { label: "Configuración", icon: <v.iconoconfiguracion />, to: "/configurar" },
+    ],
   },
 ];
 
-
-
-//data SIDEBAR
-export const LinksArray = [
+// Tarjetas de la página de configuración. "modulo" debe coincidir con la tabla "modulos".
+export const DataModulosConfiguracion = [
   {
-    label: "Home",
-    icon: <AiOutlineHome />,
-    to: "/",
+    title: "Plan y suscripción",
+    subtitle: "Tu plan, límites de uso y cambio de plan",
+    icono: <v.iconoplan />,
+    link: "/configurar/plan",
+    modulo: MODULOS.suscripcion,
+    destacado: true,
   },
   {
-    label: "Kardex",
-    icon: <v.iconocategorias />,
-    to: "/kardex",
+    title: "Permisos de Novandra",
+    subtitle: "Qué puede hacer tu asistente y quién puede usarla",
+    icono: <v.icononovandra />,
+    link: "/configurar/novandra",
+    soloAdmin: true,
   },
   {
-    label: "Reportes",
-    icon: <v.iconoreportes />,
-    to: "/reportes",
+    title: "Facturación",
+    subtitle: "Numeración, impuestos y factura electrónica DIAN",
+    icono: <v.iconofacturas />,
+    link: "/configurar/facturacion",
+    modulo: MODULOS.facturacion,
   },
- 
+  {
+    title: "Productos",
+    subtitle: "Registra tus productos, precios y stock mínimo",
+    icono: <v.iconostock />,
+    link: "/configurar/productos",
+    modulo: MODULOS.productos,
+  },
+  {
+    title: "Personal",
+    subtitle: "Gestiona tu equipo y sus permisos",
+    icono: <v.iconoUsuarios />,
+    link: "/configurar/usuarios",
+    modulo: MODULOS.personal,
+  },
+  {
+    title: "Tu empresa",
+    subtitle: "Nombre y moneda de tu negocio",
+    icono: <v.iconoempresa />,
+    link: "/configurar/empresa",
+    modulo: MODULOS.empresa,
+  },
+  {
+    title: "Categorías",
+    subtitle: "Agrupa tus productos por categoría",
+    icono: <v.iconocategorias />,
+    link: "/configurar/categorias",
+    modulo: MODULOS.categorias,
+  },
+  {
+    title: "Marcas",
+    subtitle: "Gestiona las marcas de tus productos",
+    icono: <v.iconomarca />,
+    link: "/configurar/marca",
+    modulo: MODULOS.marcas,
+  },
 ];
-export const SecondarylinksArray = [
-  {
-    label: "Configuración",
-    icon: <AiOutlineSetting />,
-    to: "/configurar",
-  },
 
-];
-//temas
-export const TemasData = [
-  {
-    icono: "🌞",
-    descripcion: "light",
-   
-  },
-  {
-    icono: "🌚",
-    descripcion: "dark",
-    
-  },
-];
-
-//data configuracion
-export const DataModulosConfiguracion =[
-  {
-    title:"Productos",
-    subtitle:"Registra tus productos",
-    icono:"https://i.ibb.co/85zJ6yG/caja-del-paquete.png",
-    link:"/configurar/productos",
-   
-  },
-  {
-    title:"Personal",
-    subtitle:"Ten el control de tu personal",
-    icono:"https://i.ibb.co/5vgZ0fX/hombre.png",
-    link:"/configurar/usuarios",
-   
-  },
-
-  {
-    title:"Tu empresa",
-    subtitle:"Configura tus opciones básicas",
-    icono:"https://i.ibb.co/x7mHPgm/administracion-de-empresas.png",
-    link:"/configurar/empresa",
-    
-  },
-  {
-    title:"Categoria de productos",
-    subtitle:"Asigna categorias a tus productos",
-    icono:"https://i.ibb.co/VYbMRLZ/categoria.png",
-    link:"/configurar/categorias",
-    
-  },
-  {
-    title:"Marca de productos",
-    subtitle:"Gestiona tus marcas",
-    icono:"https://i.ibb.co/1qsbCRb/piensa-fuera-de-la-caja.png",
-    link:"/configurar/marca",
-   
-  },
-
-]
-//tipo usuario
 export const TipouserData = [
-  {
-    descripcion: "empleado",
-    icono: "🪖",
-  },
-  {
-    descripcion: "administrador",
-    icono: "👑",
-  },
+  { id: "empleado", descripcion: "empleado", icono: <v.iconoUser /> },
+  { id: "administrador", descripcion: "administrador", icono: <v.iconoplan /> },
 ];
-//tipodoc
-export const TipoDocData = [
-  {
-    descripcion: "Dni",
-    icono: "🪖",
-  },
-  {
-    descripcion: "Libreta electoral",
-    icono: "👑",
-  },
-  {
-    descripcion: "Otros",
-    icono: "👑",
-  },
+
+export const TiposBodega = {
+  principal: { etiqueta: "Principal", icono: v.iconobodegas },
+  punto_venta: { etiqueta: "Punto de venta", icono: v.iconotienda },
+  ecommerce: { etiqueta: "E-commerce", icono: v.iconoonline },
+  satelite: { etiqueta: "Satélite", icono: v.iconosatelite },
+};
+
+// Medios de pago en el punto de venta. "tarjeta" y "mixto" solo se muestran en ventas registradas.
+export const MetodosPago = [
+  { id: "efectivo", descripcion: "Efectivo", icono: v.iconoefectivo },
+  { id: "datafono", descripcion: "Datáfono", icono: v.iconotarjeta },
+  { id: "transferencia", descripcion: "Transferencia", icono: v.iconotransferencia },
+  { id: "nequi", descripcion: "Nequi", icono: v.iconocelular },
+  { id: "daviplata", descripcion: "Daviplata", icono: v.iconocelular },
+  { id: "link_pago", descripcion: "Link de pago", icono: v.iconoenviar },
+  { id: "credito", descripcion: "Crédito", icono: v.iconofecha },
+];
+
+export const NombresMetodo = {
+  ...Object.fromEntries(MetodosPago.map((m) => [m.id, m.descripcion])),
+  tarjeta: "Tarjeta",
+  mixto: "Pago mixto",
+};
+
+export const Franquicias = ["Visa", "Mastercard", "American Express", "Diners", "Débito Maestro", "Otra"];
+
+export const Bancos = ["Bancolombia", "Davivienda", "Banco de Bogotá", "BBVA", "Banco de Occidente", "Banco Popular", "Banco Caja Social", "Nequi", "Daviplata", "Otro"];
+
+export const Canales = [
+  { id: "mostrador", descripcion: "Mostrador" },
+  { id: "online", descripcion: "Tienda online" },
+  { id: "telefono", descripcion: "Teléfono / WhatsApp" },
+  { id: "otro", descripcion: "Otro" },
+];
+
+export const TiposDocumento = [
+  { id: "CC", descripcion: "Cédula de ciudadanía" },
+  { id: "NIT", descripcion: "NIT" },
+  { id: "CE", descripcion: "Cédula de extranjería" },
+  { id: "PAS", descripcion: "Pasaporte" },
+  { id: "TI", descripcion: "Tarjeta de identidad" },
+];
+
+export const Sectores = [
+  "Moda y accesorios",
+  "Alimentos y bebidas",
+  "Tecnología",
+  "Ferretería y construcción",
+  "Salud y belleza",
+  "Hogar y decoración",
+  "Papelería y oficina",
+  "Mascotas",
+  "Distribución mayorista",
+  "Otro",
+];
+
+export const Monedas = [
+  { id: "$", descripcion: "Peso colombiano (COP $)" },
+  { id: "US$", descripcion: "Dólar (US$)" },
+  { id: "€", descripcion: "Euro (€)" },
+  { id: "MX$", descripcion: "Peso mexicano (MX$)" },
+  { id: "S/", descripcion: "Sol peruano (S/)" },
 ];

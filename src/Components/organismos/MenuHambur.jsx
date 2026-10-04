@@ -1,162 +1,103 @@
+import { useEffect, useState } from "react";
 import styled from "styled-components";
-import { LinksArray, SecondarylinksArray, ToggleTema, BannerEmpresa } from "../../index";
-import { NavLink } from "react-router-dom";
-import { useState } from "react";
+import { useLocation } from "react-router-dom";
+import { LuMenu } from "react-icons/lu";
+import { Sidebar } from "./sidebar/Sidebar";
+import { CampanaNotificaciones } from "./CampanaNotificaciones";
+import { useNovandraStore } from "../../store/NovandraStore";
 import { v } from "../../styles/variables";
 
+// Barra superior para móvil con un cajón de navegación.
 export function MenuHambur() {
-  const [click, setClick] = useState(false);
+  const [abierto, setAbierto] = useState(false);
+  const { pathname } = useLocation();
+  const abrirNovandra = useNovandraStore((s) => s.abrir);
+
+  useEffect(() => setAbierto(false), [pathname]);
 
   return (
-    <Container>
-      <NavBar>
-        <HamburgerMenu onClick={() => setClick(!click)}>
-          <label className={click ? "toggle active" : "toggle"}>
-            <div className="bar" id="bar1" />
-            <div className="bar" id="bar2" />
-            <div className="bar" id="bar3" />
-          </label>
-        </HamburgerMenu>
-
-        <Menu $click={click.toString()}>
-          {LinksArray.map(({ icon, label, to }) => (
-            <div onClick={() => setClick(false)} className="LinkContainer" key={label}>
-              <NavLink to={to} className="Links">
-                <div className="Linkicon">{icon}</div>
-                <span>{label}</span>
-              </NavLink>
-            </div>
-          ))}
-          <Divider />
-          {SecondarylinksArray.map(({ icon, label, to }) => (
-            <div className="LinkContainer" key={label} onClick={() => setClick(false)}>
-              <NavLink to={to} className="Links">
-                <div className="Linkicon">{icon}</div>
-                <span>{label}</span>
-              </NavLink>
-            </div>
-          ))}
-          
-          <ToggleTema />
-          <Divider />
-        </Menu>
-      </NavBar>
-    </Container>
+    <>
+      <Barra>
+        <button type="button" onClick={() => setAbierto(true)} aria-label="Abrir menú">
+          <LuMenu />
+        </button>
+        <span className="marca">
+          <img src={v.logo} alt="" />
+          Stockly
+        </span>
+        <button type="button" className="novandra" onClick={() => abrirNovandra()} aria-label="Abrir Novandra">
+          <v.icononovandra />
+        </button>
+        <CampanaNotificaciones />
+      </Barra>
+      {abierto && (
+        <Cajon onMouseDown={(e) => e.target === e.currentTarget && setAbierto(false)}>
+          <Sidebar movil onNavegar={() => setAbierto(false)} />
+        </Cajon>
+      )}
+    </>
   );
 }
 
-
-const Container = styled.div`
-  background-color: ${(props) => props.theme.body};
-`;
-
-const NavBar = styled.nav`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  height: 100vh;
-`;
-
-const HamburgerMenu = styled.span`
-  position: fixed;
-  top: 2rem;
-  left: 1rem;
-  z-index: 100;
-
-  .toggle {
-    position: relative;
-    width: 35px;
-    height: 30px;
-    cursor: pointer;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-  }
-
-  .bar {
-    position: absolute;
-    width: 30px;
-    height: 3px;
-    background-color: ${(props) =>
-      props.theme.name === "dark" ? "#ccc" : props.theme.text}; 
-    border-radius: 2px;
-    transition: all 0.3s ease;
-  }
-
-  #bar1 {
-    top: 0;
-  }
-
-  #bar2 {
-    top: 10px;
-  }
-
-  #bar3 {
-    top: 20px;
-  }
-
-  .toggle.active #bar1 {
-    transform: rotate(45deg);
-    top: 10px;
-  }
-
-  .toggle.active #bar2 {
-    opacity: 0;
-  }
-
-  .toggle.active #bar3 {
-    transform: rotate(-45deg);
-    top: 10px;
-  }
-    
-`;
-
-const Menu = styled.div`
-  display: flex;
-  align-items: center;
-  list-style: none;
-  z-index: 10;
-  flex-direction: column;
-  position: fixed;
-  justify-content: center;
+const Barra = styled.header`
+  position: sticky;
   top: 0;
-  left: 0;
-  right:0;
-  bottom:0;
-  width: 100vw; 
-  background-color: ${(props) => `rgba(${props.theme.bodyRgba},0.85)`};
-  backdrop-filter: blur(3px);
-  transform: ${(props) =>
-  props.$click == "true" ? "translateY(0)" : "translateY(1000%)"};
-  transition: all 0.3s ease;
-  .LinkContainer{
-  &:hover{
-     background: ${(props) => props.theme.bgAlpha};
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 60px;
+  padding: 0 16px;
+  background: ${({ theme }) => theme.surface};
+  border-bottom: 1px solid ${({ theme }) => theme.border};
+  button {
+    display: grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    border: none;
+    border-radius: ${({ theme }) => theme.radiusSm};
+    background: transparent;
+    font-size: 24px;
+    cursor: pointer;
+    &:hover {
+      background: ${({ theme }) => theme.surfaceAlt};
+    }
   }
-   
-
-  .Links{
-    width:100vw;
-    display:flex;
-    text-decoration: none;
-    color: ${(props) => props.theme.text};
-    height: 80px;
-    .Linkicon{
-    padding: ${v.smSpacing} ${v.mdSpacing};
+  .novandra {
+    color: ${({ theme }) => theme.primary};
+    font-size: 20px;
+  }
+  .marca {
+    flex: 1;
     display: flex;
-    svg{
-    font-size: 25px;
-    }
+    align-items: center;
+    gap: 8px;
+    font-weight: 700;
+    img {
+      width: 28px;
     }
   }
+`;
+
+const Cajon = styled.div`
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: ${({ theme }) => theme.overlay};
+  animation: aparecer 0.15s ease-out;
+  > aside {
+    animation: deslizar 0.2s ease-out;
+    box-shadow: ${({ theme }) => theme.shadowLg};
   }
- 
+  @keyframes aparecer {
+    from {
+      opacity: 0;
+    }
+  }
+  @keyframes deslizar {
+    from {
+      transform: translateX(-100%);
+    }
+  }
 `;
-
-const Divider = styled.div`
-  height: 1px;
-  width: 100%;
-  background: ${(props) => props.theme.bg4};
-  margin: ${v.lgSpacing} 0;
-`;
-

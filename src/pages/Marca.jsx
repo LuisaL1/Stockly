@@ -1,34 +1,38 @@
-import { useQuery } from "@tanstack/react-query";
-import { MarcaTemplate, SpinnerLoader, useEmpresaStore, useMarcaStore, useUsuariosStore, BloqueoPagina } from "../index";
+import { CrudTemplate } from "../Components/templatesReact/CrudTemplate";
+import { TablaMarca } from "../Components/organismos/tablas/TablaMarca";
+import { RegistrarMarca } from "../Components/organismos/formularios/RegistrarMarca";
+import { ConPermiso } from "../Components/moleculas/ConPermiso";
+import { SpinnerLoader } from "../Components/moleculas/SpinnerLoader";
+import { ErrorMolecula } from "../Components/moleculas/ErrorMolecula";
+import { useMarcaStore } from "../store/MarcaStore";
+import { usePaginaCrud } from "../hooks/usePaginaCrud";
+import { MODULOS } from "../utils/permisos";
 
 export function Marca() {
-        const {datapermisos} = useUsuariosStore();
-        const statePermiso = datapermisos.some((objeto) => objeto.modulos.nombre.includes("Marca de productos"))
-    const { MostrarMarca, datamarca, BuscarMarca, buscador } = useMarcaStore();
-    const { dataempresa } = useEmpresaStore();
+  return (
+    <ConPermiso modulo={MODULOS.marcas}>
+      <Contenido />
+    </ConPermiso>
+  );
+}
 
-  const { isLoading, error } = useQuery({
-  queryKey: ["mostrar marca", { id_empresa: dataempresa?.id}],
-  queryFn: () =>  MostrarMarca({ id_empresa: dataempresa?.id }),
-  enabled: dataempresa?.id != null,
-    });
-    const { data: buscardata } = useQuery({
-        queryKey: [
-          "buscar marca", 
-          { id_empresa: dataempresa?.id, descripcion: buscador }
-        ],
-        queryFn: () => BuscarMarca({ id_empresa: dataempresa?.id, descripcion: buscador }),
-        enabled: dataempresa?.id !=null,
-    });
-    if (statePermiso == false){
-      return <BloqueoPagina/>;
-    }
-    if (isLoading){
-      return <SpinnerLoader />;
-    } 
-    if (error) {
-      return <span>Error: {error.message}</span>;
-    }
+function Contenido() {
+  const { setBuscador } = useMarcaStore();
+  const { data, isLoading, error, refetch } = usePaginaCrud("marcas", useMarcaStore);
 
-    return <MarcaTemplate data={datamarca} />;
+  if (isLoading) return <SpinnerLoader />;
+  if (error) return <ErrorMolecula mensaje={error.message} reintentar={refetch} />;
+
+  return (
+    <CrudTemplate
+      titulo="Marcas"
+      descripcion="Las marcas que comercializa tu empresa."
+      textoNuevo="Nueva marca"
+      placeholderBusqueda="Buscar marca..."
+      setBuscador={setBuscador}
+      data={data}
+      Tabla={TablaMarca}
+      Formulario={RegistrarMarca}
+    />
+  );
 }

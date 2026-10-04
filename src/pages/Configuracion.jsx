@@ -1,4 +1,5 @@
-import { ConfiguracionTemplate } from "../index";
-export function Configuracion(){
-    return (<ConfiguracionTemplate/>);
+import { ConfiguracionTemplate } from "../Components/templatesReact/ConfiguracionTemplate";
+
+export function Configuracion() {
+  return <ConfiguracionTemplate />;
 }

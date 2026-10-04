@@ -1,50 +1,44 @@
-import { useQuery } from "@tanstack/react-query";
-import {
-  UsuariosTemplate,
-  SpinnerLoader,
-  useEmpresaStore,
-  useUsuariosStore,
-  BloqueoPagina
-} from "../index";
+import { CrudTemplate } from "../Components/templatesReact/CrudTemplate";
+import { TablaUsuarios } from "../Components/organismos/tablas/TablaUsuarios";
+import { RegistrarUsuarios } from "../Components/organismos/formularios/RegistrarUsuarios";
+import { ConPermiso } from "../Components/moleculas/ConPermiso";
+import { SpinnerLoader } from "../Components/moleculas/SpinnerLoader";
+import { ErrorMolecula } from "../Components/moleculas/ErrorMolecula";
+import { useUsuariosStore } from "../store/UsuariosStore";
+import { usePaginaCrud } from "../hooks/usePaginaCrud";
+import { MODULOS } from "../utils/permisos";
+import { usePlan } from "../hooks/usePlan";
 
 export function Usuarios() {
-  const {
-    MostrarModulos,
-    MostrarUsuariosTodos,
-    datausuarios,
-    BuscarUsuarios,
-    buscador, datapermisos
-  } = useUsuariosStore();
-      const statePermiso = datapermisos.some((objeto) => objeto.modulos.nombre.includes("Personal"))
-  const { dataempresa } = useEmpresaStore();
-  const { isLoading, error } = useQuery({
-    queryKey: ["mostrar usuarios", { _id_empresa: dataempresa?.id }],
-    queryFn: ()=> MostrarUsuariosTodos({ _id_empresa: dataempresa?.id }),
-    enabled: dataempresa?.id != null,
-  });
-  const { data: buscardata } = useQuery({
-    queryKey: [
-      "buscar usuarios",
-      { _id_empresa: dataempresa?.id, buscador: buscador },
-    ],
-    queryFn: () =>
-      BuscarUsuarios({ _id_empresa: dataempresa?.id, buscador: buscador }),
-    enabled: dataempresa?.id != null,
-  });
-  const { data: datamodulos } = useQuery({
-    queryKey: ["mostrar modulos"],
-    queryFn: MostrarModulos,
-  });
-    if (statePermiso == false){
-      return <BloqueoPagina/>;
-    }
-  if (isLoading) {
-    return <SpinnerLoader />;
-  }
-  if (error) {
-    return <span>Error...</span>;
-  }
-
-  return <UsuariosTemplate data={datausuarios} />;
+  return (
+    <ConPermiso modulo={MODULOS.personal}>
+      <Contenido />
+    </ConPermiso>
+  );
 }
 
+function Contenido() {
+  const { setBuscador } = useUsuariosStore();
+  const { data, isLoading, error, refetch } = usePaginaCrud("personal", useUsuariosStore);
+
+  const { alcanzado, limite, plan } = usePlan();
+
+  if (isLoading) return <SpinnerLoader />;
+  if (error) return <ErrorMolecula mensaje={error.message} reintentar={refetch} />;
+
+  return (
+    <CrudTemplate
+      titulo="Personal"
+      descripcion="Las personas que usan Stockly en tu empresa y sus permisos."
+      textoNuevo="Nuevo usuario"
+      placeholderBusqueda="Buscar por nombre..."
+      setBuscador={setBuscador}
+      data={data}
+      Tabla={TablaUsuarios}
+      bloqueoNuevo={
+        alcanzado("usuarios") && `Tu plan ${plan?.nombre ?? ""} permite ${limite("usuarios")} usuarios. Mejóralo en Configuración → Plan.`
+      }
+      Formulario={RegistrarUsuarios}
+    />
+  );
+}

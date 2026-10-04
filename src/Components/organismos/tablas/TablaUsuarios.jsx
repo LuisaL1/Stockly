@@ -1,295 +1,98 @@
-import {
-  flexRender,
-  getCoreRowModel,
-  getFilteredRowModel,
-  getPaginationRowModel,
-  getSortedRowModel,
-  useReactTable,
-} from "@tanstack/react-table";
 import styled from "styled-components";
-import { ContentAccionesTabla, Paginacion, useUsuariosStore, v } from "../../../index";
-import Swal from "sweetalert2";
-import {FaArrowsAltV} from "react-icons/fa"
-import { useState } from "react";
-export function TablaUsuarios({ data, SetopenRegistro,
-  setdataSelect, setAccion
- }) {
-  const [pagina, setPagina] = useState(1);
-  const { EliminarUsuarios } = useUsuariosStore();
+import { DataTable } from "./DataTable";
+import { ContentAccionesTabla } from "../ContentAccionesTabla";
+import { EstadoVacio } from "../../moleculas/EstadoVacio";
+import { ColorContentTabla } from "../../atomos/ColorContenTabla";
+import { useUsuariosStore } from "../../../store/UsuariosStore";
+import { confirmarEliminacion, notificarAviso } from "../../../utils/notificaciones";
 
-  const editar = (data) => {
-    if (data.tipouser === "Dueño"){
-      Swal.fire({
-        title: "Oops...",
-        text: "Este registro no se permite editar ya que es valor por defecto.",
-        icon: "error",
-      });
-      return;
+const esDueno = (u) => u.tipouser === "Dueño";
+
+export function TablaUsuarios({ data, editar }) {
+  const { Eliminar } = useUsuariosStore();
+
+  const eliminar = async (fila) => {
+    if (esDueno(fila)) {
+      return notificarAviso("Registro protegido", "El dueño de la empresa no se puede eliminar.");
     }
-    SetopenRegistro(true); 
-    setdataSelect(data);
-    setAccion("Editar");
-  };
-  const eliminar = (p) => {
-    if (p.tipouser === "Dueño") {
-      Swal.fire({
-        title: "Oops...",
-        text: "Este registro no se permite eliminar ya que es valor por defecto.",
-        icon: "error",
-      });
-      return;
+    if (await confirmarEliminacion(`Se eliminará a "${fila.nombres}" del personal.`)) {
+      await Eliminar({ id: fila.id });
     }
-
-    Swal.fire({
-      title: "¿Estás seguro?",
-      text: "Una vez eliminado, ¡No podrás recuperar este registro!",
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonColor: "#3085d6",
-      cancelButtonColor: "#d33",
-      confirmButtonText: "Sí, eliminar",
-      cancelButtonText: "Cancelar",
-    }).then(async (result) => {
-      if (result.isConfirmed) {
-        await EliminarUsuarios({ id: p.id });
-      }
-    });
   };
-
-  console.log("Datos recibidos:", data);
 
   const columns = [
     {
       accessorKey: "nombres",
-      header: "Nombres",
-      cell: (info) => <td data-title="Nombres"
-      className="ContentCell">
-        <span>{info.getValue()}</span>
-        </td>
+      header: "Nombre",
+      cell: ({ row }) => (
+        <Persona>
+          <span className="avatar">{(row.original.nombres ?? "?").charAt(0).toUpperCase()}</span>
+          <span>
+            <strong>{row.original.nombres}</strong>
+            {row.original.email && <small>{row.original.email}</small>}
+          </span>
+        </Persona>
+      ),
     },
-        {
+    {
       accessorKey: "tipouser",
-      header: "Tipo user",
-      cell: (info) => <td data-title="Tipo user"
-      className="ContentCell">
-        <span>{info.getValue()}</span>
-        </td>
+      header: "Rol",
+      cell: (info) => <span style={{ textTransform: "capitalize" }}>{info.getValue()}</span>,
     },
-            {
+    {
       accessorKey: "estado",
       header: "Estado",
-      enableSorting: false,
-      cell: (info) => <td data-title="Estado"
-      className="ContentCell">
-        <span>{info.getValue()}</span>
-        </td>
+      cell: (info) => (
+        <ColorContentTabla $color={info.getValue() === "activo" ? "#16A34A" : "#9AA2B4"}>
+          {info.getValue()}
+        </ColorContentTabla>
+      ),
     },
-    
-{
-  accessorKey: "acciones",
-  header: "",
-  enableSorting: false,
-  cell: (info) => (
-    <ContentAccionesTabla
-      funcionEditar={() => editar(info.row.original)}
-      funcionEliminar={() => eliminar(info.row.original)}
-    />
-  ),
-},
+    {
+      id: "acciones",
+      header: "",
+      enableSorting: false,
+      meta: { align: "right" },
+      cell: ({ row }) =>
+        esDueno(row.original) ? null : (
+          <ContentAccionesTabla
+            funcionEditar={() => editar(row.original)}
+            funcionEliminar={() => eliminar(row.original)}
+          />
+        ),
+    },
   ];
 
-  const table = useReactTable({
-    data,
-    columns,
-    getCoreRowModel: getCoreRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-  });
-
   return (
-    <Container>
-      <table className="responsive-table">
-        <thead>
-          {table.getHeaderGroups().map((headerGroup) => (
-            <tr key={headerGroup.id}>
-              {headerGroup.headers.map((header) => (
-                <th key={header.id}>{header.column.columnDef.header}
-                {header.column.getCanSort() && (
-                  <span style ={{cursor:"pointer"}}
-                  onClick={header.column.getToggleSortingHandler()}>
-                    <FaArrowsAltV/>
-                  </span>
-                )}
-                {
-                  {
-                    asc: "🔼",
-                    desc: "🔽"
-                  } [header.column.getIsSorted()]
-                }
-                </th>
-              ))}
-            </tr>
-          ))}
-        </thead>
-        <tbody>
-          {table.getRowModel().rows.map((item) => (
-            <tr key={item.id}>
-              {item.getVisibleCells().map((cell) => (
-                <td key={cell.id}>
-                  {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                </td>
-              ))}
-            </tr>
-          ))}
-        </tbody>
-      </table>
-      <Paginacion table ={table} irinicio = {() => table.setPageIndex(0)}
-        pagina = {table.getState().pagination.pageIndex+1}
-        setPagina ={setPagina}
-        maximo={table.getPageCount()}/>
-    </Container>
+    <DataTable
+      data={data}
+      columns={columns}
+      vacio={<EstadoVacio titulo="Aún no hay personal" mensaje="Agrega a tu equipo y asígnales permisos por módulo." />}
+    />
   );
 }
 
-const Container = styled.div`
-  position: relative;
-
-  margin: 5% 3%;
-  @media (min-width: ${v.bpbart}) {
-    margin: 2%;
+const Persona = styled.span`
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  text-align: left;
+  .avatar {
+    display: grid;
+    place-items: center;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: ${({ theme }) => theme.primarySoft};
+    color: ${({ theme }) => theme.primary};
+    font-weight: 700;
+    flex-shrink: 0;
   }
-  @media (min-width: ${v.bphomer}) {
-    margin: 2em auto;
-   
+  span {
+    display: flex;
+    flex-direction: column;
   }
-  .responsive-table {
-    width: 100%;
-    margin-bottom: 1.5em;
-    border-spacing: 0;
-    @media (min-width: ${v.bpbart}) {
-      font-size: 0.9em;
-    }
-    @media (min-width: ${v.bpmarge}) {
-      font-size: 1em;
-    }
-    thead {
-      position: absolute;
-
-      padding: 0;
-      border: 0;
-      height: 1px;
-      width: 1px;
-      overflow: hidden;
-      @media (min-width: ${v.bpbart}) {
-        position: relative;
-        height: auto;
-        width: auto;
-        overflow: auto;
-      }
-      th {
-        border-bottom: 2px solid rgba(115, 115, 115, 0.32);
-        font-weight: normal;
-        text-align: center;
-        color: ${({ theme }) => theme.text};
-        &:first-of-type {
-          text-align: center;
-        }
-      }
-    }
-    tbody,
-    tr,
-    th,
-    td {
-      display: block;
-      padding: 0;
-      text-align: left;
-      white-space: normal;
-    }
-    tr {
-      @media (min-width: ${v.bpbart}) {
-        display: table-row;
-      }
-    }
-
-    th,
-    td {
-      padding: 0.5em;
-      vertical-align: middle;
-      @media (min-width: ${v.bplisa}) {
-        padding: 0.75em 0.5em;
-      }
-      @media (min-width: ${v.bpbart}) {
-        display: table-cell;
-        padding: 0.5em;
-      }
-      @media (min-width: ${v.bpmarge}) {
-        padding: 0.75em 0.5em;
-      }
-      @media (min-width: ${v.bphomer}) {
-        padding: 0.75em;
-      }
-    }
-    tbody {
-      @media (min-width: ${v.bpbart}) {
-        display: table-row-group;
-      }
-      tr {
-        margin-bottom: 1em;
-        @media (min-width: ${v.bpbart}) {
-          display: table-row;
-          border-width: 1px;
-        }
-        &:last-of-type {
-          margin-bottom: 0;
-        }
-        &:nth-of-type(even) {
-          @media (min-width: ${v.bpbart}) {
-            background-color: rgba(78, 78, 78, 0.12);
-          }
-        }
-      }
-      th[scope="row"] {
-        @media (min-width: ${v.bplisa}) {
-          border-bottom: 1px solid rgba(161, 161, 161, 0.32);
-        }
-        @media (min-width: ${v.bpbart}) {
-          background-color: transparent;
-          text-align: center;
-          color: ${({ theme }) => theme.text};
-        }
-      }
-      .ContentCell {
-        text-align: right;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        height: 50px;
-
-        border-bottom: 1px solid rgba(161, 161, 161, 0.32);
-        @media (min-width: ${v.bpbart}) {
-          justify-content: center;
-          border-bottom: none;
-        }
-      }
-      td {
-        text-align: right;
-        @media (min-width: ${v.bpbart}) {
-          border-bottom: 1px solid rgba(161, 161, 161, 0.32);
-          text-align: center;
-        }
-      }
-      td[data-title]:before {
-        content: attr(data-title);
-        float: left;
-        font-size: 0.8em;
-        @media (min-width: ${v.bplisa}) {
-          font-size: 0.9em;
-        }
-        @media (min-width: ${v.bpbart}) {
-          content: none;
-        }
-      }
-    }
+  small {
+    color: ${({ theme }) => theme.textMuted};
   }
 `;

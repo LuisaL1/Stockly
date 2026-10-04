@@ -1,4 +1,5 @@
-import { LoginTemplate } from "../index";
-export function Login(){
-    return (<LoginTemplate/>);
+import { LoginTemplate } from "../Components/templatesReact/LoginTemplate";
+
+export function Login() {
+  return <LoginTemplate />;
 }

@@ -1,102 +1,80 @@
-import{supabase} from "../index"
-import Swal from 'sweetalert2';
+import { supabase } from "./supabase.config";
+import { manejarError } from "./manejarError";
+import { notificarExito } from "../utils/notificaciones";
 import { ObtenerIdAuthSupabase } from "./globalSupabase";
-export const InsertarUsuarios =async (p)=>{
-    const {data, error} = await supabase.from("Usuarios").insert(p).select().maybeSingle();
-    if (error){
-        Swal.fire({
-            icon: "error",
-            title: "Oops...",
-            text: "Error al insertar usuario!"+error.message
-        });
-    }
-    
-    if (data) return data;
+
+export async function InsertarUsuarios(p) {
+  const { data, error } = await supabase.from("Usuarios").insert(p).select().maybeSingle();
+  if (manejarError(error, "No se pudo registrar el usuario")) return null;
+  return data;
 }
-export const MostrarUsuarios = async () => {
+
+export async function MostrarUsuarios() {
   const idAuthSupabase = await ObtenerIdAuthSupabase();
-    const {error, data} = await supabase
+  if (!idAuthSupabase) return null;
+  const { data, error } = await supabase
     .from("Usuarios")
     .select()
     .eq("idauth", idAuthSupabase)
     .maybeSingle();
-    if (data){
-    return data;
-  }
-};
-export const MostrarUsuariosTodos = async (p) => {
-    const {error, data} = await supabase.rpc("mostrarpersonal", p);
-    if (data){
-    return data;
-  }
-};
-export async function EliminarUsuarios(p){
-    const {error} = await supabase
-    .from ("Usuarios")
-    .delete()
-    .eq("id",p.id);
-    if(error){
-        alert("Error al eliminar", error.message);
-    }
-}
-export async function EditarUsuarios(p){
-    const {error} = await supabase
-    .from("Usuarios")
-    .update(p)
-    .eq("id",p.id);
-    if (error){
-        alert("Error al editar marca", error.message);
-    }
-}
-export async function BuscarUsuarios(p) {
-  console.log("info: "+p)
-  const { data } = await supabase.rpc("buscarpersonal", p);
-  console.log("Hola"+data);
+  if (error) throw error;
   return data;
-}
-// tabla asignaciones
-export const InsertarAsignaciones =async (p)=>{
-    const { error} = await supabase.from("asignarempresa").insert(p).maybeSingle();
-    if (error){
-        Swal.fire({
-            icon: "error",
-            title: "Oops...",
-            text: "Error al insertar usuario!"+error.message
-        });
-    }
-};
-//tabla permisos
-export const InsertarPermisos =async (p)=>{
-    const { error} = await supabase.from("permisos").insert(p).maybeSingle();
-    if (error){
-        Swal.fire({
-            icon: "error",
-            title: "Oops...",
-            text: "Error al insertar usuario!"+error.message
-        });
-    }
-};
-// mostrar los permisos
-export async function MostrarPermisos(p) {
-  const { data } = await supabase
-    .from("permisos")
-    .select(`id, id_usuario, idmodulo, modulos(nombre)`)
-    .eq("id_usuario", p.id_usuario)
-  console.log(data)
-  console.log("Parametro recibido:", p);
-  return data;
-}
-export async function EliminarPermisos(p){
-    const {error} = await supabase
-    .from ("permisos")
-    .delete()
-    .eq("id_usuario",p.id_usuario);
-    if(error){
-        alert("Error al eliminar", error.message);
-    }
 }
 
-export async function MostrarModulos(){
-    const {data} = await supabase.from ("modulos").select();
-    return data;
+export async function MostrarUsuariosTodos(p) {
+  const { data, error } = await supabase.rpc("mostrarpersonal", p);
+  if (error) throw error;
+  return data ?? [];
+}
+
+export async function EliminarUsuarios(p) {
+  const { error } = await supabase.from("Usuarios").delete().eq("id", p.id);
+  if (manejarError(error, "No se pudo eliminar el usuario")) return false;
+  notificarExito("Usuario eliminado");
+  return true;
+}
+
+export async function EditarUsuarios(p) {
+  const { error } = await supabase.from("Usuarios").update(p).eq("id", p.id);
+  if (manejarError(error, "No se pudo editar el usuario")) return false;
+  notificarExito("Usuario actualizado");
+  return true;
+}
+
+export async function BuscarUsuarios(p) {
+  const { data, error } = await supabase.rpc("buscarpersonal", p);
+  if (error) throw error;
+  return data ?? [];
+}
+
+// tabla asignarempresa
+export async function InsertarAsignaciones(p) {
+  const { error } = await supabase.from("asignarempresa").insert(p);
+  return !manejarError(error, "No se pudo asignar el usuario a la empresa");
+}
+
+// tabla permisos
+export async function InsertarPermisos(p) {
+  const { error } = await supabase.from("permisos").insert(p);
+  return !manejarError(error, "No se pudieron guardar los permisos");
+}
+
+export async function MostrarPermisos(p) {
+  const { data, error } = await supabase
+    .from("permisos")
+    .select("id, id_usuario, idmodulo, modulos(nombre)")
+    .eq("id_usuario", p.id_usuario);
+  if (error) throw error;
+  return data ?? [];
+}
+
+export async function EliminarPermisos(p) {
+  const { error } = await supabase.from("permisos").delete().eq("id_usuario", p.id_usuario);
+  return !manejarError(error, "No se pudieron actualizar los permisos");
+}
+
+export async function MostrarModulos() {
+  const { data, error } = await supabase.from("modulos").select();
+  if (error) throw error;
+  return data ?? [];
 }

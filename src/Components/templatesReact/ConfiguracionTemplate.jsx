@@ -1,159 +1,131 @@
 import styled from "styled-components";
-import fondocuadros from "../../assets/fondocuadros.svg";
-import {  Link } from "react-router-dom";
-import {Mensaje} from "../../index";
+import { Link } from "react-router-dom";
+import { LuLock } from "react-icons/lu";
+import { PaginaTemplate } from "./PaginaTemplate";
 import { DataModulosConfiguracion } from "../../utils/dataEstatica";
-export function ConfiguracionTemplate() {
-  
-  return (
-    <Container>
-      <div id="cards">
-        {DataModulosConfiguracion.map((item, index) => {
-          return (
-            <Link to={item.state? item.link: ""} className={item.state?"card": "card false"} key={index}>
-              <Mensaje state={item.state}/>
-            
-              <div className="card-content">
-                <div className="card-image">
-                  <img src={item.icono} />
-                </div>
+import { esAdmin, tienePermiso } from "../../utils/permisos";
+import { useUsuariosStore } from "../../store/UsuariosStore";
+import { v } from "../../styles/variables";
+import { BannerDemo } from "../moleculas/BannerDemo";
 
-                <div className="card-info-wrapper">
-                  <div className="card-info">
-                    <i className="fa-duotone fa-unicorn"></i>
-                    <div className="card-info-title">
-                      <h3>{item.title}</h3>
-                      <h4>{item.subtitle}</h4>
-                    </div>
-                  </div>
-                </div>
+export function ConfiguracionTemplate() {
+  const { datapermisos, datausuario } = useUsuariosStore();
+
+  return (
+    <PaginaTemplate titulo="Configuración" descripcion="Administra los catálogos y ajustes de tu empresa.">
+      <BannerDemo />
+      <Grid>
+        {DataModulosConfiguracion.map((item) => {
+          const habilitado = item.soloAdmin ? esAdmin(datausuario) : tienePermiso(datapermisos, item.modulo);
+          const contenido = (
+            <>
+              <span className="icono">{item.icono}</span>
+              <div className="texto">
+                <h3>{item.title}</h3>
+                <p>{item.subtitle}</p>
               </div>
+              <span className="estado">
+                {habilitado ? <v.iconoflechaderecha /> : <LuLock title="Sin permiso" />}
+              </span>
+            </>
+          );
+          return habilitado ? (
+            <Link key={item.link} to={item.link} className={`tarjeta ${item.destacado ? "destacada" : ""}`}>
+              {contenido}
             </Link>
+          ) : (
+            <div key={item.link} className="tarjeta bloqueada" title="No tienes permiso para este módulo">
+              {contenido}
+            </div>
           );
         })}
-      </div>
-    </Container>
+      </Grid>
+    </PaginaTemplate>
   );
 }
-const Container = styled.div`
-  background-color: ${({ theme }) => theme?.bgtotal || "#121212"};
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: start;
-  min-height: 100vh;
-  padding: 50px 20px;
 
-  a {
+const Grid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+
+  .tarjeta {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 22px;
+    background: ${({ theme }) => theme.surface};
+    border: 1px solid ${({ theme }) => theme.border};
+    border-radius: ${({ theme }) => theme.radiusXl};
+    box-shadow: ${({ theme }) => theme.shadow};
     text-decoration: none;
     color: inherit;
+    transition: border-color 0.15s, transform 0.15s;
   }
-
-  #cards {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    align-items: flex-start;
-    gap: 30px;
-    max-width: 1300px;
-    width: 100%;
-    margin-top: 40px;
-  }
-
-  .card {
-    background-color: rgba(255, 255, 255, 0.05);
-    border-radius: 16px;
-    cursor: pointer;
-    display: flex;
-    flex-direction: column;
-    position: relative;
-    width: 300px;
-    height: 260px;
-    transition: 0.3s;
-    border: 1px solid transparent;
-
-    &:hover {
-      border: 1px solid ${({ theme }) => theme?.bg5 || "#ffffff66"};
-      box-shadow: 0 0 10px #ffa5004d;
-    }
-
-    &:hover .card-image img {
-      filter: grayscale(0%);
-      transform: scale(1.05);
+  a.tarjeta:hover {
+    border-color: ${({ theme }) => theme.primary};
+    transform: translateY(-2px);
+    .estado {
+      color: ${({ theme }) => theme.primary};
     }
   }
-
-  .card-content {
-    background-color: ${({ theme }) => theme?.bgcards || "#1e1e1e"};
-    border-radius: inherit;
-    display: flex;
-    flex-direction: column;
-    flex-grow: 1;
-    padding: 25px;
-    z-index: 2;
-  }
-
-  .card-image {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 110px;
-
-    img {
-      max-height: 90px;
-      max-width: 90px;
-      filter: grayscale(100%);
-      transition: 0.3s ease;
+  .destacada {
+    grid-column: 1 / -1;
+    background: ${({ theme }) => theme.inkCard};
+    border-color: ${({ theme }) => theme.inkBorder};
+    color: ${({ theme }) => theme.inkText};
+    .icono {
+      background: ${({ theme }) => theme.accentLight};
+      color: ${({ theme }) => theme.ink};
+    }
+    .texto p,
+    .estado {
+      color: ${({ theme }) => theme.inkMuted};
+    }
+    @media (min-width: 900px) {
+      grid-column: span 2;
     }
   }
-
-  .card-info-wrapper {
-    flex-grow: 1;
+  a.destacada:hover {
+    border-color: ${({ theme }) => theme.accentLight};
+    .estado {
+      color: ${({ theme }) => theme.accentLight};
+    }
+  }
+  .icono {
+    display: grid;
+    place-items: center;
+    width: 48px;
+    height: 48px;
+    border-radius: 14px;
+    flex-shrink: 0;
+    font-size: 22px;
+    background: ${({ theme }) => theme.primarySoft};
+    color: ${({ theme }) => theme.primary};
+  }
+  .texto {
+    flex: 1;
+    min-width: 0;
+    h3 {
+      font-size: 1rem;
+      font-weight: 600;
+    }
+    p {
+      font-size: 0.85rem;
+      color: ${({ theme }) => theme.textMuted};
+    }
+  }
+  .estado {
+    color: ${({ theme }) => theme.textMuted};
+    font-size: 18px;
     display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 12px 0;
   }
-
-  .card-info-title {
-    text-align: center;
-  }
-
-  h3,
-  h4 {
-    color: ${({ theme }) => theme?.colorsubtitlecard || "#ffffff"};
-    margin: 0;
-    font-family: "Rubik", sans-serif;
-    text-decoration: none;
-  }
-
-  h3 {
-    font-size: 1.3em;
-  }
-
-  h4 {
-    font-size: 0.95em;
-    color: ${({ theme }) => theme?.colortitlecard || "#bbbbbb"};
-    margin-top: 6px;
-  }
-
-  @media (max-width: 768px) {
-    .card {
-      width: 90%;
-    }
-  }
-
-  @media (max-width: 480px) {
-    .card {
-      width: 100%;
-    }
-
-    .card-image img {
-      max-height: 70px;
-      max-width: 70px;
+  .bloqueada {
+    opacity: 0.6;
+    cursor: not-allowed;
+    .icono {
+      background: ${({ theme }) => theme.surfaceAlt};
+      color: ${({ theme }) => theme.textMuted};
     }
   }
 `;
-
-
-

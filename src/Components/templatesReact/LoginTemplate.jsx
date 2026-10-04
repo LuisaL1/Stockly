@@ -1,228 +1,160 @@
+import { useState } from "react";
 import styled from "styled-components";
-import { Btnsave, v, useAuthStore, InputText, FooterLogin } from "../../index";
+import { ToggleTema } from "../organismos/ToggleTema";
+import { FooterLogin } from "../organismos/sidebar/FooterLogin";
+import { FormIngresar } from "../organismos/auth/FormIngresar";
+import { FormRegistro } from "../organismos/auth/FormRegistro";
+import { FormRecuperar, VistaVerificar } from "../organismos/auth/VistasCorreo";
 import { Device } from "../../styles/breackpoints";
-import { useContext, useState, useEffect} from "react";
-import { useNavigate } from "react-router-dom";
-import { useForm } from "react-hook-form";
-import carrito from "../../assets/imagenpantalla.png";
+import { v } from "../../styles/variables";
+import ilustracion from "../../assets/login-ilustracion.png";
 
-import logo from "../../assets/inventarioslogo.png";
-import { MdOutlineInfo } from "react-icons/md";
-import { ThemeContext } from "../../App";
-import { RegistrarAdmin } from "../organismos/formularios/RegistrarAdmin";
+// Pantalla de acceso: ingresar, crear empresa, recuperar contraseña y confirmar correo.
 export function LoginTemplate() {
-  const { setTheme } = useContext(ThemeContext);
-    useEffect(() => {
-    setTheme("light");
-  }, [setTheme]);
-  const { signInWithEmail } = useAuthStore();
-  const [state, setState] = useState(false);
-  const [stateInicio, setStateInicio] = useState(false);
-  const navigate = useNavigate();
-  const {
-    register,
-    formState: { errors },
-    handleSubmit,
-  } = useForm();
-  async function iniciar(data) {
-    const response = await signInWithEmail({
-      email: data.email,
-      pass: data.pass,
-    });
-    if (response) {
-      navigate("/");
-    } else {
-      setStateInicio(true);
-    }
-  }
+  const [vista, setVista] = useState("ingresar"); // ingresar | registrar | recuperar | verificar
+  const [email, setEmail] = useState("");
+  const registrando = vista === "registrar";
+
+  const irA = (destino, correo) => {
+    if (correo !== undefined) setEmail(correo);
+    setVista(destino);
+  };
 
   return (
-    <Container>
-      <div className="contentLogo">
-        <img src={logo}></img>
-        <span>Stockly</span>
-      </div>
-      <div className="bannerlateral">
-        <img src={carrito}></img>
-      </div>
+    <Container $ancho={registrando}>
+      <aside className="banner">
+        <div className="marca">
+          <img src={v.logo} alt="" />
+          <span>Stockly</span>
+        </div>
+        <img className="ilustracion" src={ilustracion} alt="" />
+      </aside>
 
-      <div className="contentCard">
-        <div className="card">
-          {
-            state && <RegistrarAdmin setState={()=>setState(!state)}/>
-          }
-          <Titulo>Stockly</Titulo>
-          {stateInicio && (
-            <TextoStateInicio>datos incorrectos</TextoStateInicio>
+      <section className="panel">
+        <div className="superior">
+          <div className="marca-movil">
+            <img src={v.logo} alt="" />
+            <span>Stockly</span>
+          </div>
+          <div className="tema">
+            <ToggleTema compacto />
+          </div>
+        </div>
+
+        <div className="tarjeta" key={vista}>
+          {vista === "ingresar" && <FormIngresar irA={irA} emailInicial={email} />}
+          {vista === "registrar" && (
+            <FormRegistro
+              irA={irA}
+              alRegistrar={({ email: correo, confirmarCorreo }) => {
+                setEmail(correo);
+                // Si no hay que confirmar, la sesión ya está abierta y la ruta redirige sola.
+                if (confirmarCorreo) setVista("verificar");
+              }}
+            />
           )}
-          <span className="ayuda">
-            {" "}
-            Puedes crear una cuenta nueva ó <br></br>solicitar a tu empleador
-            una. <MdOutlineInfo />
-          </span>
-          <p className="frase">Controla tu inventario.</p>
-          <form onSubmit={handleSubmit(iniciar)}>
-            <InputText icono={<v.iconoemail />}>
-              <input
-                className="form__field"
-                type="text"
-                placeholder="email"
-                {...register("email", {
-                  required: true,
-                })}
-              />
-              <label className="form__label">email</label>
-              {errors.email?.type === "required" && <p>Campo requerido</p>}
-            </InputText>
-            <InputText icono={<v.iconopass />}>
-              <input
-                className="form__field"
-                type="password"
-                placeholder="contraseña"
-                {...register("pass", {
-                  required: true,
-                })}
-              />
-              <label className="form__label">pass</label>
-              {errors.pass?.type === "required" && <p>Campo requerido</p>}
-            </InputText>
-            <ContainerBtn>
-              <Btnsave titulo="Iniciar" bgcolor="#fc6b32" />
-              <Btnsave
-                funcion={() => setState(!state)}
-                titulo="Crear cuenta"
-                bgcolor="#ffffff"
-              />
-            </ContainerBtn>
-          </form>
+          {vista === "recuperar" && <FormRecuperar irA={irA} emailInicial={email} />}
+          {vista === "verificar" && <VistaVerificar irA={irA} email={email} />}
         </div>
         <FooterLogin />
-      </div>
+      </section>
     </Container>
   );
 }
+
 const Container = styled.div`
-  background-size: cover;
-  height: 100vh;
+  min-height: 100vh;
   display: grid;
   grid-template-columns: 1fr;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  background-color: #262626;
-  @media ${Device.tablet} {
-    grid-template-columns: 1fr 2fr;
+  background: ${({ theme }) => theme.bg};
+  @media ${Device.laptop} {
+    grid-template-columns: minmax(380px, 0.9fr) 1.1fr;
   }
-  .contentLogo {
-    position: absolute;
-    top: 15px;
-    font-weight: 700;
-    display: flex;
-    left: 15px;
-    align-items: center;
-    color: #fff;
 
-    img {
-      width: 50px;
-    }
-  }
-  .bannerlateral {
-    background-color: #fc6b32;
+  .banner {
+    display: none;
+    position: sticky;
+    top: 0;
     height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    img {
-      width: 100%;
-    }
-  }
-  .contentCard {
-    grid-column: 2;
-    background-color: #ffffff;
-    background-size: cover;
-    z-index: 100;
-    position: relative;
-    gap: 30px;
-    display: flex;
-    padding: 20px;
-    box-shadow: 8px 5px 18px 3px rgba(0, 0, 0, 0.35);
-    justify-content: center;
-    width: auto;
-    height: 100%;
-    width: 100%;
-    align-items: center;
-    flex-direction: column;
-    justify-content: space-between;
-    .card {
-      padding-top: 80px;
-      width: 100%;
-      @media ${Device.laptop} {
-        width: 50%;
-      }
-    }
-    .version {
-      color: #727272;
-      text-align: start;
-    }
-    .contentImg {
-      width: 100%;
+    overflow: hidden;
+    background: #f4f1ec;
+    color: #fff;
+    @media ${Device.laptop} {
       display: flex;
-      justify-content: center;
-
-      img {
-        width: 40%;
-
-        animation: flotar 1.5s ease-in-out infinite alternate;
-      }
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 32px;
     }
-    .frase {
-      color: #fc6c32;
-      font-size: 1.5rem;
-      font-weight: 700;
-      margin-bottom: 30px;
-    }
-    .ayuda {
+    .ilustracion {
       position: absolute;
-      top: 15px;
-      right: 15px;
-      color: #8d8d8d;
-      font-size: 15px;
-      font-weight: 500;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
     }
-    &:hover {
-      .contentsvg {
-        top: -100px;
-        opacity: 1;
-      }
-      .cuadros {
-        transform: rotate(37deg) rotateX(5deg) rotateY(12deg) rotate(3deg)
-          skew(2deg) skewY(1deg) scaleX(1.2) scaleY(1.2);
-        color: red;
-      }
+    .marca {
+      position: relative;
+      z-index: 1;
+      color: #17131d;
     }
   }
-  @keyframes flotar {
-    0% {
-      transform: translate(0, 0px);
-    }
-    50% {
-      transform: translate(0, 15px);
-    }
-    100% {
-      transform: translate(0, -0px);
+  .marca,
+  .marca-movil {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 700;
+    font-size: 1.25rem;
+    letter-spacing: -0.02em;
+    img {
+      width: 38px;
+      height: 38px;
     }
   }
-`;
-const Titulo = styled.span`
-  font-size: 3rem;
-  font-weight: 700;
-`;
-const ContainerBtn = styled.div`
-  margin-top: 15px;
-  display: flex;
-  justify-content: center;
-`;
-const TextoStateInicio = styled.p`
-  color: #fc7575;
-`;
 
+  .panel {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 28px;
+    min-height: 100vh;
+    padding: 20px 16px 24px;
+    @media ${Device.tablet} {
+      padding: 28px 32px;
+    }
+  }
+  .superior {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .marca-movil {
+    @media ${Device.laptop} {
+      visibility: hidden;
+    }
+  }
+  .tema {
+    width: 44px;
+  }
+  .tarjeta {
+    width: 100%;
+    max-width: ${({ $ancho }) => ($ancho ? "520px" : "420px")};
+    margin: auto 0;
+    padding: 28px 22px;
+    border-radius: ${({ theme }) => theme.radiusXl};
+    background: ${({ theme }) => theme.surface};
+    border: 1px solid ${({ theme }) => theme.border};
+    box-shadow: ${({ theme }) => theme.shadowLg};
+    animation: entrar 0.25s ease-out;
+    @media ${Device.tablet} {
+      padding: 36px 36px 30px;
+    }
+    @keyframes entrar {
+      from {
+        opacity: 0;
+        transform: translateY(8px);
+      }
+    }
+  }
+`;

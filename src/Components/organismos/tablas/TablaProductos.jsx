@@ -1,325 +1,85 @@
-import {
-  flexRender,
-  getCoreRowModel,
-  getFilteredRowModel,
-  getPaginationRowModel,
-  getSortedRowModel,
-  useReactTable,
-} from "@tanstack/react-table";
 import styled from "styled-components";
-import { ColorContent, ColorContentTabla, ContentAccionesTabla, Paginacion, useProductosStore, v } from "../../../index";
-import Swal from "sweetalert2";
-import {FaArrowsAltV} from "react-icons/fa"
-import { useState } from "react";
-export function TablaProductos({ data, SetopenRegistro,
-  setdataSelect, setAccion
- }) {
-  const [pagina, setPagina] = useState(1);
-  const { EliminarProductos } = useProductosStore();
+import { DataTable } from "./DataTable";
+import { ContentAccionesTabla } from "../ContentAccionesTabla";
+import { EstadoVacio } from "../../moleculas/EstadoVacio";
+import { ColorContentTabla } from "../../atomos/ColorContenTabla";
+import { useProductosStore } from "../../../store/ProductosStore";
+import { useEmpresaStore } from "../../../store/EmpresaStore";
+import { confirmarEliminacion } from "../../../utils/notificaciones";
+import { formatearMoneda, formatearNumero } from "../../../utils/conversiones";
 
-  const editar = (data) => {
-    if (data.descripcion === "Generica"){
-      Swal.fire({
-        title: "Oops...",
-        text: "Este registro no se permite editar ya que es valor por defecto.",
-        icon: "error",
-      });
-      return;
+export function TablaProductos({ data, editar }) {
+  const { Eliminar } = useProductosStore();
+  const { dataempresa } = useEmpresaStore();
+  const moneda = dataempresa?.simbolomoneda ?? "$";
+
+  const eliminar = async (fila) => {
+    if (await confirmarEliminacion(`Se eliminará el producto "${fila.descripcion}".`)) {
+      await Eliminar({ id: fila.id });
     }
-    SetopenRegistro(true); 
-    setdataSelect(data);
-    setAccion("Editar");
   };
-  const eliminar = (p) => {
-    if (p.descripcion === "Generica") {
-      Swal.fire({
-        title: "Oops...",
-        text: "Este registro no se permite eliminar ya que es valor por defecto.",
-        icon: "error",
-      });
-      return;
-    }
-
-    Swal.fire({
-      title: "¿Estás seguro?",
-      text: "Una vez eliminado, ¡No podrás recuperar este registro!",
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonColor: "#3085d6",
-      cancelButtonColor: "#d33",
-      confirmButtonText: "Sí, eliminar",
-      cancelButtonText: "Cancelar",
-    }).then(async (result) => {
-      if (result.isConfirmed) {
-        await EliminarProductos({ id: p.id });
-      }
-    });
-  };
-
-  console.log("Datos recibidos:", data);
 
   const columns = [
+    { accessorKey: "descripcion", header: "Producto" },
     {
-      accessorKey: "descripcion",
-      header: "Descripción",
-      cell: (info) => <td data-title="Descripción"
-      className="ContentCell">
-        <span>{info.getValue()}</span>
-        </td>
-    },
-        {
       accessorKey: "stock",
       header: "Stock",
-      enableSorting: false,
-      cell: (info) => <td data-title="Stock"
-      className="ContentCell">
-        <span>{info.getValue()}</span>
-        </td>
+      meta: { align: "right" },
+      cell: ({ row }) => {
+        const { stock, stock_minimo } = row.original;
+        const bajo = Number(stock) <= Number(stock_minimo);
+        return (
+          <Stock $bajo={bajo} title={bajo ? `Mínimo: ${stock_minimo}` : undefined}>
+            {formatearNumero(stock)}
+          </Stock>
+        );
+      },
     },
-            {
+    {
       accessorKey: "precioventa",
-      header: "Precio Venta",
-      enableSorting: false,
-      cell: (info) => <td data-title="Precio Venta"
-      className="ContentCell">
-        <span>{info.getValue()}</span>
-        </td>
+      header: "Precio venta",
+      meta: { align: "right" },
+      cell: (info) => formatearMoneda(info.getValue(), moneda),
     },
-                {
+    {
       accessorKey: "preciocompra",
-      header: "Precio Compra",
-      enableSorting: false,
-      cell: (info) => <td data-title="Precio Compra"
-      className="ContentCell">
-        <span>{info.getValue()}</span>
-        </td>
+      header: "Precio compra",
+      meta: { align: "right" },
+      cell: (info) => formatearMoneda(info.getValue(), moneda),
     },
     {
       accessorKey: "categoria",
       header: "Categoría",
-      enableSorting: false,
-      cell: (info) => <td data-title="Categoría"
-      className="ContentCell">
-        <ColorContentTabla $color={info.row.original.color} className="contentCategoria">
-        {info.getValue()}
-        </ColorContentTabla>
-        </td>
+      cell: ({ row }) => (
+        <ColorContentTabla $color={row.original.color ?? "#888"}>{row.original.categoria}</ColorContentTabla>
+      ),
     },
-     {
-      accessorKey: "marca",
-      header: "Marca",
+    { accessorKey: "marca", header: "Marca" },
+    {
+      id: "acciones",
+      header: "",
       enableSorting: false,
-      cell: (info) => (<td data-title="Marca"
-      className="ContentCell">
-        <span>{info.getValue()}</span>
-        </td>)
+      meta: { align: "right" },
+      cell: ({ row }) => (
+        <ContentAccionesTabla
+          funcionEditar={() => editar(row.original)}
+          funcionEliminar={() => eliminar(row.original)}
+        />
+      ),
     },
-{
-  accessorKey: "acciones",
-  header: "",
-  enableSorting: false,
-  cell: (info) => (
-    <ContentAccionesTabla
-      funcionEditar={() => editar(info.row.original)}
-      funcionEliminar={() => eliminar(info.row.original)}
-    />
-  ),
-},
   ];
 
-  const table = useReactTable({
-    data,
-    columns,
-    getCoreRowModel: getCoreRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-  });
-
   return (
-    <Container>
-      <table className="responsive-table">
-        <thead>
-          {table.getHeaderGroups().map((headerGroup) => (
-            <tr key={headerGroup.id}>
-              {headerGroup.headers.map((header) => (
-                <th key={header.id}>{header.column.columnDef.header}
-                {header.column.getCanSort() && (
-                  <span style ={{cursor:"pointer"}}
-                  onClick={header.column.getToggleSortingHandler()}>
-                    <FaArrowsAltV/>
-                  </span>
-                )}
-                {
-                  {
-                    asc: "🔼",
-                    desc: "🔽"
-                  } [header.column.getIsSorted()]
-                }
-                </th>
-              ))}
-            </tr>
-          ))}
-        </thead>
-        <tbody>
-          {table.getRowModel().rows.map((item) => (
-            <tr key={item.id}>
-              {item.getVisibleCells().map((cell) => (
-                <td 
-                  key={cell.id}>
-                  {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                </td>
-              ))}
-            </tr>
-          ))}
-        </tbody>
-      </table>
-      <Paginacion table ={table} irinicio = {() => table.setPageIndex(0)}
-        pagina = {table.getState().pagination.pageIndex+1}
-        setPagina ={setPagina}
-        maximo={table.getPageCount()}/>
-    </Container>
+    <DataTable
+      data={data}
+      columns={columns}
+      vacio={<EstadoVacio titulo="Aún no hay productos" mensaje="Registra tu primer producto con el botón “Nuevo producto”." />}
+    />
   );
 }
 
-const Container = styled.div`
-  position: relative;
-
-  margin: 5% 3%;
-  @media (min-width: ${v.bpbart}) {
-    margin: 2%;
-  }
-  @media (min-width: ${v.bphomer}) {
-    margin: 2em auto;
-   
-  }
-  .responsive-table {
-    width: 100%;
-    margin-bottom: 1.5em;
-    border-spacing: 0;
-    @media (min-width: ${v.bpbart}) {
-      font-size: 0.9em;
-    }
-    @media (min-width: ${v.bpmarge}) {
-      font-size: 1em;
-    }
-    thead {
-      position: absolute;
-
-      padding: 0;
-      border: 0;
-      height: 1px;
-      width: 1px;
-      overflow: hidden;
-      @media (min-width: ${v.bpbart}) {
-        position: relative;
-        height: auto;
-        width: auto;
-        overflow: auto;
-      }
-      th {
-        border-bottom: 2px solid rgba(115, 115, 115, 0.32);
-        font-weight: normal;
-        text-align: center;
-        color: ${({ theme }) => theme.text};
-        &:first-of-type {
-          text-align: center;
-        }
-      }
-    }
-    tbody,
-    tr,
-    th,
-    td {
-      display: block;
-      padding: 0;
-      text-align: left;
-      white-space: normal;
-    }
-    tr {
-      @media (min-width: ${v.bpbart}) {
-        display: table-row;
-      }
-    }
-
-    th,
-    td {
-      padding: 0.5em;
-      vertical-align: middle;
-      @media (min-width: ${v.bplisa}) {
-        padding: 0.75em 0.5em;
-      }
-      @media (min-width: ${v.bpbart}) {
-        display: table-cell;
-        padding: 0.5em;
-      }
-      @media (min-width: ${v.bpmarge}) {
-        padding: 0.75em 0.5em;
-      }
-      @media (min-width: ${v.bphomer}) {
-        padding: 0.75em;
-      }
-    }
-    tbody {
-      @media (min-width: ${v.bpbart}) {
-        display: table-row-group;
-      }
-      tr {
-        margin-bottom: 1em;
-        @media (min-width: ${v.bpbart}) {
-          display: table-row;
-          border-width: 1px;
-        }
-        &:last-of-type {
-          margin-bottom: 0;
-        }
-        &:nth-of-type(even) {
-          @media (min-width: ${v.bpbart}) {
-            background-color: rgba(78, 78, 78, 0.12);
-          }
-        }
-      }
-      th[scope="row"] {
-        @media (min-width: ${v.bplisa}) {
-          border-bottom: 1px solid rgba(161, 161, 161, 0.32);
-        }
-        @media (min-width: ${v.bpbart}) {
-          background-color: transparent;
-          text-align: center;
-          color: ${({ theme }) => theme.text};
-        }
-      }
-      .ContentCell {
-        text-align: right;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        height: 50px;
-
-        border-bottom: 1px solid rgba(161, 161, 161, 0.32);
-        @media (min-width: ${v.bpbart}) {
-          justify-content: center;
-          border-bottom: none;
-        }
-      }
-      td {
-        text-align: right;
-        @media (min-width: ${v.bpbart}) {
-          border-bottom: 1px solid rgba(161, 161, 161, 0.32);
-          text-align: center;
-        }
-      }
-      td[data-title]:before {
-        content: attr(data-title);
-        float: left;
-        font-size: 0.8em;
-        @media (min-width: ${v.bplisa}) {
-          font-size: 0.9em;
-        }
-        @media (min-width: ${v.bpbart}) {
-          content: none;
-        }
-      }
-    }
-  }
+const Stock = styled.span`
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: ${({ theme, $bajo }) => ($bajo ? theme.danger : theme.text)};
 `;

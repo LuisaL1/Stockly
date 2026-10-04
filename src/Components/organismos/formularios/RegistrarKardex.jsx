@@ -1,174 +1,181 @@
-import { useEffect, useState } from "react";
-import styled from "styled-components";
-import { v } from "../../../styles/variables";
-import { InputText, Btnsave, useKardexStore, CovertirCapitalize, Buscador, useProductosStore, CardProductoSelect, useUsuariosStore } from "../../../index";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Modal } from "../../moleculas/Modal";
+import { CardProductoSelect } from "../../moleculas/CardProductoSelect";
+import { InputText } from "./InputText";
+import { Formulario } from "./Formulario";
+import { Boton } from "../../atomos/Boton";
+import { Selector } from "../Selector";
+import { useKardexStore } from "../../../store/KardexStore";
+import { useProductosStore } from "../../../store/ProductosStore";
 import { useEmpresaStore } from "../../../store/EmpresaStore";
-import { ListaGenerica } from "../ListaGenerica";
+import { useUsuariosStore } from "../../../store/UsuariosStore";
+import { BuscarProductos } from "../../../supabase/crudProductos";
+import { MostrarBodegas, MostrarStockBodega } from "../../../supabase/crudBodegas";
+import { formatearNumero } from "../../../utils/conversiones";
+import { v } from "../../../styles/variables";
 
-export function RegistrarKardex({ onClose, dataSelect, accion, tipo }) {
-  const [stateListaProd, SetstateListaProd] = useState(false);
-  const { InsertarKardex } = useKardexStore(); 
+export function RegistrarKardex({ onClose, tipo }) {
+  const esSalida = tipo === "Salida";
+  const { Insertar } = useKardexStore();
   const { dataempresa } = useEmpresaStore();
-  const {idusuario} = useUsuariosStore();
-  const {dataproductos, setBuscador, selectProductos, productosItemSelect} = useProductosStore();
-  
+  const { idusuario } = useUsuariosStore();
+  const queryClient = useQueryClient();
+  const [texto, setTexto] = useState("");
+  const [producto, setProducto] = useState(null);
+  const [bodega, setBodega] = useState(null);
+  const [intentoGuardar, setIntentoGuardar] = useState(false);
+
+  const { data: productos } = useQuery({
+    queryKey: ["buscar productos kardex", dataempresa?.id, texto],
+    queryFn: () => BuscarProductos({ _id_empresa: dataempresa.id, buscador: texto }),
+    enabled: !!dataempresa?.id,
+    placeholderData: (previo) => previo,
+  });
+
+  const bodegas = useQuery({
+    queryKey: ["bodegas", dataempresa?.id],
+    queryFn: () => MostrarBodegas(dataempresa.id),
+    enabled: !!dataempresa?.id,
+  });
+  const opcionesBodega = (bodegas.data ?? []).map((b) => ({ ...b, descripcion: b.nombre }));
+  const bodegaActual = bodega ?? opcionesBodega[0] ?? null;
+  const stockBodega = useQuery({
+    queryKey: ["stock bodega", dataempresa?.id, bodegaActual?.id, producto?.id],
+    queryFn: () => MostrarStockBodega({ idEmpresa: dataempresa.id, idBodega: bodegaActual.id, idProducto: producto.id }),
+    enabled: !!bodegaActual && !!producto,
+  });
+  // Con varias bodegas, la salida se valida contra lo que hay en la bodega elegida.
+  const disponible =
+    producto && stockBodega.data?.[0] ? Number(stockBodega.data[0].cantidad) : Number(producto?.stock ?? 0);
+
   const {
     register,
-    formState: { errors },
     handleSubmit,
-    setValue, 
+    watch,
+    formState: { errors, isSubmitting },
   } = useForm();
 
-  async function insertar(data) {
+  const cantidad = Number(watch("cantidad") || 0);
+  const stockResultante = producto ? disponible + (esSalida ? -cantidad : cantidad) : null;
 
-      const p = {
-        fecha: new Date(),
-        tipo: tipo,
-        id_usuario: idusuario,
-        cantidad: parseFloat(data.cantidad),
-        detalle: data.detalle,
-        id_empresa: dataempresa.id,
-        id_producto: productosItemSelect.id
-      };
-      await InsertarKardex(p);
+  async function guardar(data) {
+    if (!producto) return;
+    const ok = await Insertar({
+      fecha: new Date(),
+      tipo,
+      id_usuario: idusuario,
+      cantidad: data.cantidad,
+      detalle: data.detalle.trim(),
+      id_empresa: dataempresa.id,
+      id_producto: producto.id,
+      id_bodega: bodegaActual?.id ?? null,
+    });
+    if (ok) {
+      // El stock de los productos cambia: refrescamos listas y KPIs.
+      useProductosStore.getState().recargar();
+      queryClient.invalidateQueries();
       onClose();
-  }
-
- 
-  useEffect(() => {
-    if (accion === "Editar" && dataSelect?.descripcion) {
-      setValue("nombre", dataSelect.descripcion);
     }
-  }, [accion, dataSelect, setValue]);
+  }
 
   return (
-    <Container>
-      <div className="sub-contenedor">
-        <div className="headers">
-          <section>
-            <h1>
-          Nueva {tipo == "Entrada" ? "entrada" : "salida"}
-            </h1>
-          </section>
-
-          <section>
-            <span onClick={onClose}>x</span>
-          </section>
-        </div>
-        <div className="contentBuscador">
-          <div onClick={()=>SetstateListaProd(!stateListaProd)}>
-            <Buscador setBuscador={setBuscador}/>
+    <Modal
+      titulo={esSalida ? "Registrar salida" : "Registrar entrada"}
+      subtitulo={esSalida ? "Descuenta unidades del inventario." : "Suma unidades al inventario."}
+      onClose={onClose}
+      ancho="520px"
+    >
+      <Formulario
+        onSubmit={(e) => {
+          setIntentoGuardar(true);
+          return handleSubmit(guardar)(e);
+        }}
+      >
+        <div>
+          <span className="etiqueta">Producto</span>
+          <div style={{ marginTop: 6 }}>
+            <Selector
+              opciones={productos}
+              valor={producto}
+              onChange={setProducto}
+              buscable
+              onBuscar={setTexto}
+              icono={<v.iconostock />}
+              placeholder="Busca y selecciona un producto"
+              error={intentoGuardar && !producto ? "Selecciona un producto" : undefined}
+              renderOpcion={(o) => (
+                <span style={{ display: "flex", justifyContent: "space-between", width: "100%", gap: 8 }}>
+                  <span>{o.descripcion}</span>
+                  <small style={{ opacity: 0.7 }}>Stock: {formatearNumero(o.stock)}</small>
+                </span>
+              )}
+            />
           </div>
-          {
-            stateListaProd && (
-              <ListaGenerica scroll="scroll" bottom="-250px" data={dataproductos} 
-              setState={()=>SetstateListaProd(!stateListaProd)}
-              funcion={selectProductos}/>
-              
-            )
-          }
         </div>
-        <CardProductoSelect text1={productosItemSelect.descripcion} text2={productosItemSelect.stock}/>
 
-        <form className="formulario" onSubmit={handleSubmit(insertar)}>
-          <section>
-            <article>
-              <InputText icono={<v.iconocalculadora />}>
-                <input
-                  className="form__field"
-                 
-                  type="number"
-                  placeholder=""
-                  {...register("cantidad", {
-                    required: true,
-                  })}
-                />
-                <label className="form__label">cantidad</label>
-                {errors.cantidad?.type === "required" && <p>Campo requerido</p>}
-              </InputText>
-            </article>
-            <article>
-              <InputText icono={<v.iconotodos />}>
-                <input
-                  className="form__field"
-                 
-                  type="text"
-                  placeholder=""
-                  {...register("detalle", {
-                    required: true,
-                  })}
-                />
-                <label className="form__label">detalle</label>
-                {errors.detalle?.type === "required" && <p>Campo requerido</p>}
-              </InputText>
-            </article>
-
-            <div className="btnguardarContent">
-              <Btnsave
-                icono={<v.iconoguardar />}
-                titulo="Guardar"
-                bgcolor="#ef552b"
-              />
+        {opcionesBodega.length > 1 && (
+          <div>
+            <span className="etiqueta">Bodega</span>
+            <div style={{ marginTop: 6 }}>
+              <Selector opciones={opcionesBodega} valor={bodegaActual} onChange={setBodega} icono={<v.iconobodegas />} />
             </div>
-          </section>
-        </form>
-      </div>
-    </Container>
+          </div>
+        )}
+
+        {producto && (
+          <CardProductoSelect
+            text1={producto.descripcion}
+            text2={formatearNumero(disponible)}
+            alerta={Number(producto.stock) <= Number(producto.stock_minimo ?? 0)}
+          />
+        )}
+
+        <InputText
+          label="Cantidad"
+          icono={<v.iconocalculadora />}
+          error={errors.cantidad?.message}
+          ayuda={
+            producto && cantidad > 0 && !errors.cantidad
+              ? `Stock en ${bodegaActual?.nombre ?? "la bodega"} después del movimiento: ${formatearNumero(stockResultante)}`
+              : undefined
+          }
+        >
+          <input
+            type="number"
+            step="any"
+            placeholder="0"
+            {...register("cantidad", {
+              required: "Indica la cantidad",
+              valueAsNumber: true,
+              validate: (n) => {
+                if (!(n > 0)) return "La cantidad debe ser mayor que cero";
+                if (esSalida && producto && n > disponible) {
+                  return `No hay stock suficiente en esta bodega (disponible: ${formatearNumero(disponible)})`;
+                }
+                return true;
+              },
+            })}
+          />
+        </InputText>
+
+        <InputText label="Detalle" icono={<v.iconotodos />} error={errors.detalle?.message}>
+          <input
+            placeholder={esSalida ? "Ej. Venta mostrador" : "Ej. Compra a proveedor"}
+            {...register("detalle", { validate: (t) => !!t?.trim() || "Describe el motivo del movimiento" })}
+          />
+        </InputText>
+
+        <div className="acciones">
+          <Boton variante="secundario" funcion={onClose}>
+            Cancelar
+          </Boton>
+          <Boton type="submit" icono={<v.iconoguardar />} cargando={isSubmitting}>
+            Registrar {esSalida ? "salida" : "entrada"}
+          </Boton>
+        </div>
+      </Formulario>
+    </Modal>
   );
 }
-
-const Container = styled.div`
-  transition: 0.5s;
-  top: 0;
-  left: 0;
-  position: fixed;
-  background-color: rgba(10, 9, 9, 0.5);
-  display: flex;
-  width: 100%;
-  min-height: 100vh;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-
-  .sub-contenedor {
-    width: 500px;
-    max-width: 85%;
-    border-radius: 20px;
-    background: ${({ theme }) => theme.bgtotal};
-    box-shadow: -10px 15px 30px rgba(10, 9, 9, 0.4);
-    padding: 13px 36px 20px 36px;
-    z-index: 100;
-.contentBuscador{
-  position:relative;
-}
-    .headers {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 20px;
-
-      h1 {
-        font-size: 20px;
-        font-weight: 500;
-      }
-      span {
-        font-size: 20px;
-        cursor: pointer;
-      }
-    }
-    .formulario {
-      section {
-        gap: 20px;
-        display: flex;
-        flex-direction: column;
-        .colorContainer {
-          .colorPickerContent {
-            padding-top: 15px;
-            min-height: 50px;
-          }
-        }
-      }
-    }
-  }
-`;

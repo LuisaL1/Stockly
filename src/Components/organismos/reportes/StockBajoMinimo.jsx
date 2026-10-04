@@ -1,111 +1,28 @@
-import styled from "styled-components";
-import { Page, Text, View, Document, StyleSheet, PDFViewer, render } from '@react-pdf/renderer';
-import { useProductosStore } from "../../../store/ProductosStore";
 import { useQuery } from "@tanstack/react-query";
+import { ReportePDF } from "./ReportePDF";
 import { useEmpresaStore } from "../../../store/EmpresaStore";
+import { ReportStockBajoMinimo } from "../../../supabase/crudProductos";
+import { formatearNumero } from "../../../utils/conversiones";
 
+export default function StockBajoMinimo() {
+  const { dataempresa } = useEmpresaStore();
+  const query = useQuery({
+    queryKey: ["reporte stock bajo minimo", dataempresa?.id],
+    queryFn: () => ReportStockBajoMinimo({ id_empresa: dataempresa.id }),
+    enabled: !!dataempresa?.id,
+  });
 
-
-function StockBajoMinimo() {
-    const{ReportStockBajoMinimo} = useProductosStore();
-    const{dataempresa} = useEmpresaStore();
-    const {data} = useQuery({
-        queryKey:["reporte stock bajo minimo", {id_empresa:dataempresa?.id}],
-        queryFn:()=> ReportStockBajoMinimo({id_empresa:dataempresa?.id}),
-        enabled:!!dataempresa,
-    })
-    const currenData = new Date();
-const styles = StyleSheet.create({
-    page:{flexDirection:"row",
-        position: "relative"},
-        section:{margin:10,padding:10,
-            flexGrow:1},
-        table: {width:"100%", margin: "auto", marginTop: 10},
-            row: {
-            flexDirection: "row",
-            borderBottom: 1,
-            borderBottomColor: "#121212",
-            alignItems: "stretch",
-            height: 24,
-            borderLeftColor: "#000",
-            borderLeft: 1,
-            textAlign: "left",
-            justifyContent: "flex-start",
-            alignItems: "center",
-            },
-            cell: {
-            flex: 1,
-            textAlign: "center",
-            borderLeftColor: "#000",
-            justifyContent: "flex-start",
-            alignItems: "center",
-            },
-            headerCell: {
-            flex: 1,
-            backgroundColor: "#dcdcdc",
-            fontWeight: "bold",
-            textAlign: "left",
-            justifyContent: "flex-start",
-            alignItems: "center",
-            textAlign:"center"
-            }
-})
-const formattedDate = `${currenData.toLocaleDateString()}
-${currenData.toLocaleTimeString()}`
-const renderTableRow=(rowData, isHeader =false)=>(
-    <View style={styles.row} key={rowData.id}>
-        <Text style={[styles.cell,isHeader && styles.headerCell]}>
-            {
-                rowData.descripcion
-            }
-        </Text>
-        <Text style={[styles.cell,isHeader && styles.headerCell]}>
-            {rowData.stock}
-        </Text>
-            <Text style={[styles.cell,isHeader && styles.headerCell]}>
-            {rowData.stock_minimo}
-        </Text>
-    </View>
-);
   return (
-    <Container>
-        <PDFViewer style={{ width: "100%", height: "100%" }}>
-            <Document title="Reporte de Stockly todos">
-                <Page size="A4" orientation="portrait">
-                    <View style={styles.page}>
-                        <View style={styles.section}>
-                        <Text>
-                            Stock bajo mínimo
-                        </Text>
-                        <Text>
-                           Fecha y hora del reporte: {formattedDate}
-                        </Text>
-                        <View>
-                            {
-                                renderTableRow(
-                                    {
-                                        descripcion:"Producto",
-                                        stock: "Stock",
-                                        stock_minimo: "Stock Mínimo"
-                                    },
-                                    true
-                                )}
-                            {data?.map((item)=>renderTableRow(item))}
-                        </View>
-                        </View>
-                    </View>
-                </Page>
-            </Document>
-        </PDFViewer>
-    </Container>
+    <ReportePDF
+      titulo="Productos con stock bajo el mínimo"
+      archivo="stock-bajo-minimo"
+      query={query}
+      resumen={(filas) => `${filas.length} productos necesitan reposición`}
+      columnas={[
+        { clave: "descripcion", titulo: "Producto", flex: 3 },
+        { clave: "stock_minimo", titulo: "Stock mínimo", alinear: "right", formato: formatearNumero },
+        { clave: "stock", titulo: "Stock actual", alinear: "right", formato: formatearNumero },
+      ]}
+    />
   );
 }
-const Container = styled.div`
-width: 100%;
-height: 80vh;
-.pdfviewer: {
-    width: 100%;
-    height: 100%;
-}
-`;
-export default StockBajoMinimo;

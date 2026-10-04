@@ -1,47 +1,44 @@
-import { useQuery } from "@tanstack/react-query";
-import { BloqueoPagina, SpinnerLoader, useCategoriasStore, useEmpresaStore, useMarcaStore, useProductosStore, useUsuariosStore } from "../index";
-import { ProductosTemplate } from "../Components/templatesReact/ProductosTemplate";
+import { CrudTemplate } from "../Components/templatesReact/CrudTemplate";
+import { TablaProductos } from "../Components/organismos/tablas/TablaProductos";
+import { RegistrarProductos } from "../Components/organismos/formularios/RegistrarProductos";
+import { ConPermiso } from "../Components/moleculas/ConPermiso";
+import { SpinnerLoader } from "../Components/moleculas/SpinnerLoader";
+import { ErrorMolecula } from "../Components/moleculas/ErrorMolecula";
+import { useProductosStore } from "../store/ProductosStore";
+import { usePaginaCrud } from "../hooks/usePaginaCrud";
+import { MODULOS } from "../utils/permisos";
+import { usePlan } from "../hooks/usePlan";
 
 export function Productos() {
-    const {datapermisos} = useUsuariosStore();
-    const statePermiso = datapermisos.some((objeto) => objeto.modulos.nombre.includes("Productos"))
-    const {MostrarMarca} = useMarcaStore();
-    const {MostrarCategorias} = useCategoriasStore();
-    const { MostrarProductos, dataproductos, BuscarProductos, buscador } = useProductosStore();
-    const { dataempresa } = useEmpresaStore();
+  return (
+    <ConPermiso modulo={MODULOS.productos}>
+      <Contenido />
+    </ConPermiso>
+  );
+}
 
-  const { isLoading, error } = useQuery({
-  queryKey: ["mostrar productos", { _id_empresa: dataempresa?.id}],
-  queryFn: () =>  MostrarProductos({ _id_empresa: dataempresa?.id }),
-  enabled: dataempresa?.id != null,
-    });
-    const { data: buscardata } = useQuery({
-        queryKey: [
-          "buscar productos", 
-          { id_empresa: dataempresa?.id, descripcion: buscador }
-        ],
-        queryFn: () => BuscarProductos({ _id_empresa: dataempresa?.id, buscador: buscador }),
-        enabled: dataempresa?.id !=null,
-    });
-      const { data:datamarca } = useQuery({
-  queryKey: ["mostrar marca", { id_empresa: dataempresa?.id}],
-  queryFn: () =>  MostrarMarca({ id_empresa: dataempresa?.id }),
-  enabled: dataempresa?.id != null,
-    });
-    const { data:datacategorias } = useQuery({
-  queryKey: ["mostrar categorias", { id_empresa: dataempresa?.id}],
-  queryFn: () =>  MostrarCategorias({ id_empresa: dataempresa?.id }),
-  enabled: dataempresa?.id != null,
-    });
-    if (statePermiso == false){
-      return <SpinnerLoader/>;
-    }
-    if (isLoading){
-      return <SpinnerLoader />;
-    } 
-    if (error) {
-      return <span>Error: {error.message}</span>;
-    }
+function Contenido() {
+  const { setBuscador } = useProductosStore();
+  const { data, isLoading, error, refetch } = usePaginaCrud("productos", useProductosStore);
 
-    return <ProductosTemplate data={dataproductos} />;
+  const { alcanzado, limite, plan } = usePlan();
+
+  if (isLoading) return <SpinnerLoader />;
+  if (error) return <ErrorMolecula mensaje={error.message} reintentar={refetch} />;
+
+  return (
+    <CrudTemplate
+      titulo="Productos"
+      descripcion="Tu catálogo con precios y niveles de stock."
+      textoNuevo="Nuevo producto"
+      placeholderBusqueda="Buscar producto..."
+      setBuscador={setBuscador}
+      data={data}
+      Tabla={TablaProductos}
+      bloqueoNuevo={
+        alcanzado("productos") && `Tu plan ${plan?.nombre ?? ""} permite ${limite("productos")} productos. Mejóralo en Configuración → Plan.`
+      }
+      Formulario={RegistrarProductos}
+    />
+  );
 }

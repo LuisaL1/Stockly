@@ -1,21 +1,16 @@
 import { create } from "zustand";
-import{supabase} from "../index";
-export const useAuthStore = create((set, get) => ({
-  signInWithEmail: async (p) => {
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email: p.email,
-      password: p.pass,
-    });
+import { supabase } from "../supabase/supabase.config";
 
-    if (error) {
-     console.error("Error en login:", error.message);
-    }
-    return data.user;
+export const useAuthStore = create(() => ({
+  signInWithEmail: async ({ email, pass }) => {
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password: pass });
+    if (error) return { error };
+    return { user: data.user };
   },
-  signOut: async () =>{
-    const {error} = await
-  supabase.auth.signOut()
-  if (error)
-    throw new Error("Se presentó un error durante el cierre de sesión"+error)
-  }
+  signOut: async () => {
+    const { error } = await supabase.auth.signOut();
+    if (error) throw new Error("No se pudo cerrar la sesión: " + error.message);
+    // Recarga completa: limpia caché de consultas y stores del usuario anterior.
+    window.location.replace("/login");
+  },
 }));

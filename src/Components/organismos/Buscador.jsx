@@ -1,118 +1,61 @@
+import { useEffect, useState } from "react";
 import styled from "styled-components";
-import {FaSearch} from "react-icons/fa"
-export function Buscador({setBuscador,onFocus, funcion }){
-    const buscar = (e) => {
-        setBuscador(e.target.value)
-    }
-    function ejecutarfuncion(){
-      if(funcion){
-        funcion();
-      }
-    }
-    return (
-    <Container onClick={ejecutarfuncion}>
-        <article className="content">
-          <FaSearch className="icono"/>
-            <input onFocus={onFocus} onChange={buscar}
-              placeholder="...buscar"></input>
-        </article>
-    </Container>);
+import { LuSearch } from "react-icons/lu";
+
+// Buscador con "debounce" para no consultar Supabase en cada tecla.
+export function Buscador({ setBuscador, placeholder = "Buscar...", retraso = 300 }) {
+  const [texto, setTexto] = useState("");
+
+  useEffect(() => {
+    const t = setTimeout(() => setBuscador(texto), retraso);
+    return () => clearTimeout(t);
+  }, [texto, retraso, setBuscador]);
+
+  useEffect(() => () => setBuscador(""), [setBuscador]);
+
+  return (
+    <Container>
+      <LuSearch className="icono" />
+      <input
+        type="search"
+        value={texto}
+        onChange={(e) => setTexto(e.target.value)}
+        placeholder={placeholder}
+        aria-label={placeholder}
+      />
+    </Container>
+  );
 }
-const Container = styled.div`
-  background-color: ${(props) => props.theme.bg};
-  border-radius: 30px;
-  height: 60px;
+
+const Container = styled.label`
   display: flex;
   align-items: center;
-  color: ${(props) => props.theme.text};
-  border: 1px solid #414244;
-  padding: 0 20px;
-  transition: all 0.3s ease;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-
-  &:hover {
-    border-color: #606060;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  }
-
+  gap: 10px;
+  height: 42px;
+  width: 100%;
+  max-width: 360px;
+  padding: 0 14px;
+  background: ${({ theme }) => theme.surface};
+  border: 1px solid ${({ theme }) => theme.border};
+  border-radius: ${({ theme }) => theme.radiusSm};
+  transition: border-color 0.15s, box-shadow 0.15s;
   &:focus-within {
-    border-color: #ff6f00ff;
-    box-shadow: 0 0 0 3px rgba(255, 123, 0, 0.1);
+    border-color: ${({ theme }) => theme.primary};
+    box-shadow: 0 0 0 3px ${({ theme }) => theme.primarySoft};
   }
-
-  .content {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-    width: 100%;
-    position: relative;
-
-    .icono {
-      font-size: 20px;
-      color: ${(props) => props.theme.text};
-      opacity: 0.7;
-      transition: opacity 0.3s ease;
-      flex-shrink: 0;
-    }
-
-    input {
-      font-size: 16px;
-      width: 100%;
-      outline: none;
-      background: none;
-      border: 0;
-      color: ${(props) => props.theme.text};
-      padding: 12px 0;
-      
-      &::placeholder {
-        color: ${(props) => props.theme.text};
-        opacity: 0.5;
-        font-size: 16px;
-      }
-
-      &:focus + .icono {
-        opacity: 1;
-        color: #007bff;
-      }
-    }
+  .icono {
+    color: ${({ theme }) => theme.textMuted};
+    flex-shrink: 0;
   }
-
-  /* Responsive design */
-  @media (max-width: 768px) {
-    height: 50px;
-    padding: 0 15px;
-
-    .content {
-      gap: 12px;
-
-      .icono {
-        font-size: 18px;
-      }
-
-      input {
-        font-size: 14px;
-        padding: 10px 0;
-
-        &::placeholder {
-          font-size: 14px;
-        }
-      }
+  input {
+    flex: 1;
+    min-width: 0;
+    border: none;
+    outline: none;
+    background: transparent;
+    color: ${({ theme }) => theme.text};
+    &::placeholder {
+      color: ${({ theme }) => theme.textMuted};
     }
   }
 `;
-
-// Ejemplo de uso del componente
-const SearchBar = () => {
-  return (
-    <Container>
-      <div className="content">
-        <div className="icono">🔍</div>
-        <input 
-          type="text" 
-          placeholder="Buscar..." 
-        />
-      </div>
-    </Container>
-  );
-};
-
