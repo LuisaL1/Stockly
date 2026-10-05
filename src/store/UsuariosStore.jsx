@@ -1,5 +1,4 @@
 import { create } from "zustand";
-import { supabaseRegistro } from "../supabase/supabase.config";
 import { manejarError } from "../supabase/manejarError";
 import { notificarExito } from "../utils/notificaciones";
 import {
@@ -7,9 +6,8 @@ import {
   EditarUsuarios,
   EliminarPermisos,
   EliminarUsuarios,
-  InsertarAsignaciones,
   InsertarPermisos,
-  InsertarUsuarios,
+  InvitarUsuario,
   MostrarModulos,
   MostrarPermisos,
   MostrarUsuarios,
@@ -79,30 +77,25 @@ export const useUsuariosStore = create((set, get) => ({
 
   MostrarPermisosEdit: (p) => MostrarPermisos(p),
 
-  // Crea la cuenta de acceso, el registro en Usuarios, la asignación a la
-  // empresa y los permisos. Usa un cliente sin sesión para no cerrar la del admin.
-  Insertar: async ({ email, pass }, p, modulos) => {
-    const { data, error } = await supabaseRegistro.auth.signUp({ email, password: pass });
-    if (manejarError(error, "No se pudo crear el acceso del usuario")) return false;
-
-    const nuevo = await InsertarUsuarios({
-      nombres: p.nombres,
-      email: p.email,
-      nro_docum: p.nro_docum,
-      telefono: p.telefono,
-      direccion: p.direccion,
-      fecharegistro: new Date(),
-      estado: "activo",
-      idauth: data.user.id,
-      tipouser: p.tipouser,
-    });
-    if (!nuevo) return false;
-
-    await InsertarAsignaciones({ id_empresa: p.id_empresa, id_usuario: nuevo.id });
-    const permisos = permisosSeleccionados(nuevo.id, modulos);
-    if (permisos.length) await InsertarPermisos(permisos);
-
-    notificarExito("Usuario registrado");
+  // Invita a la persona con su correo real: recibe un correo para verificar su cuenta y crear
+  // su contraseña. El servidor la registra en la empresa con su rol y sus permisos.
+  Insertar: async (p, modulos) => {
+    try {
+      await InvitarUsuario({
+        id_empresa: p.id_empresa,
+        email: p.email,
+        nombres: p.nombres,
+        nro_docum: p.nro_docum,
+        telefono: p.telefono,
+        direccion: p.direccion,
+        tipouser: p.tipouser,
+        modulos: modulos.filter((m) => m.check).map((m) => m.id),
+      });
+    } catch (e) {
+      manejarError(e, "No se pudo enviar la invitación");
+      return false;
+    }
+    notificarExito(`Invitación enviada a ${p.email}`);
     await get().recargar();
     return true;
   },

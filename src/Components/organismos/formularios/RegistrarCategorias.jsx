@@ -9,17 +9,16 @@ import { useCategoriasStore } from "../../../store/CategoriasStore";
 import { useEmpresaStore } from "../../../store/EmpresaStore";
 import { CovertirCapitalize } from "../../../utils/conversiones";
 import { v } from "../../../styles/variables";
+import { COLORES_CATEGORIA, COLOR_CATEGORIA_DEFECTO } from "../../../utils/coloresCategoria";
 
-const COLORES = [
-  "#EF4444", "#F97316", "#F59E0B", "#EAB308", "#84CC16", "#22C55E",
-  "#14B8A6", "#06B6D4", "#3B82F6", "#6366F1", "#8B5CF6", "#EC4899",
-];
+const COLORES = COLORES_CATEGORIA.map((c) => c.hex);
+const NOMBRE_COLOR = Object.fromEntries(COLORES_CATEGORIA.map((c) => [c.hex, c.nombre]));
 
 export function RegistrarCategorias({ onClose, dataSelect = {}, accion }) {
   const { Insertar, Editar } = useCategoriasStore();
   const { dataempresa } = useEmpresaStore();
   const editando = accion === "Editar";
-  const [color, setColor] = useState(editando && dataSelect.color ? dataSelect.color : COLORES[8]);
+  const [color, setColor] = useState(editando && dataSelect.color ? dataSelect.color : COLOR_CATEGORIA_DEFECTO);
   const {
     register,
     handleSubmit,
@@ -55,7 +54,8 @@ export function RegistrarCategorias({ onClose, dataSelect = {}, accion }) {
                   type="button"
                   role="radio"
                   aria-checked={c.toLowerCase() === color.toLowerCase()}
-                  aria-label={c}
+                  aria-label={NOMBRE_COLOR[c]}
+                  title={NOMBRE_COLOR[c]}
                   style={{ background: c }}
                   onClick={() => setColor(c)}
                 />

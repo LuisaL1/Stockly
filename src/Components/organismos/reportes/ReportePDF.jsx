@@ -2,6 +2,7 @@ import styled from "styled-components";
 import { Document, Page, Text, View, Image, StyleSheet, PDFViewer, PDFDownloadLink } from "@react-pdf/renderer";
 import { useEmpresaStore } from "../../../store/EmpresaStore";
 import logo from "../../../assets/logo.png";
+import { medidasLogo, useLogoEmpresa } from "../../../hooks/useLogoEmpresa";
 import { SpinnerLoader } from "../../moleculas/SpinnerLoader";
 import { ErrorMolecula } from "../../moleculas/ErrorMolecula";
 import { EstadoVacio } from "../../moleculas/EstadoVacio";
@@ -38,7 +39,7 @@ const estilos = StyleSheet.create({
 });
 
 // columnas: [{ clave, titulo, flex?, alinear?, formato? }]
-function DocumentoReporte({ titulo, empresa, columnas, filas, orientacion, resumen }) {
+function DocumentoReporte({ titulo, empresa, logoEmpresa, columnas, filas, orientacion, resumen }) {
   const ahora = new Date();
   const celda = (col, extra) => [estilos.celda, { flex: col.flex ?? 1, textAlign: col.alinear ?? "left" }, extra];
 
@@ -47,7 +48,11 @@ function DocumentoReporte({ titulo, empresa, columnas, filas, orientacion, resum
       <Page size="A4" orientation={orientacion} style={estilos.pagina}>
         <View style={estilos.encabezado} fixed>
           <View style={estilos.marca}>
-            <Image src={logo} style={estilos.logo} />
+            {logoEmpresa?.dataUrl ? (
+              <Image src={logoEmpresa.dataUrl} style={medidasLogo(logoEmpresa, 32, 110)} />
+            ) : (
+              <Image src={logo} style={estilos.logo} />
+            )}
             <View>
               <Text style={estilos.empresa}>{empresa ?? "Stockly"}</Text>
               <Text style={estilos.titulo}>{titulo}</Text>
@@ -97,11 +102,12 @@ export function ReportePDF({
   archivo,
 }) {
   const { dataempresa } = useEmpresaStore();
+  const { logo: logoEmpresa, cargando: cargandoLogo } = useLogoEmpresa();
   const filas = query?.data ?? [];
 
   let contenido;
   if (sinSeleccion) contenido = sinSeleccion;
-  else if (query.isLoading) contenido = <SpinnerLoader texto="Generando reporte..." />;
+  else if (query.isLoading || cargandoLogo) contenido = <SpinnerLoader texto="Generando reporte..." />;
   else if (query.error) contenido = <ErrorMolecula mensaje={query.error.message} reintentar={query.refetch} />;
   else if (!filas.length) contenido = <EstadoVacio titulo="Sin datos para este reporte" />;
   else {
@@ -109,6 +115,7 @@ export function ReportePDF({
       <DocumentoReporte
         titulo={titulo}
         empresa={dataempresa?.nombre}
+        logoEmpresa={logoEmpresa}
         columnas={columnas}
         filas={filas}
         orientacion={orientacion}

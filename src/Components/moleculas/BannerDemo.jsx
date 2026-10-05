@@ -2,6 +2,7 @@ import { useState } from "react";
 import styled from "styled-components";
 import Swal from "sweetalert2";
 import { useQueryClient } from "@tanstack/react-query";
+import { Link } from "react-router-dom";
 import { Boton } from "../atomos/Boton";
 import { CargarDatosDemo } from "../../supabase/crudDemo";
 import { v } from "../../styles/variables";
@@ -38,7 +39,9 @@ export function BannerDemo({ compacto = false }) {
       </span>
       <div className="texto">
         <strong>¿Quieres ver Stockly en acción?</strong>
-        <span>Carga un negocio de ejemplo con productos, bodegas y un mes de ventas para explorar todo.</span>
+        <span>
+          Carga un negocio de ejemplo para explorar todo, o <Link to="/configurar/datos">sube tu negocio real desde Excel</Link>.
+        </span>
       </div>
       <Boton icono={<v.icononovandra />} cargando={cargando} funcion={cargar}>
         Cargar datos de ejemplo
@@ -74,6 +77,10 @@ const Container = styled.div`
     span {
       font-size: 0.88rem;
       color: ${({ theme }) => theme.textMuted};
+    }
+    a {
+      color: ${({ theme }) => theme.primary};
+      font-weight: 600;
     }
   }
 `;

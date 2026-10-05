@@ -1,12 +1,13 @@
 import { useState } from "react";
 import styled from "styled-components";
 import { useForm } from "react-hook-form";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Boton } from "../Components/atomos/Boton";
 import { CampoContrasena } from "../Components/organismos/auth/CampoContrasena";
 import { Alerta, Encabezado, FormAuth } from "../Components/organismos/auth/EstilosAuth";
 import { UserAuth } from "../context/contextoAuth";
 import { CambiarContrasena } from "../supabase/crudRegistro";
+import { ActivarInvitacion } from "../supabase/crudUsuarios";
 import { notificarExito } from "../utils/notificaciones";
 import { v } from "../styles/variables";
 
@@ -14,6 +15,9 @@ import { v } from "../styles/variables";
 export function Restablecer() {
   const { user } = UserAuth();
   const navigate = useNavigate();
+  const [params] = useSearchParams();
+  // Llega desde la invitación de su equipo: verifica el correo y crea su primera contraseña.
+  const bienvenida = params.get("bienvenida") === "1" || user?.user_metadata?.invitado === true;
   const [error, setError] = useState(null);
   const {
     register,
@@ -26,7 +30,8 @@ export function Restablecer() {
     setError(null);
     try {
       await CambiarContrasena(pass);
-      notificarExito("Contraseña actualizada");
+      if (bienvenida) await ActivarInvitacion().catch(() => {});
+      notificarExito(bienvenida ? "¡Listo! Tu cuenta está activa" : "Contraseña actualizada");
       navigate("/", { replace: true });
     } catch (e) {
       setError(e.message);
@@ -40,14 +45,20 @@ export function Restablecer() {
           <span className="icono">
             <v.iconopass />
           </span>
-          <h1>Crea una nueva contraseña</h1>
-          <p>{user ? `Para ${user.email}` : "Abre esta página desde el enlace que te enviamos por correo."}</p>
+          <h1>{bienvenida ? "Te damos la bienvenida a Stockly" : "Crea una nueva contraseña"}</h1>
+          <p>
+            {user
+              ? bienvenida
+                ? `Tu correo ${user.email} quedó verificado. Crea tu contraseña para entrar.`
+                : `Para ${user.email}`
+              : "Abre esta página desde el enlace que te enviamos por correo."}
+          </p>
         </Encabezado>
         {error && <Alerta role="alert">{error}</Alerta>}
         {user ? (
           <FormAuth onSubmit={handleSubmit(guardar)} noValidate>
             <CampoContrasena
-              label="Nueva contraseña"
+              label={bienvenida ? "Tu contraseña" : "Nueva contraseña"}
               medidor
               valor={watch("pass")}
               autoComplete="new-password"
@@ -65,7 +76,7 @@ export function Restablecer() {
               {...register("confirmar", { validate: (t) => t === watch("pass") || "Las contraseñas no coinciden" })}
             />
             <Boton type="submit" tamano="lg" bloque cargando={isSubmitting} icono={<v.iconoguardar />}>
-              Guardar contraseña
+              {bienvenida ? "Crear contraseña y entrar" : "Guardar contraseña"}
             </Boton>
           </FormAuth>
         ) : (

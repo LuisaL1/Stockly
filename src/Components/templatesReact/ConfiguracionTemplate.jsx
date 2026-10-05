@@ -60,11 +60,11 @@ const Grid = styled.div`
     box-shadow: ${({ theme }) => theme.shadow};
     text-decoration: none;
     color: inherit;
-    transition: border-color 0.15s, transform 0.15s;
+    transition: border-color 0.15s, box-shadow 0.15s;
   }
   a.tarjeta:hover {
     border-color: ${({ theme }) => theme.primary};
-    transform: translateY(-2px);
+    box-shadow: ${({ theme }) => theme.shadowLg};
     .estado {
       color: ${({ theme }) => theme.primary};
     }

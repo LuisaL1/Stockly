@@ -1,6 +1,7 @@
+import { AvisoSuscripcion } from "../organismos/AvisoSuscripcion";
 import { useEffect, useState } from "react";
 import styled from "styled-components";
-import { Outlet } from "react-router-dom";
+import { Outlet, useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Sidebar } from "../organismos/sidebar/Sidebar";
 import { MenuHambur } from "../organismos/MenuHambur";
@@ -17,6 +18,7 @@ import { useAuthStore } from "../../store/AuthStore";
 import { Device } from "../../styles/breackpoints";
 import { CompletarEmpresa } from "../organismos/auth/CompletarEmpresa";
 import { CompletarRegistro } from "../../supabase/crudRegistro";
+import { supabase } from "../../supabase/supabase.config";
 
 // Estructura de la app autenticada: carga usuario, empresa y permisos una sola vez.
 export function Layout() {
@@ -83,6 +85,25 @@ export function Layout() {
     }
   }, [datosEmpresa, setContextoNovandra]);
 
+  // Si al registrarse eligió un plan de pago (o la prueba de Enterprise), al entrar por primera vez se le lleva a pagarlo.
+  const navigate = useNavigate();
+  const planRegistro = registroPendiente?.plan;
+  const codigoRegistro = registroPendiente?.codigo;
+  const pagoPendiente =
+    !!datosEmpresa && (codigoRegistro || (planRegistro && planRegistro !== "basico")) && !user?.user_metadata?.pago_inicial;
+  useEffect(() => {
+    if (!pagoPendiente) return;
+    // Se marca primero en la cuenta para no volver a redirigir aunque cancele el pago.
+    supabase.auth.updateUser({ data: { pago_inicial: "ofrecido" } }).finally(() => {
+      const ciclo = registroPendiente?.ciclo === "anual" ? "anual" : "mensual";
+      // "prueba_enterprise": abre el registro de la tarjeta para la prueba de 7 días (sin cobro).
+      // Código promocional del registro: se activa en Plan y suscripción (tiene prioridad).
+      if (codigoRegistro) navigate(`/configurar/plan?codigo=${encodeURIComponent(codigoRegistro)}`, { replace: true });
+      else if (planRegistro === "prueba_enterprise") navigate("/configurar/plan?prueba=1", { replace: true });
+      else navigate(`/configurar/plan?comprar=${encodeURIComponent(planRegistro)}&ciclo=${ciclo}`, { replace: true });
+    });
+  }, [pagoPendiente, planRegistro, codigoRegistro, registroPendiente?.ciclo, navigate]);
+
   if (usuario.isLoading || (idusuario && empresa.isLoading)) return <SpinnerLoader pantallaCompleta />;
 
   // Cuenta sin perfil o sin empresa: se completa aquí en lugar de mostrar un error.
@@ -121,6 +142,7 @@ export function Layout() {
         <div className="superior">
           <BarraSuperior />
         </div>
+        <AvisoSuscripcion />
         <Outlet />
       </main>
       <PanelNovandra />

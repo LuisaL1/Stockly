@@ -1,13 +1,14 @@
 import styled from "styled-components";
 import { Link } from "react-router-dom";
 import { CampanaNotificaciones } from "./CampanaNotificaciones";
+import { BotonSoporte } from "./BotonSoporte";
 import { useNovandraStore } from "../../store/NovandraStore";
 import { v } from "../../styles/variables";
 
 const fechaHoy = () =>
   new Date().toLocaleDateString("es-CO", { weekday: "long", day: "numeric", month: "long" });
 
-// Barra superior de escritorio: fecha, acceso a Novandra, venta rápida y notificaciones.
+// Barra superior de escritorio: fecha, acceso a Novandra, venta rápida, soporte y notificaciones.
 export function BarraSuperior() {
   const abrirNovandra = useNovandraStore((s) => s.abrir);
 
@@ -23,6 +24,7 @@ export function BarraSuperior() {
         <Link to="/ventas" className="vender">
           <v.agregar /> Nueva venta
         </Link>
+        <BotonSoporte />
         <CampanaNotificaciones />
       </div>
     </Container>

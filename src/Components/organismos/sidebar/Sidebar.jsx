@@ -5,6 +5,7 @@ import { ToggleTema } from "../ToggleTema";
 import { useAuthStore } from "../../../store/AuthStore";
 import { useUsuariosStore } from "../../../store/UsuariosStore";
 import { useEmpresaStore } from "../../../store/EmpresaStore";
+import { useLogoEmpresa } from "../../../hooks/useLogoEmpresa";
 import { useNovandraStore } from "../../../store/NovandraStore";
 import { UserAuth } from "../../../context/contextoAuth";
 import { usePlan } from "../../../hooks/usePlan";
@@ -16,6 +17,7 @@ export function Sidebar({ abierto, setAbierto, movil = false, onNavegar }) {
   const { signOut } = useAuthStore();
   const { datausuario } = useUsuariosStore();
   const { dataempresa } = useEmpresaStore();
+  const { logo: logoEmpresa } = useLogoEmpresa();
   const abrirNovandra = useNovandraStore((s) => s.abrir);
   const { user } = UserAuth();
   const { plan } = usePlan();
@@ -44,8 +46,8 @@ export function Sidebar({ abierto, setAbierto, movil = false, onNavegar }) {
       </div>
 
       <Link to="/configurar/empresa" className="empresa" onClick={onNavegar} title={dataempresa?.nombre}>
-        <span className="empresa-icono">
-          <v.iconoempresa />
+        <span className={`empresa-icono ${logoEmpresa?.url ? "con-logo" : ""}`}>
+          {logoEmpresa?.url ? <img src={logoEmpresa.url} alt="" /> : <v.iconoempresa />}
         </span>
         <span className="texto">
           <strong>{dataempresa?.nombre ?? "Mi empresa"}</strong>
@@ -96,7 +98,7 @@ export function Sidebar({ abierto, setAbierto, movil = false, onNavegar }) {
           <v.iconoplan />
           <span>
             <strong>Pásate a Pro</strong>
-            <small>Más bodegas, ventas ilimitadas y factura electrónica.</small>
+            <small>Más productos, ventas, bodegas y Novandra Max.</small>
           </span>
         </Link>
       )}
@@ -197,6 +199,17 @@ const Container = styled.aside`
     background: ${({ theme }) => theme.primary};
     color: ${({ theme }) => theme.onPrimary};
     font-size: 18px;
+    overflow: hidden;
+    &.con-logo {
+      padding: 3px;
+      background: #ffffff;
+      border: 1px solid ${({ theme }) => theme.border};
+    }
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
   }
 
   .colapsar {

@@ -7,6 +7,7 @@ import { BarraUso } from "../moleculas/BarraUso";
 import { EstadoVacio } from "../moleculas/EstadoVacio";
 import { ErrorMolecula } from "../moleculas/ErrorMolecula";
 import { BannerDemo } from "../moleculas/BannerDemo";
+import { PrimerosPasos } from "../organismos/PrimerosPasos";
 import { EtiquetaEstado } from "../atomos/Etiqueta";
 import { useUsuariosStore } from "../../store/UsuariosStore";
 import { SUGERENCIAS_NOVANDRA, useNovandraStore } from "../../store/NovandraStore";
@@ -81,6 +82,7 @@ export function HomeTemplate({ empresa, dashboard, bajoMinimo, dias, setDias, su
         </AvisoNombre>
       )}
       {d && !d.recientes?.length && <BannerDemo />}
+      <PrimerosPasos tieneVentas={!!d?.recientes?.length} />
 
       <BentoGrid>
         {/* Ventas del periodo con gráfico */}

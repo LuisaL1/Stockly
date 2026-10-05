@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import styled from "styled-components";
 import { LuSearch } from "react-icons/lu";
 import { v } from "../../styles/variables";
@@ -21,19 +22,47 @@ export function Selector({
 }) {
   const [abierto, setAbierto] = useState(false);
   const [texto, setTexto] = useState("");
+  const [posicion, setPosicion] = useState(null);
   const ref = useRef(null);
+  const disparadorRef = useRef(null);
+  const panelRef = useRef(null);
 
   useEffect(() => {
     if (!abierto) return;
-    const cerrar = (e) => !ref.current?.contains(e.target) && setAbierto(false);
+    const cerrar = (e) => !ref.current?.contains(e.target) && !panelRef.current?.contains(e.target) && setAbierto(false);
     document.addEventListener("mousedown", cerrar);
     return () => document.removeEventListener("mousedown", cerrar);
   }, [abierto]);
 
+  // El panel flota sobre la página (no empuja el contenido ni se recorta en modales):
+  // se ubica bajo el botón, o encima si no cabe, y sigue al botón al hacer scroll.
+  useLayoutEffect(() => {
+    if (!abierto) return;
+    const ubicar = () => {
+      const r = disparadorRef.current?.getBoundingClientRect();
+      if (!r) return;
+      const abajo = window.innerHeight - r.bottom - 12;
+      const arriba = r.top - 12;
+      const haciaArriba = abajo < 240 && arriba > abajo;
+      setPosicion({
+        left: r.left,
+        width: r.width,
+        top: haciaArriba ? undefined : r.bottom + 6,
+        bottom: haciaArriba ? window.innerHeight - r.top + 6 : undefined,
+        alto: Math.max(Math.min(320, haciaArriba ? arriba : abajo), 140),
+      });
+    };
+    ubicar();
+    window.addEventListener("resize", ubicar);
+    window.addEventListener("scroll", ubicar, true);
+    return () => {
+      window.removeEventListener("resize", ubicar);
+      window.removeEventListener("scroll", ubicar, true);
+    };
+  }, [abierto]);
+
   const filtradas =
-    buscable && !onBuscar && texto
-      ? opciones.filter((o) => o.descripcion?.toLowerCase().includes(texto.toLowerCase()))
-      : opciones;
+    buscable && !onBuscar && texto ? opciones.filter((o) => o.descripcion?.toLowerCase().includes(texto.toLowerCase())) : opciones;
 
   const buscar = (e) => {
     setTexto(e.target.value);
@@ -61,6 +90,7 @@ export function Selector({
     >
       <div className="fila">
         <button
+          ref={disparadorRef}
           type="button"
           className="disparador"
           onClick={() => setAbierto(!abierto)}
@@ -68,48 +98,59 @@ export function Selector({
           aria-expanded={abierto}
         >
           {icono && <span className="icono">{icono}</span>}
-          <span className={valor?.descripcion ? "valor" : "valor vacio"}>
-            {valor?.descripcion ?? placeholder}
-          </span>
+          <span className={valor?.descripcion ? "valor" : "valor vacio"}>{valor?.descripcion ?? placeholder}</span>
           <v.iconoFlechabajo className={abierto ? "flecha abierta" : "flecha"} />
         </button>
         {accionExtra}
       </div>
       {error && <span className="error">{error}</span>}
-      {abierto && (
-        <div className="panel" role="listbox">
-          {buscable && (
-            <div className="busqueda">
-              <LuSearch />
-              <input autoFocus value={texto} onChange={buscar} placeholder="Buscar..." />
-            </div>
-          )}
-          <ul>
-            {filtradas?.length ? (
-              filtradas.map((opcion, i) => (
-                <li
-                  key={opcion.id ?? i}
-                  role="option"
-                  aria-selected={valor?.id === opcion.id}
-                  className={valor?.id != null && valor?.id === opcion.id ? "activa" : ""}
-                  onClick={() => elegir(opcion)}
-                >
-                  {renderOpcion ? (
-                    renderOpcion(opcion)
-                  ) : (
-                    <>
-                      {opcion.icono && <span>{opcion.icono}</span>}
-                      <span>{opcion.descripcion}</span>
-                    </>
-                  )}
-                </li>
-              ))
-            ) : (
-              <li className="sin-resultados">Sin resultados</li>
+      {abierto &&
+        posicion &&
+        createPortal(
+          <Panel
+            ref={panelRef}
+            role="listbox"
+            style={{ left: posicion.left, width: posicion.width, top: posicion.top, bottom: posicion.bottom, maxHeight: posicion.alto }}
+            onKeyDown={(e) => {
+              if (e.key === "Escape") {
+                e.preventDefault();
+                setAbierto(false);
+              }
+            }}
+          >
+            {buscable && (
+              <div className="busqueda">
+                <LuSearch />
+                <input autoFocus value={texto} onChange={buscar} placeholder="Buscar..." />
+              </div>
             )}
-          </ul>
-        </div>
-      )}
+            <ul>
+              {filtradas?.length ? (
+                filtradas.map((opcion, i) => (
+                  <li
+                    key={opcion.id ?? i}
+                    role="option"
+                    aria-selected={valor?.id === opcion.id}
+                    className={valor?.id != null && valor?.id === opcion.id ? "activa" : ""}
+                    onClick={() => elegir(opcion)}
+                  >
+                    {renderOpcion ? (
+                      renderOpcion(opcion)
+                    ) : (
+                      <>
+                        {opcion.icono && <span>{opcion.icono}</span>}
+                        <span>{opcion.descripcion}</span>
+                      </>
+                    )}
+                  </li>
+                ))
+              ) : (
+                <li className="sin-resultados">Sin resultados</li>
+              )}
+            </ul>
+          </Panel>,
+          document.body,
+        )}
     </Container>
   );
 }
@@ -169,14 +210,24 @@ const Container = styled.div`
     font-size: 0.8rem;
     color: ${({ theme }) => theme.danger};
   }
-  /* El panel va dentro del flujo para no recortarse en modales con scroll. */
-  .panel {
-    margin-top: 6px;
-    background: ${({ theme }) => theme.surface};
-    border: 1px solid ${({ theme }) => theme.border};
-    border-radius: ${({ theme }) => theme.radius};
-    box-shadow: ${({ theme }) => theme.shadowLg};
-    overflow: hidden;
+`;
+
+// Panel flotante (se dibuja en el body para quedar por encima de modales y tarjetas).
+const Panel = styled.div`
+  position: fixed;
+  z-index: 1200;
+  display: flex;
+  flex-direction: column;
+  background: ${({ theme }) => theme.surface};
+  border: 1px solid ${({ theme }) => theme.border};
+  border-radius: ${({ theme }) => theme.radius};
+  box-shadow: ${({ theme }) => theme.shadowLg};
+  overflow: hidden;
+  animation: aparecerPanel 0.12s ease-out;
+  @keyframes aparecerPanel {
+    from {
+      opacity: 0;
+    }
   }
   .busqueda {
     display: flex;
@@ -194,8 +245,9 @@ const Container = styled.div`
     }
   }
   ul {
+    flex: 1;
+    min-height: 0;
     list-style: none;
-    max-height: 200px;
     overflow-y: auto;
     padding: 6px;
   }

@@ -68,6 +68,13 @@ import {
   LuBrain,
   LuScanEye,
   LuMapPinned,
+  LuFileSpreadsheet,
+  LuUpload,
+  LuDatabase,
+  LuRotateCcw,
+  LuHeadset,
+  LuCopy,
+  LuBookOpen,
 } from "react-icons/lu";
 import logo from "../assets/logo.png";
 
@@ -123,6 +130,7 @@ export const v = {
   iconoefectivo: LuWallet,
   iconotarjeta: LuCreditCard,
   iconotransferencia: LuLandmark,
+  iconobreb: LuZap,
   iconocelular: LuSmartphone,
   // acciones
   agregar: LuPlus,
@@ -134,6 +142,13 @@ export const v = {
   iconocheck: LuCircleCheck,
   iconolisto: LuCheck,
   iconodescargar: LuDownload,
+  iconosubir: LuUpload,
+  iconoexcel: LuFileSpreadsheet,
+  iconodatos: LuDatabase,
+  iconoreiniciar: LuRotateCcw,
+  iconosoporte: LuHeadset,
+  iconocopiar: LuCopy,
+  iconoguia: LuBookOpen,
   iconoimprimir: LuPrinter,
   iconoenviar: LuSend,
   iconoanular: LuBan,

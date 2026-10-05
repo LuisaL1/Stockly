@@ -1,4 +1,4 @@
-import { Document, Page, Text, View, Image, StyleSheet, PDFDownloadLink } from "@react-pdf/renderer";
+import { Document, Page, Text, View, Image, Link, StyleSheet, PDFDownloadLink } from "@react-pdf/renderer";
 import { useQuery } from "@tanstack/react-query";
 import { useEmpresaStore } from "../../../store/EmpresaStore";
 import { MostrarVenta } from "../../../supabase/crudVentas";
@@ -8,6 +8,7 @@ import { formatearMoneda, formatearNumero } from "../../../utils/conversiones";
 import { NombresMetodo } from "../../../utils/dataEstatica";
 import { v } from "../../../styles/variables";
 import logo from "../../../assets/logo.png";
+import { medidasLogo, useLogoEmpresa } from "../../../hooks/useLogoEmpresa";
 
 const MORADO = "#8800B3";
 const TINTA = "#17131D";
@@ -40,10 +41,23 @@ const s = StyleSheet.create({
   seccion: { marginTop: 16, padding: 10, borderRadius: 6, borderWidth: 0.8, borderColor: "#E4E1E6" },
   pagoFila: { flexDirection: "row", justifyContent: "space-between", paddingVertical: 2 },
   link: { color: MORADO, fontFamily: "Helvetica-Bold" },
+  botonPago: {
+    marginTop: 6,
+    marginBottom: 4,
+    paddingVertical: 7,
+    paddingHorizontal: 12,
+    borderRadius: 6,
+    backgroundColor: MORADO,
+    color: "#FFFFFF",
+    fontFamily: "Helvetica-Bold",
+    fontSize: 10,
+    textDecoration: "none",
+    textAlign: "center",
+  },
   pie: { position: "absolute", bottom: 24, left: 36, right: 36, fontSize: 7.5, color: GRIS, textAlign: "center", lineHeight: 1.4 },
 });
 
-function DocumentoFactura({ venta, cfg, empresa }) {
+export function DocumentoFactura({ venta, cfg, empresa, logoEmpresa }) {
   const moneda = empresa?.simbolomoneda ?? "$";
   const dinero = (n) => formatearMoneda(n, moneda);
   const cliente = venta.clientes;
@@ -55,7 +69,12 @@ function DocumentoFactura({ venta, cfg, empresa }) {
       <Page size="LETTER" style={s.pagina}>
         <View style={s.encabezado}>
           <View style={s.emisor}>
-            <Image src={logo} style={s.logo} />
+            {/* Logo de la empresa si lo subió; si no, el de Stockly. */}
+            {logoEmpresa?.dataUrl ? (
+              <Image src={logoEmpresa.dataUrl} style={medidasLogo(logoEmpresa, 44, 130)} />
+            ) : (
+              <Image src={logo} style={s.logo} />
+            )}
             <View>
             <Text style={s.empresa}>{empresa?.nombre || cfg?.razon_social}</Text>
             {cfg?.razon_social && cfg.razon_social !== empresa?.nombre && <Text style={s.gris}>{cfg.razon_social}</Text>}
@@ -163,7 +182,17 @@ function DocumentoFactura({ venta, cfg, empresa }) {
                     <Text style={s.negrita}>Saldo por pagar</Text>
                     <Text style={s.negrita}>{dinero(saldo)}</Text>
                   </View>
-                  {link && <Text style={s.link}>Paga en línea: {link}</Text>}
+                  {link && (
+                    <>
+                      <Link src={link} style={s.botonPago}>
+                        Pagar en línea {dinero(saldo)} (tarjeta, PSE o Nequi)
+                      </Link>
+                      <Link src={link} style={s.link}>
+                        {link}
+                      </Link>
+                    </>
+                  )}
+                  {cfg?.breb_llave && <Text style={s.gris}>Bre-B (desde cualquier banco): llave {cfg.breb_llave}</Text>}
                   {cfg?.numero_cuenta && (
                     <Text style={s.gris}>
                       Transferencia: {cfg.banco ?? "Banco"} · {cfg.tipo_cuenta ?? "Cuenta"} {cfg.numero_cuenta}
@@ -201,10 +230,11 @@ export default function BotonFacturaPDF({ idVenta, variante = "secundario", text
     queryFn: () => MostrarConfigFacturacion(dataempresa.id),
     enabled: !!dataempresa?.id,
   });
+  const { logo: logoEmpresa, cargando: cargandoLogo } = useLogoEmpresa();
 
-  if (venta.isLoading || cfg.isLoading || !venta.data) {
+  if (venta.isLoading || cfg.isLoading || cargandoLogo || !venta.data) {
     return (
-      <Boton variante={variante} cargando={venta.isLoading || cfg.isLoading} disabled>
+      <Boton variante={variante} cargando={venta.isLoading || cfg.isLoading || cargandoLogo} disabled>
         {texto}
       </Boton>
     );
@@ -212,7 +242,7 @@ export default function BotonFacturaPDF({ idVenta, variante = "secundario", text
 
   return (
     <PDFDownloadLink
-      document={<DocumentoFactura venta={venta.data} cfg={cfg.data} empresa={dataempresa} />}
+      document={<DocumentoFactura venta={venta.data} cfg={cfg.data} empresa={dataempresa} logoEmpresa={logoEmpresa} />}
       fileName={`factura-${venta.data.prefijo}-${venta.data.numero}.pdf`}
       style={{ textDecoration: "none" }}
     >

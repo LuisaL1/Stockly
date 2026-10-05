@@ -4,6 +4,7 @@ import { useLocation } from "react-router-dom";
 import { LuMenu } from "react-icons/lu";
 import { Sidebar } from "./sidebar/Sidebar";
 import { CampanaNotificaciones } from "./CampanaNotificaciones";
+import { BotonSoporte } from "./BotonSoporte";
 import { useNovandraStore } from "../../store/NovandraStore";
 import { v } from "../../styles/variables";
 
@@ -28,6 +29,7 @@ export function MenuHambur() {
         <button type="button" className="novandra" onClick={() => abrirNovandra()} aria-label="Abrir Novandra">
           <v.icononovandra />
         </button>
+        <BotonSoporte />
         <CampanaNotificaciones />
       </Barra>
       {abierto && (
@@ -50,7 +52,7 @@ const Barra = styled.header`
   padding: 0 16px;
   background: ${({ theme }) => theme.surface};
   border-bottom: 1px solid ${({ theme }) => theme.border};
-  button {
+  > button {
     display: grid;
     place-items: center;
     width: 40px;

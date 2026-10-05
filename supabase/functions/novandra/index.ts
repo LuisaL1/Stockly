@@ -5,15 +5,21 @@
 // usuario que llama, así que respetan las mismas reglas de acceso (RLS) que la app.
 //
 // Despliegue:
-//   supabase secrets set ANTHROPIC_API_KEY=sk-ant-...
-//   supabase functions deploy novandra
-import Anthropic from "npm:@anthropic-ai/sdk";
-import { createClient, type SupabaseClient } from "npm:@supabase/supabase-js@2";
+//   supabase secrets set ANTHROPIC_API_KEY=...   (o en el panel: Edge Functions → Secrets)
+//   Opcional, si la key no pertenece a un workspace: ANTHROPIC_WORKSPACE_ID=wrkspc_...
+//   supabase functions deploy novandra --project-ref <ref>
+import Anthropic from "npm:@anthropic-ai/sdk@0.131.0";
+import { createClient, type SupabaseClient } from "npm:@supabase/supabase-js@2.117.2";
 
-const MODELO = "claude-opus-5-5";
-const MAX_VUELTAS = 8;
-const MAX_MENSAJES = 30;
+// Modelo de IA: secreto NOVANDRA_MODELO en Supabase (ver docs/LANZAMIENTO.md).
+const MODELO = Deno.env.get("NOVANDRA_MODELO") ?? "";
+// Topes por consulta para que el costo sea predecible (ver docs/LANZAMIENTO.md):
+// a lo sumo 6 vueltas con herramientas, 16 mensajes de historial y ~90.000 tokens de entrada.
+const MAX_VUELTAS = 6;
+const MAX_MENSAJES = 16;
 const MAX_CARACTERES = 4000;
+const MAX_TOKENS_ENTRADA = 90_000;
+const MAX_TOKENS_SALIDA = 4_000;
 
 const cors = {
   "Access-Control-Allow-Origin": "*",
@@ -24,7 +30,10 @@ const cors = {
 const responder = (cuerpo: unknown, status = 200) =>
   new Response(JSON.stringify(cuerpo), { status, headers: { ...cors, "Content-Type": "application/json" } });
 
-const anthropic = new Anthropic();
+// Si la API key no pertenece a un workspace, Anthropic exige indicar cuál usar
+// (secreto opcional ANTHROPIC_WORKSPACE_ID). Con una key de workspace no hace falta.
+const workspace = Deno.env.get("ANTHROPIC_WORKSPACE_ID")?.trim();
+const anthropic = new Anthropic(workspace ? { defaultHeaders: { "anthropic-workspace-id": workspace } } : {});
 
 const SISTEMA = `Eres Novandra, la asistente de operaciones de Stockly, un sistema de inventario, ventas y facturación para pequeñas empresas en Colombia.
 
@@ -462,13 +471,32 @@ Deno.serve(async (req) => {
   const { data: uso, error: errorUso } = await db.rpc("stockly_uso_plan", { _id_empresa: idEmpresa });
   if (errorUso) return responder({ error: "No tienes acceso a esta empresa" }, 403);
   const { data: plan } = await db.rpc("stockly_plan", { _id_empresa: idEmpresa });
+  if (!MODELO) return responder({ error: "Novandra Max aún no está configurada (falta NOVANDRA_MODELO).", esencial: true }, 503);
+  // Interruptor global: mientras la IA no esté disponible, la app usa Novandra esencial.
+  const { data: iaDisponible } = await db.rpc("stockly_ajuste", { _clave: "novandra_ia_disponible" });
+  if (iaDisponible === false) {
+    return responder({ error: "Novandra Max llegará muy pronto.", esencial: true }, 403);
+  }
+  // Novandra Max (IA) es de los planes Pro y Enterprise; el Básico usa Novandra esencial en la app.
+  if (plan && plan.novandra_ia === false) {
+    return responder({ error: "Novandra Max está disponible en los planes Pro y Enterprise.", esencial: true }, 403);
+  }
   const limite = plan?.limite_novandra_mes;
   if (limite != null && Number(uso?.novandra_mes ?? 0) >= limite) {
     return responder(
       {
-        error: `Usaste las ${limite} consultas a Novandra de tu plan ${plan?.nombre ?? ""} este mes. Mejora tu plan para seguir.`,
+        error: `Usaste las ${limite} consultas a Novandra Max de tu plan ${plan?.nombre ?? ""} este mes. Mientras tanto te respondo en modo esencial.`,
         limite: true,
+        esencial: true,
       },
+      429,
+    );
+  }
+  // Tope de gasto del mes en la API (por si las consultas son muy largas).
+  const presupuesto = Number(plan?.presupuesto_ia_cop ?? 0);
+  if (presupuesto > 0 && Number(uso?.ia_cop_mes ?? 0) >= presupuesto) {
+    return responder(
+      { error: "Novandra Max llegó al tope de análisis de este mes. Mientras tanto te respondo en modo esencial.", limite: true, esencial: true },
       429,
     );
   }
@@ -493,9 +521,10 @@ Deno.serve(async (req) => {
       (h.name !== "crear_borrador_orden_compra" || permisos.ordenes) &&
       (h.name !== "crear_recordatorio" || permisos.recordatorios),
   );
-  // Bloque estable (cacheable) + bloque con el rol y las reglas del dueño.
+  // Bloque estable (con caché: herramientas + instrucciones se reutilizan entre consultas)
+  // + bloque con el rol y las reglas del dueño.
   const sistema = [
-    { type: "text" as const, text: SISTEMA },
+    { type: "text" as const, text: SISTEMA, cache_control: { type: "ephemeral" as const } },
     {
       type: "text" as const,
       text:
@@ -527,12 +556,14 @@ Deno.serve(async (req) => {
       let tokensEntrada = 0;
       let tokensSalida = 0;
       let escribioAlgo = false;
+      // Si la cuenta no acepta el respaldo de modelo (beta), se reintenta sin él.
+      let conRespaldo = true;
 
       try {
         enviar({ tipo: "estado", texto: "Pensando" });
         for (let vuelta = 0; vuelta < MAX_VUELTAS; vuelta++) {
           // Sin tiempo para más consultas: se pide la respuesta final sin herramientas.
-          const ultima = vuelta === MAX_VUELTAS - 1 || Date.now() - inicio > PRESUPUESTO_MS;
+          const ultima = vuelta === MAX_VUELTAS - 1 || Date.now() - inicio > PRESUPUESTO_MS || tokensEntrada > MAX_TOKENS_ENTRADA;
           if (ultima && vuelta > 0) {
             mensajes.push({
               role: "user",
@@ -542,9 +573,8 @@ Deno.serve(async (req) => {
 
           const corriente = anthropic.beta.messages.stream({
             model: MODELO,
-            max_tokens: 16000,
-            betas: ["server-side-fallback-2026-07-01"],
-            fallbacks: "default",
+            max_tokens: MAX_TOKENS_SALIDA,
+            ...(conRespaldo ? { betas: ["server-side-fallback-2026-07-01"], fallbacks: "default" as const } : {}),
             output_config: { effort: "medium" },
             system: sistema,
             tools: herramientasPermitidas,
@@ -559,8 +589,22 @@ Deno.serve(async (req) => {
             escribioAlgo = true;
             enviar({ tipo: "texto", delta });
           });
-          const r = await corriente.finalMessage();
-          tokensEntrada += r.usage.input_tokens;
+          let r: Anthropic.Beta.BetaMessage;
+          try {
+            r = await corriente.finalMessage();
+          } catch (e) {
+            if (conRespaldo && !escribioAlgo && e instanceof Anthropic.BadRequestError && /fallback|beta/i.test(e.message)) {
+              console.warn("[novandra] Respaldo de modelo no disponible, se reintenta sin él:", e.message);
+              conRespaldo = false;
+              vuelta--;
+              continue;
+            }
+            throw e;
+          }
+          // Entrada equivalente en costo: la escritura en caché vale 1,25x y la lectura 0,1x.
+          tokensEntrada += Math.round(
+            r.usage.input_tokens + (r.usage.cache_creation_input_tokens ?? 0) * 1.25 + (r.usage.cache_read_input_tokens ?? 0) * 0.1,
+          );
           tokensSalida += r.usage.output_tokens;
 
           if (r.stop_reason === "refusal") {
@@ -605,10 +649,29 @@ Deno.serve(async (req) => {
         enviar({ tipo: "fin", acciones });
       } catch (e) {
         let mensaje = "Novandra no pudo responder. Intenta de nuevo.";
-        if (e instanceof Anthropic.RateLimitError) mensaje = "Novandra está recibiendo muchas consultas. Intenta en un minuto.";
-        else if (e instanceof Anthropic.AuthenticationError) mensaje = "Novandra no está configurada en el servidor (falta la API key).";
-        else if (e instanceof Anthropic.APIError) console.error(`[novandra] Error ${e.status}:`, e.message);
+        const detalle = e instanceof Error ? e.message : String(e);
+        if (e instanceof Anthropic.APIError) console.error(`[novandra] Error ${e.status}:`, e.message);
         else console.error("[novandra]", e);
+        if (e instanceof Anthropic.RateLimitError) mensaje = "Novandra está recibiendo muchas consultas. Intenta en un minuto.";
+        else if (e instanceof Anthropic.AuthenticationError) {
+          mensaje = "La API key de Anthropic no es válida. Revisa el secreto ANTHROPIC_API_KEY en Supabase (Edge Functions → Secrets).";
+        } else if (e instanceof Anthropic.PermissionDeniedError) {
+          mensaje = "La API key de Anthropic no tiene permiso para usar este modelo. Revisa tu cuenta en console.anthropic.com.";
+        } else if (e instanceof Anthropic.NotFoundError) {
+          mensaje = `El modelo ${MODELO} no está disponible para tu cuenta de Anthropic.`;
+        } else if (e instanceof Anthropic.APIError && /workspace/i.test(e.message)) {
+          mensaje =
+            "La API key de Anthropic no pertenece a un workspace. Crea una key dentro de un workspace en console.anthropic.com " +
+            "o guarda el ID del workspace en el secreto ANTHROPIC_WORKSPACE_ID de Supabase.";
+        } else if (e instanceof Anthropic.APIError && /credit|balance|billing/i.test(e.message)) {
+          mensaje = "La cuenta de Anthropic no tiene créditos. Recárgala en console.anthropic.com → Billing.";
+        } else if (e instanceof Anthropic.InternalServerError || (e instanceof Anthropic.APIError && e.status === 529)) {
+          mensaje = "El servicio de IA está saturado en este momento. Intenta en unos minutos.";
+        } else if (e instanceof Anthropic.APIConnectionError) {
+          mensaje = "No se pudo conectar con el servicio de IA. Intenta de nuevo.";
+        }
+        // El detalle técnico solo lo ve el dueño o un administrador.
+        if (permisos.admin) mensaje += `\n\nDetalle técnico: ${detalle.slice(0, 300)}`;
         enviar({ tipo: "error", mensaje, acciones });
       } finally {
         if (tokensEntrada || tokensSalida) {

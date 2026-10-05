@@ -40,8 +40,8 @@ export function CamposNegocio({ register, errors, autoFocus = true }) {
         <InputText label="Moneda" icono={<v.iconoprecioventa />}>
           <select {...register("moneda")}>
             {Monedas.map((m) => (
-              <option key={m.id} value={m.id}>
-                {m.descripcion}
+              <option key={m.id} value={m.id} disabled={!m.disponible}>
+                {m.disponible ? m.descripcion : `${m.descripcion} · próximamente`}
               </option>
             ))}
           </select>

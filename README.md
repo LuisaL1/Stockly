@@ -36,6 +36,25 @@ npm run dev
    4. `20261004020000_demo.sql`: botón de datos de ejemplo.
    5. `20261005000000_inteligencia.sql`: sucursales, auditoría, rotación y permisos de Novandra.
    6. `20261006000000_pagos.sql`: pagos por venta (mixto, datáfono, transferencia, efectivo con cambio, crédito) y Wompi.
+   7. `20261006010000_empresa.sql`: edición de los datos de la empresa.
+   8. `20261007000000_medios_pago.sql`: Bre-B (llave del negocio) y QR dinámico de Nequi Negocios.
+   9. `20261008000000_importacion.sql`: importación masiva desde Excel y exportación de los datos de la empresa.
+   10. `20261009000000_reporte_bajo_minimo.sql`: corrección de seguridad del reporte de stock bajo mínimo.
+   11. `20261010000000_novandra_esencial.sql`: Novandra esencial (sin API), patrones del negocio, aprendizaje y Novandra Max en planes Pro/Empresa.
+   12. `20261011000000_eliminar_datos.sql`: eliminación de datos con confirmación y código por correo.
+   13. `20261012000000_logo_empresa.sql`: logo de la empresa (almacenamiento y facturas).
+   14. `20261013000000_soporte.sql`: solicitudes de soporte desde la app (Edge Function `soporte`, secreto `BREVO_API_KEY`).
+   15. `20261014000000_informe_contable.sql`: informe para el contador (Edge Function `informe-contador`, secreto `BREVO_API_KEY`).
+   16. `20261015000000_facturas_proveedor.sql`: facturas de proveedores en las compras e informe contable con detalle de compras.
+   17. `20261016000000_invitaciones.sql`: invitaciones al equipo por correo (Edge Function `invitar-usuario`).
+   18. `20261017000000_bienvenida.sql`: correo de bienvenida al crear la empresa (Edge Function `bienvenida`).
+   19. `20261018000000_lanzamiento.sql`: planes comerciales, mes de prueba, pagos con Wompi y funciones "próximamente". Ver `docs/LANZAMIENTO.md`.
+   20. `20261019000000_recibos_suscripcion.sql`: número de comprobante de pago de la suscripción y registro de los avisos de Wompi.
+   21. `20261020000000_limites_planes.sql`: topes de todos los planes (nada ilimitado), revisados en el servidor, y protección para no bajar a Básico con un plan pagado vigente.
+   22. `20261021000000_complementos.sql`: complementos (usuarios, sedes, productos, etc. adicionales) que se compran sobre el plan pagado y vencen con él.
+   23. `20261022000000_prueba_enterprise.sql`: prueba de Enterprise por 7 días registrando un medio de pago en Wompi (sin cobro); reemplaza el mes de prueba automático.
+   24. `20261023000000_facturas_compartidas.sql`: almacenamiento privado del PDF de la factura para enviarlo por WhatsApp con un enlace de 30 días.
+   25. `20261024000000_codigos_promo.sql`: códigos promocionales (por ejemplo, Pro gratis un mes) con topes de seguridad. Los códigos se crean en el SQL Editor, no en el repositorio.
 2. Despliega las Edge Functions y guarda la API key de Anthropic para Novandra:
 
 ```bash
@@ -74,7 +93,7 @@ src/
 supabase/
 ├── migrations/          Esquema v2 (ventas, bodegas, planes, notificaciones...)
 └── functions/
-    ├── novandra/              Agente con Claude (herramientas de solo lectura + borradores)
+    ├── novandra/              Agente con IA (herramientas de solo lectura + borradores)
     ├── factura-electronica/   Envío a la DIAN vía proveedor tecnológico (preparado)
     ├── wompi-link/            Crea el link de pago de Wompi para el saldo de una venta
     └── wompi-webhook/         Recibe la confirmación de Wompi (firma SHA256) y marca el pago

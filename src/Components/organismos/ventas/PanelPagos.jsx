@@ -1,11 +1,12 @@
 import styled from "styled-components";
 import { Link } from "react-router-dom";
-import { Bancos, Franquicias, MetodosPago } from "../../../utils/dataEstatica";
+import { Bancos, Franquicias, MetodosPago, TiposLlaveBreB } from "../../../utils/dataEstatica";
 import { normalizarPagos, pagoVacio } from "../../../utils/pagos";
 import { v } from "../../../styles/variables";
 
 // Cobro de la venta: un medio de pago o varios (pago mixto), con los datos de cada uno.
-export function PanelPagos({ total, pagos, setPagos, wompiActivo, dinero }) {
+// breb: { llave, tipo } del negocio, para mostrársela al cliente.
+export function PanelPagos({ total, pagos, setPagos, wompiActivo, nequiActivo, breb, dinero }) {
   const mixto = pagos.length > 1;
   const lista = normalizarPagos(pagos, total);
   const asignado = lista.reduce((a, p) => a + p.monto, 0);
@@ -17,7 +18,7 @@ export function PanelPagos({ total, pagos, setPagos, wompiActivo, dinero }) {
       { ...pagos[0], monto: Math.round(total / 2) },
       { ...pagoVacio(pagos[0].metodo === "efectivo" ? "datafono" : "efectivo"), monto: total - Math.round(total / 2) },
     ]);
-  const agregar = () => setPagos([...pagos, { ...pagoVacio("transferencia"), monto: Math.max(restante, 0) }]);
+  const agregar = () => setPagos([...pagos, { ...pagoVacio("bre_b"), monto: Math.max(restante, 0) }]);
   const quitar = (i) => {
     const resto = pagos.filter((_, j) => j !== i);
     setPagos(resto.length ? resto : [pagoVacio()]);
@@ -43,8 +44,9 @@ export function PanelPagos({ total, pagos, setPagos, wompiActivo, dinero }) {
         return (
           <div key={i} className={`pago ${mixto ? "mixto" : ""}`}>
             <div className="metodos" role="radiogroup" aria-label={`Medio de pago ${i + 1}`}>
-              {MetodosPago.map((m) => {
-                const bloqueado = m.id === "link_pago" && !wompiActivo;
+              {/* Nequi QR solo aparece cuando la empresa lo tiene conectado. */}
+              {MetodosPago.filter((m) => m.id !== "nequi_qr" || nequiActivo).map((m) => {
+                const bloqueado = (m.id === "link_pago" && !wompiActivo) || (m.id === "nequi_qr" && !nequiActivo);
                 return (
                   <button
                     key={m.id}
@@ -52,7 +54,7 @@ export function PanelPagos({ total, pagos, setPagos, wompiActivo, dinero }) {
                     role="radio"
                     aria-checked={p.metodo === m.id}
                     disabled={bloqueado}
-                    title={bloqueado ? "Configura Wompi en Configuración → Facturación" : undefined}
+                    title={bloqueado ? `Configura ${m.id === "nequi_qr" ? "Nequi" : "Wompi"} en Configuración → Facturación` : undefined}
                     onClick={() => cambiar(i, { metodo: m.id })}
                   >
                     <m.icono />
@@ -108,9 +110,9 @@ export function PanelPagos({ total, pagos, setPagos, wompiActivo, dinero }) {
                   </label>
                 </>
               )}
-              {p.metodo === "transferencia" && (
+              {p.metodo === "bre_b" && (
                 <label>
-                  Banco
+                  Banco de origen
                   <select value={p.banco} onChange={(e) => cambiar(i, { banco: e.target.value })}>
                     <option value="">Selecciona…</option>
                     {Bancos.map((b) => (
@@ -119,7 +121,7 @@ export function PanelPagos({ total, pagos, setPagos, wompiActivo, dinero }) {
                   </select>
                 </label>
               )}
-              {["transferencia", "nequi", "daviplata"].includes(p.metodo) && (
+              {["bre_b", "nequi", "daviplata"].includes(p.metodo) && (
                 <label>
                   Referencia
                   <input placeholder="Opcional" value={p.referencia} onChange={(e) => cambiar(i, { referencia: e.target.value })} />
@@ -137,8 +139,23 @@ export function PanelPagos({ total, pagos, setPagos, wompiActivo, dinero }) {
                 {cambio < 0 ? `Faltan ${dinero(-cambio)}` : `Cambio: ${dinero(cambio)}`}
               </p>
             )}
+            {p.metodo === "bre_b" &&
+              (breb?.llave ? (
+                <p className="llave">
+                  <span>Llave Bre-B{tipoLlave(breb.tipo)}</span>
+                  <strong>{breb.llave}</strong>
+                  <small>El cliente paga desde cualquier banco o billetera. Confirma en tu app que el dinero llegó antes de entregar.</small>
+                </p>
+              ) : (
+                <p className="nota">
+                  Agrega tu llave Bre-B en <Link to="/configurar/facturacion">Configuración → Facturación</Link> para mostrársela al cliente.
+                </p>
+              ))}
             {p.metodo === "link_pago" && (
               <p className="nota">Al cobrar se crea un link de Wompi (tarjeta, PSE, Nequi) para enviarlo por WhatsApp. La venta queda pendiente hasta que el cliente pague.</p>
+            )}
+            {p.metodo === "nequi_qr" && (
+              <p className="nota">Al cobrar aparece un QR de Nequi con este valor. La venta se marca pagada sola cuando Nequi confirma el pago.</p>
             )}
             {p.metodo === "credito" && <p className="nota">La venta queda pendiente. Podrás registrar los abonos desde Facturas.</p>}
           </div>
@@ -155,14 +172,20 @@ export function PanelPagos({ total, pagos, setPagos, wompiActivo, dinero }) {
           </button>
         </div>
       )}
-      {!wompiActivo && (
+      {(!wompiActivo || !nequiActivo) && (
         <p className="ayuda">
-          ¿Quieres cobrar con link de pago? <Link to="/configurar/facturacion">Conecta Wompi</Link>.
+          ¿Quieres cobros con confirmación automática?{" "}
+          <Link to="/configurar/facturacion">Conecta {!nequiActivo ? "Nequi" : ""}{!nequiActivo && !wompiActivo ? " o " : ""}{!wompiActivo ? "Wompi" : ""}</Link>.
         </p>
       )}
     </Container>
   );
 }
+
+const tipoLlave = (tipo) => {
+  const t = TiposLlaveBreB.find((x) => x.id === tipo);
+  return t ? ` · ${t.descripcion}` : "";
+};
 
 const Container = styled.div`
   display: flex;
@@ -285,6 +308,35 @@ const Container = styled.div`
       color: ${({ theme }) => theme.danger};
       font-weight: 600;
     }
+  }
+  .llave {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 10px 12px;
+    border-radius: ${({ theme }) => theme.radius};
+    background: ${({ theme }) => theme.primarySoft};
+    span {
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: ${({ theme }) => theme.textMuted};
+    }
+    strong {
+      font-size: 1.05rem;
+      color: ${({ theme }) => theme.primary};
+      word-break: break-all;
+    }
+    small {
+      font-size: 0.74rem;
+      color: ${({ theme }) => theme.textMuted};
+    }
+    a {
+      color: ${({ theme }) => theme.primary};
+    }
+  }
+  .nota a {
+    color: ${({ theme }) => theme.primary};
+    font-weight: 600;
   }
   .pie {
     display: flex;

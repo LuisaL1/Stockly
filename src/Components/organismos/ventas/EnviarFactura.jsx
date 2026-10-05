@@ -3,20 +3,27 @@ import styled from "styled-components";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Boton } from "../../atomos/Boton";
 import { useEmpresaStore } from "../../../store/EmpresaStore";
-import { GenerarLinkPago, MostrarVenta } from "../../../supabase/crudVentas";
+import { GenerarLinkPago, MostrarVenta, SubirFacturaCompartida } from "../../../supabase/crudVentas";
 import { MostrarConfigFacturacion } from "../../../supabase/crudFacturacion";
-import { abrirWhatsApp, mensajeFactura, numeroWhatsApp } from "../../../utils/whatsapp";
-import { notificarAviso, notificarExito } from "../../../utils/notificaciones";
+import Swal from "sweetalert2";
+import { abrirWhatsApp, compartirArchivo, esCompartirDirecto, mensajeFactura, mensajeLinkPago, numeroWhatsApp, urlWhatsApp } from "../../../utils/whatsapp";
+import { crearArchivoFactura } from "../../../utils/facturaPdf";
+import { useLogoEmpresa } from "../../../hooks/useLogoEmpresa";
+import { notificarAviso, notificarError, notificarExito } from "../../../utils/notificaciones";
 import { formatearMonedaCorta } from "../../../utils/conversiones";
 import { v } from "../../../styles/variables";
 
-// Envío de la factura por WhatsApp y link de pago de Wompi para el saldo pendiente.
+// Envío de la factura en PDF por WhatsApp y link de pago de Wompi para el saldo pendiente.
+// Celular: comparte el PDF directo (menú del teléfono). Computador: abre el chat con un enlace al PDF.
 // generarAlCargar: crea el link apenas se muestra (venta recién cobrada con "Link de pago").
 export function EnviarFactura({ idVenta, generarAlCargar = false }) {
   const { dataempresa } = useEmpresaStore();
   const queryClient = useQueryClient();
   const [generando, setGenerando] = useState(false);
   const [telefono, setTelefono] = useState(null);
+  const [enviando, setEnviando] = useState(false);
+  const { logo: logoEmpresa, cargando: cargandoLogo } = useLogoEmpresa();
+  const [directo] = useState(esCompartirDirecto);
 
   const venta = useQuery({ queryKey: ["venta", idVenta], queryFn: () => MostrarVenta(idVenta) });
   const cfg = useQuery({
@@ -53,11 +60,68 @@ export function EnviarFactura({ idVenta, generarAlCargar = false }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [listoParaLink]);
 
+  // En el celular el PDF se prepara antes del clic: el menú de compartir debe abrirse de inmediato.
+  const datosListos = !!v_ && !!cfg.data && !cargandoLogo;
+  const huella = `${v_?.id}-${v_?.estado}-${pagado}-${link ?? ""}`;
+  const [archivo, setArchivo] = useState(null);
+  useEffect(() => {
+    if (!directo || !datosListos) return;
+    let vigente = true;
+    crearArchivoFactura({ venta: v_, cfg: cfg.data, empresa: dataempresa, logoEmpresa })
+      .then((a) => vigente && setArchivo(a))
+      .catch(() => vigente && setArchivo(null));
+    return () => {
+      vigente = false;
+    };
+    // Se regenera solo si cambia la venta (pagos, estado o link).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [directo, datosListos, huella]);
+
   if (venta.isLoading) return <Boton variante="secundario" cargando disabled>Cargando…</Boton>;
   if (!v_) return null;
 
   const numero = telefono ?? v_.clientes?.telefono ?? "";
-  const enviar = () => abrirWhatsApp(numero, mensajeFactura({ venta: v_, empresa: dataempresa, cfg: cfg.data, linkPago: link }));
+  const mensaje = () => mensajeFactura({ venta: v_, empresa: dataempresa, cfg: cfg.data, linkPago: link });
+
+  const enviarLink = () => abrirWhatsApp(numero, mensajeLinkPago({ venta: v_, empresa: dataempresa, linkPago: link, saldo }));
+
+  async function enviar() {
+    // Celular: menú de compartir con el PDF adjunto.
+    if (directo && archivo) {
+      const r = await compartirArchivo(archivo, mensaje());
+      // WhatsApp a veces envía solo el PDF y descarta el texto: se ofrece mandar el link de pago aparte.
+      if (r === "compartido" && link && saldo > 0) {
+        const { isConfirmed } = await Swal.fire({
+          icon: "question",
+          title: "¿Enviar también el link de pago?",
+          text: "Así el cliente lo tiene a un toque para pagar, aunque WhatsApp no haya enviado el texto con el PDF.",
+          showCancelButton: true,
+          confirmButtonText: "Enviar link de pago",
+          cancelButtonText: "No, gracias",
+          confirmButtonColor: "#8800B3",
+          reverseButtons: true,
+        });
+        if (isConfirmed) enviarLink();
+      }
+      if (r !== "fallo") return;
+    }
+    // Computador (o si el teléfono no deja compartir): la ventana se abre ya, con el clic,
+    // para que el navegador no la bloquee, y se completa cuando el PDF esté listo.
+    const ventana = window.open("about:blank", "_blank");
+    setEnviando(true);
+    try {
+      const pdf = archivo ?? (await crearArchivoFactura({ venta: v_, cfg: cfg.data, empresa: dataempresa, logoEmpresa }));
+      const url = await SubirFacturaCompartida({ idEmpresa: dataempresa.id, idVenta: v_.id, archivo: pdf });
+      const destino = urlWhatsApp(numero, `${mensaje()}\n\n📄 Tu factura en PDF:\n${url}`);
+      if (ventana) ventana.location.href = destino;
+      else window.location.href = destino;
+    } catch (e) {
+      ventana?.close();
+      notificarError("No se pudo enviar la factura", e.message);
+    } finally {
+      setEnviando(false);
+    }
+  }
 
   return (
     <Container>
@@ -73,13 +137,13 @@ export function EnviarFactura({ idVenta, generarAlCargar = false }) {
               <Boton
                 variante="secundario"
                 tamano="sm"
-                icono={<v.iconolisto />}
+                icono={<v.iconocopiar />}
                 funcion={async () => {
                   await navigator.clipboard?.writeText(link);
                   notificarExito("Link copiado");
                 }}
               >
-                Copiar
+                Copiar link
               </Boton>
             </div>
           ) : puedeLink ? (
@@ -103,11 +167,22 @@ export function EnviarFactura({ idVenta, generarAlCargar = false }) {
             onChange={(e) => setTelefono(e.target.value)}
           />
         </label>
-        <Boton icono={<IconoWhatsApp />} funcion={enviar} className="boton-wa">
-          Enviar por WhatsApp
+        <Boton icono={<IconoWhatsApp />} funcion={enviar} cargando={enviando || (directo && datosListos && !archivo)} className="boton-wa">
+          Enviar PDF por WhatsApp
         </Boton>
       </div>
-      {!numeroWhatsApp(numero) && <small className="ayuda">Sin número, WhatsApp te deja elegir el contacto.</small>}
+      {link && saldo > 0 && v_.estado !== "anulada" && (
+        <Boton variante="secundario" icono={<IconoWhatsApp />} funcion={enviarLink}>
+          Enviar solo el link de pago
+        </Boton>
+      )}
+      <small className="ayuda">
+        {directo
+          ? `Se abre el menú de compartir con el PDF: elige WhatsApp y el contacto.${link && saldo > 0 ? " El link de pago va en el mensaje y dentro del PDF." : ""}`
+          : numeroWhatsApp(numero)
+            ? `Se abre el chat con el resumen${link && saldo > 0 ? ", el link de pago" : ""} y el enlace para descargar el PDF (válido 30 días).`
+            : "Sin número, WhatsApp te deja elegir el contacto. El mensaje lleva el enlace del PDF (válido 30 días)."}
+      </small>
     </Container>
   );
 }

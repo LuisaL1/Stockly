@@ -78,3 +78,26 @@ export async function MostrarModulos() {
   if (error) throw error;
   return data ?? [];
 }
+
+// ------------------------------------------------------------- Invitaciones al equipo
+
+async function llamarInvitacion(cuerpo) {
+  const { data, error } = await supabase.functions.invoke("invitar-usuario", {
+    body: { ...cuerpo, origen: window.location.origin },
+  });
+  if (error) {
+    const detalle = await error.context?.json?.().catch(() => null);
+    throw new Error(detalle?.error ?? "No se pudo contactar al servidor. Revisa que la función invitar-usuario esté desplegada.");
+  }
+  return data;
+}
+
+// La persona recibe un correo para verificar su cuenta y crear su contraseña.
+export const InvitarUsuario = (p) => llamarInvitacion({ accion: "invitar", ...p });
+
+// Reenvía la invitación o, si ya la aceptó, un enlace para cambiar la contraseña.
+export const ReenviarAcceso = ({ idEmpresa, email }) => llamarInvitacion({ accion: "reenviar", id_empresa: idEmpresa, email });
+
+export async function ActivarInvitacion() {
+  await supabase.rpc("stockly_activar_invitacion");
+}

@@ -19,6 +19,7 @@ import { AnularVenta, EnviarFacturaDian, MostrarVentas, RegistrarPago } from "..
 import { MostrarConfigFacturacion } from "../supabase/crudFacturacion";
 import { Bancos, Canales, Franquicias, NombresMetodo } from "../utils/dataEstatica";
 import { EnviarFactura } from "../Components/organismos/ventas/EnviarFactura";
+import { PagoNequiQR } from "../Components/organismos/ventas/PagoNequiQR";
 import { Etiqueta } from "../Components/atomos/Etiqueta";
 import { MODULOS } from "../utils/permisos";
 import { notificarAviso, notificarExito } from "../utils/notificaciones";
@@ -181,6 +182,7 @@ function DetalleVenta({ venta, dinero, onClose, onCambio }) {
   const { dataempresa } = useEmpresaStore();
   const [trabajando, setTrabajando] = useState(null);
   const [abono, setAbono] = useState(null);
+  const [mostrarQR, setMostrarQR] = useState(false);
   const factura = facturaDe(venta);
   const pagos = venta.pagos_venta ?? [];
   const pagado = pagos.filter((p) => p.estado === "aprobado").reduce((a, p) => a + Number(p.monto), 0);
@@ -358,11 +360,20 @@ function DetalleVenta({ venta, dinero, onClose, onCambio }) {
           ) : (
             <p className="nota">Sin pagos registrados.</p>
           )}
+          {pagos.some((p) => p.metodo === "nequi_qr" && p.estado === "pendiente") &&
+            venta.estado !== "anulada" &&
+            (mostrarQR ? (
+              <PagoNequiQR idVenta={venta.id} dinero={dinero} onPagado={() => onCambio({ ...venta, estado: "pagada" })} />
+            ) : (
+              <Boton variante="secundario" tamano="sm" icono={<v.iconocodigobarras />} funcion={() => setMostrarQR(true)}>
+                Mostrar QR de Nequi
+              </Boton>
+            ))}
           {saldo > 0 && venta.estado !== "anulada" && (
             abono ? (
               <div className="abono">
                 <select value={abono.metodo} onChange={(e) => setAbono({ ...abono, metodo: e.target.value })} aria-label="Medio">
-                  {["efectivo", "datafono", "transferencia", "nequi", "daviplata"].map((m) => (
+                  {["efectivo", "datafono", "bre_b", "nequi", "daviplata"].map((m) => (
                     <option key={m} value={m}>
                       {NombresMetodo[m]}
                     </option>
@@ -384,9 +395,9 @@ function DetalleVenta({ venta, dinero, onClose, onCambio }) {
                     ))}
                   </select>
                 )}
-                {abono.metodo === "transferencia" && (
-                  <select value={abono.banco ?? ""} onChange={(e) => setAbono({ ...abono, banco: e.target.value })} aria-label="Banco">
-                    <option value="">Banco…</option>
+                {abono.metodo === "bre_b" && (
+                  <select value={abono.banco ?? ""} onChange={(e) => setAbono({ ...abono, banco: e.target.value })} aria-label="Banco de origen">
+                    <option value="">Banco de origen…</option>
                     {Bancos.map((b) => (
                       <option key={b}>{b}</option>
                     ))}

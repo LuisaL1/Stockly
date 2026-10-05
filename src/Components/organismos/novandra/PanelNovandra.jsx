@@ -8,7 +8,8 @@ import { TextoMarkdown } from "../../moleculas/TextoMarkdown";
 import { v } from "../../../styles/variables";
 
 export function PanelNovandra() {
-  const { abierto, cerrar, mensajes, pensando, enviar, reiniciar, detener, reintentar } = useNovandraStore();
+  const { abierto, cerrar, mensajes, pensando, enviar, reiniciar, detener, reintentar, perfil, ejecutarAccion, aclarar } = useNovandraStore();
+  const esMax = !!perfil?.plan?.novandra_ia;
   const queryClient = useQueryClient();
   const [texto, setTexto] = useState("");
   const listaRef = useRef(null);
@@ -49,11 +50,13 @@ export function PanelNovandra() {
             <v.icononovandra />
           </span>
           <div>
-            <h2>Novandra</h2>
-            <p>Asistente de operaciones · ve tus datos en tiempo real</p>
+            <h2>
+              Novandra <span className={`modo ${esMax ? "max" : ""}`}>{esMax ? "Max · IA" : "Esencial"}</span>
+            </h2>
+            <p>{esMax ? "Asistente con IA · ve tus datos en tiempo real" : "Asistente de operaciones · aprende de tu negocio"}</p>
           </div>
           <button type="button" onClick={reiniciar} title="Nueva conversación" aria-label="Nueva conversación">
-            <v.iconeditarTabla />
+            <v.iconoreiniciar />
           </button>
           <button type="button" onClick={cerrar} aria-label="Cerrar">
             <v.iconocerrar />
@@ -79,7 +82,17 @@ export function PanelNovandra() {
               {m.acciones?.length > 0 && (
                 <div className="acciones">
                   {m.acciones.map((a, j) =>
-                    a.enlace ? (
+                    a.tipo === "boton" ? (
+                      <button
+                        key={j}
+                        type="button"
+                        className="boton-accion"
+                        disabled={a.hecha || a.ejecutando}
+                        onClick={async () => refrescarSi(await ejecutarAccion(m.id, j))}
+                      >
+                        {a.hecha ? <v.iconolisto /> : <v.iconocompras />} {a.ejecutando ? "Creando…" : a.descripcion}
+                      </button>
+                    ) : a.enlace ? (
                       <Link key={j} to={a.enlace} onClick={cerrar}>
                         <v.iconolisto /> {a.descripcion}
                       </Link>
@@ -89,6 +102,24 @@ export function PanelNovandra() {
                       </span>
                     )
                   )}
+                </div>
+              )}
+              {m.aclaraciones?.length > 0 && m === ultimo && !pensando && (
+                <div className="chips">
+                  {m.aclaraciones.map((a) => (
+                    <button key={a.intencion} type="button" onClick={async () => refrescarSi(await aclarar(m.id, a.intencion))}>
+                      {a.descripcion}
+                    </button>
+                  ))}
+                </div>
+              )}
+              {m.sugerencias?.length > 0 && m === ultimo && !pensando && (
+                <div className="chips sugeridas">
+                  {m.sugerencias.map((t) => (
+                    <button key={t} type="button" onClick={() => mandar(t)}>
+                      {t}
+                    </button>
+                  ))}
                 </div>
               )}
               {(m.error || m.detenido) && m === ultimo && !pensando && (
@@ -140,7 +171,19 @@ export function PanelNovandra() {
             </button>
           )}
         </form>
-        <small className="aviso">Novandra solo crea borradores y recordatorios: tú confirmas cada cambio.</small>
+        <small className="aviso">
+          Novandra solo crea borradores y recordatorios: tú confirmas cada cambio.
+          {perfil?.iaDisponible && !esMax && (
+            <>
+              {" "}
+              ¿Necesitas análisis más complejos?{" "}
+              <Link to="/configurar/plan" onClick={cerrar}>
+                Conoce Novandra Max
+              </Link>
+              .
+            </>
+          )}
+        </small>
       </Panel>
     </Overlay>,
     document.body
@@ -209,6 +252,67 @@ const Panel = styled.aside`
       &:hover {
         background: rgba(244, 241, 236, 0.16);
       }
+    }
+  }
+  .modo {
+    display: inline-block;
+    margin-left: 6px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    vertical-align: middle;
+    font-size: 0.66rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    background: rgba(244, 241, 236, 0.12);
+    color: ${({ theme }) => theme.inkText};
+    &.max {
+      background: ${({ theme }) => theme.accentLight};
+      color: ${({ theme }) => theme.ink};
+    }
+  }
+  .chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding-top: 4px;
+    button {
+      padding: 6px 12px;
+      border-radius: 999px;
+      border: 1px solid ${({ theme }) => theme.primary};
+      background: ${({ theme }) => theme.surface};
+      color: ${({ theme }) => theme.primary};
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      text-align: left;
+      &:hover {
+        background: ${({ theme }) => theme.primarySoft};
+      }
+    }
+    &.sugeridas button {
+      border-color: ${({ theme }) => theme.border};
+      color: ${({ theme }) => theme.text};
+      font-weight: 500;
+    }
+  }
+  .boton-accion {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    border: none;
+    border-radius: ${({ theme }) => theme.radius};
+    background: ${({ theme }) => theme.primary};
+    color: ${({ theme }) => theme.onPrimary};
+    font-weight: 600;
+    font-size: 0.85rem;
+    cursor: pointer;
+    &:hover:not(:disabled) {
+      background: ${({ theme }) => theme.primaryHover};
+    }
+    &:disabled {
+      opacity: 0.7;
+      cursor: default;
     }
   }
   .avatar {
@@ -416,5 +520,9 @@ const Panel = styled.aside`
     font-size: 0.72rem;
     color: ${({ theme }) => theme.textMuted};
     text-align: center;
+    a {
+      color: ${({ theme }) => theme.primary};
+      font-weight: 600;
+    }
   }
 `;

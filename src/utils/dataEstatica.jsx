@@ -17,6 +17,7 @@ export const NavGrupos = [
       { label: "Facturas", icon: <v.iconofacturas />, to: "/ventas/facturas" },
       { label: "Compras", icon: <v.iconocompras />, to: "/compras" },
       { label: "Kardex", icon: <v.iconokardex />, to: "/kardex" },
+      { label: "Informe contable", icon: <v.iconoexcel />, to: "/informe-contable", soloAdmin: true },
     ],
   },
   {
@@ -41,6 +42,7 @@ export const NavGrupos = [
       { label: "Auditoría", icon: <v.iconoauditoria />, to: "/auditoria", soloAdmin: true },
       { label: "Notificaciones", icon: <v.icononotificaciones />, to: "/notificaciones" },
       { label: "Configuración", icon: <v.iconoconfiguracion />, to: "/configurar" },
+      { label: "Centro de ayuda", icon: <v.iconoguia />, to: "/ayuda" },
     ],
   },
 ];
@@ -54,6 +56,13 @@ export const DataModulosConfiguracion = [
     link: "/configurar/plan",
     modulo: MODULOS.suscripcion,
     destacado: true,
+  },
+  {
+    title: "Importar y exportar",
+    subtitle: "Carga, descarga o elimina los datos de tu negocio",
+    icono: <v.iconoexcel />,
+    link: "/configurar/datos",
+    soloAdmin: true,
   },
   {
     title: "Permisos de Novandra",
@@ -122,7 +131,8 @@ export const TiposBodega = {
 export const MetodosPago = [
   { id: "efectivo", descripcion: "Efectivo", icono: v.iconoefectivo },
   { id: "datafono", descripcion: "Datáfono", icono: v.iconotarjeta },
-  { id: "transferencia", descripcion: "Transferencia", icono: v.iconotransferencia },
+  { id: "bre_b", descripcion: "Bre-B", icono: v.iconobreb },
+  { id: "nequi_qr", descripcion: "Nequi QR", icono: v.iconocodigobarras },
   { id: "nequi", descripcion: "Nequi", icono: v.iconocelular },
   { id: "daviplata", descripcion: "Daviplata", icono: v.iconocelular },
   { id: "link_pago", descripcion: "Link de pago", icono: v.iconoenviar },
@@ -132,8 +142,18 @@ export const MetodosPago = [
 export const NombresMetodo = {
   ...Object.fromEntries(MetodosPago.map((m) => [m.id, m.descripcion])),
   tarjeta: "Tarjeta",
+  transferencia: "Transferencia",
   mixto: "Pago mixto",
 };
+
+// Tipos de llave Bre-B (sistema de pagos inmediatos del Banco de la República).
+export const TiposLlaveBreB = [
+  { id: "celular", descripcion: "Celular", placeholder: "3001234567" },
+  { id: "documento", descripcion: "Cédula o NIT", placeholder: "900123456" },
+  { id: "correo", descripcion: "Correo", placeholder: "pagos@minegocio.com" },
+  { id: "alfanumerica", descripcion: "Alfanumérica", placeholder: "@minegocio" },
+  { id: "comercio", descripcion: "Llave de comercio", placeholder: "0012345678" },
+];
 
 export const Franquicias = ["Visa", "Mastercard", "American Express", "Diners", "Débito Maestro", "Otra"];
 
@@ -167,10 +187,12 @@ export const Sectores = [
   "Otro",
 ];
 
+// Por ahora Stockly opera solo en pesos colombianos; las demás monedas se muestran como próximamente.
 export const Monedas = [
-  { id: "$", descripcion: "Peso colombiano (COP $)" },
+  { id: "$", descripcion: "Peso colombiano (COP $)", disponible: true },
   { id: "US$", descripcion: "Dólar (US$)" },
   { id: "€", descripcion: "Euro (€)" },
   { id: "MX$", descripcion: "Peso mexicano (MX$)" },
   { id: "S/", descripcion: "Sol peruano (S/)" },
 ];
+export const MONEDA_PREDETERMINADA = "$";

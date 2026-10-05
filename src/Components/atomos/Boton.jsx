@@ -110,7 +110,7 @@ const Container = styled.button`
     flex-shrink: 0;
   }
   &:active:not(:disabled) {
-    transform: translateY(1px);
+    filter: brightness(0.94);
   }
   &:disabled {
     opacity: 0.55;

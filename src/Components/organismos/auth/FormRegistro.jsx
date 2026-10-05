@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useQuery } from "@tanstack/react-query";
 import styled from "styled-components";
@@ -9,9 +9,41 @@ import { CamposNegocio } from "./CamposNegocio";
 import { Alerta, Encabezado, Enlace, FormAuth, PieAuth } from "./EstilosAuth";
 import { MostrarPlanesPublicos, RegistrarCuenta } from "../../../supabase/crudRegistro";
 import { formatearNumero } from "../../../utils/conversiones";
+import { Modal } from "../../moleculas/Modal";
+import { TITULO_PRIVACIDAD, TITULO_TERMINOS, TextoLegal, TextoPrivacidad, TextoTerminos } from "../../../pages/Legal";
 import { v } from "../../../styles/variables";
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+// Borrador del registro: lo escrito se conserva si la persona recarga o sale un momento.
+// Las contraseñas nunca se guardan.
+const CLAVE_BORRADOR = "stockly_registro_borrador";
+const leerBorrador = () => {
+  try {
+    return JSON.parse(sessionStorage.getItem(CLAVE_BORRADOR) ?? "null");
+  } catch {
+    return null;
+  }
+};
+const guardarBorrador = (datos) => {
+  try {
+    sessionStorage.setItem(CLAVE_BORRADOR, JSON.stringify(datos));
+  } catch {
+    // Sin almacenamiento: el formulario sigue funcionando sin borrador.
+  }
+};
+const borrarBorradorRegistro = () => {
+  try {
+    sessionStorage.removeItem(CLAVE_BORRADOR);
+  } catch {
+    // Nada que borrar.
+  }
+};
+
+// Enterprise en el registro = prueba de 7 días (tarjeta en Wompi, sin cobro). Al entrar se
+// abre ese paso; al terminar pasa al Básico y, si quiere, lo compra desde Plan y suscripción.
+const PLAN_PRUEBA = "empresa";
+const PRUEBA = "prueba_enterprise";
 
 const PASOS = [
   { titulo: "Tu cuenta", campos: ["nombres", "documento", "email", "pass", "confirmar"] },
@@ -21,15 +53,20 @@ const PASOS = [
 
 const resumenPlan = (p) =>
   [
-    p.limite_productos == null ? "Productos ilimitados" : `${formatearNumero(p.limite_productos)} productos`,
-    p.limite_bodegas == null ? "bodegas ilimitadas" : `${p.limite_bodegas} bodega${p.limite_bodegas === 1 ? "" : "s"}`,
+    `${formatearNumero(p.limite_productos)} productos`,
+    `${formatearNumero(p.limite_ventas_mes)} ventas/mes`,
+    `${p.limite_bodegas} bodega${p.limite_bodegas === 1 ? "" : "s"}`,
     p.factura_electronica ? "factura electrónica" : "factura en PDF",
   ].join(" · ");
 
 // Registro en tres pasos: cuenta, negocio y plan.
 export function FormRegistro({ irA, alRegistrar }) {
+  const [borrador] = useState(leerBorrador);
+  // El paso se conserva, pero si había avanzado vuelve al primero: las contraseñas no se guardan.
   const [paso, setPaso] = useState(0);
   const [error, setError] = useState(null);
+  const [documento, setDocumento] = useState(null); // "terminos" | "privacidad"
+  const [verCodigo, setVerCodigo] = useState(false);
   const planes = useQuery({ queryKey: ["planes publicos"], queryFn: MostrarPlanesPublicos, staleTime: 3_600_000 });
 
   const {
@@ -41,10 +78,22 @@ export function FormRegistro({ irA, alRegistrar }) {
     formState: { errors, isSubmitting },
   } = useForm({
     shouldUnregister: false,
-    defaultValues: { moneda: "$", plan: "basico", ciclo: "mensual", terminos: false, sector: "" },
+    defaultValues: { moneda: "$", plan: "basico", ciclo: "mensual", terminos: false, sector: "", ...(borrador?.datos ?? {}) },
   });
+  // Guarda el borrador mientras escribe (sin contraseñas).
+  useEffect(() => {
+    const suscripcion = watch((valores) => {
+      const { pass: _p, confirmar: _c, ...resto } = valores;
+      guardarBorrador({ datos: resto });
+    });
+    return () => suscripcion.unsubscribe();
+  }, [watch]);
   const pass = watch("pass");
   const planElegido = watch("plan");
+  // Con código promocional, el código manda: al entrar se activa (no se paga ni se abre la prueba).
+  const codigo = (watch("codigo") ?? "").trim();
+  const esPrueba = !codigo && planElegido === PLAN_PRUEBA;
+  const planDePago = !codigo && !esPrueba && !!(planes.data ?? []).find((p) => p.id === planElegido && Number(p.precio_mensual) > 0);
   const anual = watch("ciclo") === "anual";
 
   async function siguiente() {
@@ -67,10 +116,12 @@ export function FormRegistro({ irA, alRegistrar }) {
           sector: d.sector,
           ciudad: d.ciudad.trim(),
           moneda: d.moneda,
-          plan: d.plan,
+          plan: d.plan === PLAN_PRUEBA ? PRUEBA : d.plan,
+          codigo: d.codigo?.trim().toUpperCase() || null,
           ciclo: d.ciclo,
         },
       });
+      borrarBorradorRegistro();
       alRegistrar({ email, confirmarCorreo });
     } catch (e) {
       setError(e.message);
@@ -117,7 +168,7 @@ export function FormRegistro({ irA, alRegistrar }) {
                 <input
                   autoFocus
                   autoComplete="name"
-                  placeholder="Ej. Luisa Londoño"
+                  placeholder="Ej. Pepito Pérez"
                   {...register("nombres", { validate: (t) => !!t?.trim() || "Escribe tu nombre" })}
                 />
               </InputText>
@@ -161,7 +212,10 @@ export function FormRegistro({ irA, alRegistrar }) {
             <CampoContrasena
               label="Confirma la contraseña"
               autoComplete="new-password"
-              error={errors.confirmar?.message}
+              error={
+                errors.confirmar?.message ??
+                (watch("confirmar") && watch("confirmar") !== pass ? "Las contraseñas no coinciden" : undefined)
+              }
               {...register("confirmar", {
                 validate: (t) => t === watch("pass") || "Las contraseñas no coinciden",
               })}
@@ -192,27 +246,71 @@ export function FormRegistro({ irA, alRegistrar }) {
                       <strong>
                         {p.nombre}
                         {p.destacado && <em>Recomendado</em>}
+                        {p.id === PLAN_PRUEBA && <em>7 días gratis</em>}
                       </strong>
                       <small>{resumenPlan(p)}</small>
                     </span>
                     <span className="precio">
-                      {precio ? `$${formatearNumero(precio)}` : "Gratis"}
-                      {precio ? <small>/{anual ? "año" : "mes"}</small> : null}
+                      {p.id === PLAN_PRUEBA && planElegido === PLAN_PRUEBA ? (
+                        <>
+                          $0
+                          <small className="luego">
+                            7 días, luego ${formatearNumero(precio)}/{anual ? "año" : "mes"}
+                          </small>
+                        </>
+                      ) : (
+                        <>
+                          {precio ? `$${formatearNumero(precio)}` : "Gratis"}
+                          {precio ? <small>/{anual ? "año" : "mes"}</small> : null}
+                        </>
+                      )}
                     </span>
                   </label>
                 );
               })}
               {planes.isLoading && <small>Cargando planes…</small>}
             </Planes>
+            {verCodigo || codigo ? (
+              <CodigoPromo>
+                <span>Código promocional</span>
+                <input
+                  placeholder="STK-PRO-XXXXXX"
+                  autoComplete="off"
+                  spellCheck={false}
+                  maxLength={40}
+                  {...register("codigo", { setValueAs: (t) => (t ?? "").toUpperCase() })}
+                  onInput={(e) => (e.target.value = e.target.value.toUpperCase())}
+                />
+                <small>Se activa apenas entres a Stockly. No se cobra nada.</small>
+              </CodigoPromo>
+            ) : (
+              <EnlaceCodigo type="button" onClick={() => setVerCodigo(true)}>
+                ¿Tienes un código promocional?
+              </EnlaceCodigo>
+            )}
             <Terminos>
               <input type="checkbox" {...register("terminos", { validate: (t) => t || "Debes aceptar para continuar" })} />
               <span>
-                Acepto los términos del servicio y la política de tratamiento de datos de MCCore.
+                Acepto los{" "}
+                <button type="button" className="enlace-legal" onClick={() => setDocumento("terminos")}>
+                  términos del servicio
+                </button>{" "}
+                y autorizo el tratamiento de mis datos según la{" "}
+                <button type="button" className="enlace-legal" onClick={() => setDocumento("privacidad")}>
+                  política de datos personales
+                </button>{" "}
+                de MCCore.
                 {errors.terminos && <em>{errors.terminos.message}</em>}
               </span>
             </Terminos>
             <small style={{ color: "inherit", opacity: 0.7 }}>
-              Empiezas sin pagar nada: puedes cambiar de plan cuando quieras desde Configuración.
+              {codigo
+                ? "Al entrar activamos tu código promocional. No se hará ningún cobro: al terminar la promoción pasas al plan Básico gratis con todos tus datos."
+                : esPrueba
+                ? "Al entrar registras tu tarjeta o Nequi en Wompi solo para validarla: no se debita nada, ni hoy ni al terminar. Después de 7 días pasas solo al plan Básico gratis y puedes comprar Enterprise cuando quieras."
+                : planDePago
+                ? "Al entrar te llevamos a pagar con Wompi (tarjeta, PSE, Nequi o Bancolombia), con el descuento de tu primera compra."
+                : "Empiezas gratis. Desde Plan y suscripción puedes probar Enterprise 7 días sin costo."}
             </small>
           </>
         )}
@@ -230,10 +328,38 @@ export function FormRegistro({ irA, alRegistrar }) {
             cargando={isSubmitting}
             icono={paso === PASOS.length - 1 ? <v.iconolisto /> : <v.iconoflechaderecha />}
           >
-            {paso === PASOS.length - 1 ? "Crear mi empresa" : "Continuar"}
+            {paso < PASOS.length - 1
+              ? "Continuar"
+              : codigo
+                ? "Crear mi empresa y activar código"
+                : esPrueba
+                ? "Crear mi empresa y probar gratis"
+                : planDePago
+                  ? "Crear mi empresa y pagar"
+                  : "Crear mi empresa"}
           </Boton>
         </Acciones>
       </FormAuth>
+      {documento && (
+        <Modal
+          titulo={documento === "terminos" ? TITULO_TERMINOS : TITULO_PRIVACIDAD}
+          subtitulo="Tu registro sigue aquí: cierra esta ventana para continuar."
+          onClose={() => setDocumento(null)}
+          ancho="720px"
+          pie={
+            <Boton
+              funcion={() => {
+                setValue("terminos", true, { shouldValidate: true });
+                setDocumento(null);
+              }}
+            >
+              Entendido, acepto
+            </Boton>
+          }
+        >
+          <TextoLegal>{documento === "terminos" ? <TextoTerminos /> : <TextoPrivacidad />}</TextoLegal>
+        </Modal>
+      )}
 
       <PieAuth>
         ¿Ya tienes cuenta?{" "}
@@ -386,14 +512,66 @@ const Planes = styled.div`
   .precio {
     font-weight: 700;
     white-space: nowrap;
+    text-align: right;
     small {
       font-weight: 500;
       color: ${({ theme }) => theme.textMuted};
     }
+    .luego {
+      display: block;
+      font-size: 0.75rem;
+    }
+  }
+`;
+
+const EnlaceCodigo = styled.button`
+  align-self: flex-start;
+  padding: 0;
+  border: none;
+  background: none;
+  color: ${({ theme }) => theme.primary};
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+`;
+
+const CodigoPromo = styled.label`
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  span {
+    font-size: 0.85rem;
+    font-weight: 600;
+  }
+  input {
+    height: 44px;
+    padding: 0 14px;
+    border: 1.5px dashed ${({ theme }) => theme.primary};
+    border-radius: ${({ theme }) => theme.radiusLg};
+    background: ${({ theme }) => theme.primarySoft};
+    color: ${({ theme }) => theme.text};
+    font-family: ui-monospace, monospace;
+    letter-spacing: 0.05em;
+  }
+  small {
+    color: ${({ theme }) => theme.textMuted};
   }
 `;
 
 const Terminos = styled.label`
+  .enlace-legal {
+    display: inline;
+    padding: 0;
+    border: none;
+    background: none;
+    color: ${({ theme }) => theme.primary};
+    font: inherit;
+    font-weight: 600;
+    text-decoration: underline;
+    cursor: pointer;
+  }
   display: flex;
   gap: 10px;
   align-items: flex-start;

@@ -14,11 +14,13 @@ import { useEmpresaStore } from "../store/EmpresaStore";
 import { usePlan } from "../hooks/usePlan";
 import {
   GuardarConfigFacturacion,
+  GuardarCredencialesNequi,
   GuardarCredencialesWompi,
   MostrarConfigFacturacion,
+  MostrarEstadoNequi,
   MostrarEstadoWompi,
 } from "../supabase/crudFacturacion";
-import { Bancos } from "../utils/dataEstatica";
+import { Bancos, TiposLlaveBreB } from "../utils/dataEstatica";
 import { notificarExito } from "../utils/notificaciones";
 import { MODULOS } from "../utils/permisos";
 import { Device } from "../styles/breackpoints";
@@ -44,7 +46,10 @@ export function ConfigFacturacion() {
 
 function Contenido() {
   const { dataempresa } = useEmpresaStore();
-  const { plan } = usePlan();
+  const { plan, ajustes } = usePlan();
+  // Funciones que se activan cuando estén listas (interruptores globales).
+  const dianDisponible = ajustes?.factura_electronica_disponible === true;
+  const nequiDisponible = ajustes?.nequi_qr_disponible === true;
   const cfg = useQuery({
     queryKey: ["config facturacion", dataempresa?.id],
     queryFn: () => MostrarConfigFacturacion(dataempresa.id),
@@ -56,6 +61,11 @@ function Contenido() {
     queryFn: () => MostrarEstadoWompi(dataempresa.id),
     enabled: !!dataempresa?.id,
   });
+  const nequi = useQuery({
+    queryKey: ["estado nequi", dataempresa?.id],
+    queryFn: () => MostrarEstadoNequi(dataempresa.id),
+    enabled: !!dataempresa?.id,
+  });
   const {
     register,
     handleSubmit,
@@ -64,15 +74,26 @@ function Contenido() {
     formState: { errors, isSubmitting, isDirty },
   } = useForm({
     values: cfg.data
-      ? { ...cfg.data, proveedor_dian: cfg.data.proveedor_dian ?? "", wompi_llave_privada: "", wompi_secreto_eventos: "" }
+      ? {
+          ...cfg.data,
+          proveedor_dian: cfg.data.proveedor_dian ?? "",
+          wompi_llave_privada: "",
+          wompi_secreto_eventos: "",
+          nequi_client_id: "",
+          nequi_client_secret: "",
+          nequi_api_key: "",
+          nequi_codigo_comercio: nequi.data?.codigo_comercio ?? "",
+          nequi_ambiente: nequi.data?.ambiente ?? "pruebas",
+        }
       : undefined,
   });
 
   if (cfg.isLoading) return <SpinnerLoader />;
   if (cfg.error) return <ErrorMolecula mensaje={cfg.error.message} reintentar={cfg.refetch} />;
 
-  const permiteElectronica = !!plan?.factura_electronica;
+  const permiteElectronica = !!plan?.factura_electronica && dianDisponible;
   const wompiActivo = watch("wompi_activo");
+  const nequiActivo = watch("nequi_activo");
   const urlWebhook = `${import.meta.env.VITE_APP_SUPABASE_URL}/functions/v1/wompi-webhook`;
   const electronica = watch("electronica_activa");
 
@@ -95,11 +116,14 @@ function Contenido() {
       resolucion_fecha: nulo(d.resolucion_fecha),
       rango_desde: entero(d.rango_desde),
       rango_hasta: entero(d.rango_hasta),
+      breb_tipo_llave: nulo(d.breb_tipo_llave),
+      breb_llave: nulo(d.breb_llave?.trim()),
       banco: nulo(d.banco),
       tipo_cuenta: nulo(d.tipo_cuenta),
       numero_cuenta: nulo(d.numero_cuenta?.trim()),
       titular_cuenta: nulo(d.titular_cuenta?.trim()),
       wompi_activo: !!d.wompi_activo,
+      nequi_activo: nequiDisponible && !!d.nequi_activo,
       wompi_llave_publica: nulo(d.wompi_llave_publica?.trim()),
     });
     if (ok && (d.wompi_llave_privada?.trim() || d.wompi_secreto_eventos?.trim())) {
@@ -111,6 +135,26 @@ function Contenido() {
       if (guardadas) {
         wompi.refetch();
         notificarExito("Llaves de Wompi guardadas");
+      }
+    }
+    const nequiCambio =
+      d.nequi_client_id?.trim() ||
+      d.nequi_client_secret?.trim() ||
+      d.nequi_api_key?.trim() ||
+      d.nequi_ambiente !== nequi.data?.ambiente ||
+      (d.nequi_codigo_comercio?.trim() ?? "") !== (nequi.data?.codigo_comercio ?? "");
+    if (ok && d.nequi_activo && nequiCambio) {
+      const guardadas = await GuardarCredencialesNequi({
+        idEmpresa: dataempresa.id,
+        clientId: d.nequi_client_id?.trim(),
+        clientSecret: d.nequi_client_secret?.trim(),
+        apiKey: d.nequi_api_key?.trim(),
+        ambiente: d.nequi_ambiente,
+        codigoComercio: d.nequi_codigo_comercio?.trim(),
+      });
+      if (guardadas) {
+        nequi.refetch();
+        notificarExito("Credenciales de Nequi guardadas");
       }
     }
     if (ok) {
@@ -188,9 +232,35 @@ function Contenido() {
         <Columnas>
           <Bloque>
             <h2>
-              <v.iconotransferencia /> Datos bancarios
+              <v.iconobreb /> Cobro con Bre-B
             </h2>
-            <p className="ayuda">Se muestran en la factura y en el mensaje de WhatsApp para que el cliente te transfiera.</p>
+            <p className="ayuda">
+              Con tu llave Bre-B te pueden pagar al instante desde cualquier banco o billetera (Nequi, Daviplata, Bancolombia y
+              más). La llave se muestra en la caja, en la factura y en el mensaje de WhatsApp. La creas en la app de tu banco.
+            </p>
+            <div className="grid">
+              <InputText label="Tipo de llave" icono={<v.iconolista />}>
+                <select {...register("breb_tipo_llave")}>
+                  <option value="">Selecciona…</option>
+                  {TiposLlaveBreB.map((t) => (
+                    <option key={t.id} value={t.id}>
+                      {t.descripcion}
+                    </option>
+                  ))}
+                </select>
+              </InputText>
+              <InputText label="Llave Bre-B" icono={<v.iconobreb />}>
+                <input
+                  placeholder={TiposLlaveBreB.find((t) => t.id === watch("breb_tipo_llave"))?.placeholder ?? "Tu llave"}
+                  autoComplete="off"
+                  {...register("breb_llave")}
+                />
+              </InputText>
+            </div>
+            <h3>
+              <v.iconotransferencia /> Cuenta bancaria (opcional)
+            </h3>
+            <p className="ayuda">Por si el cliente prefiere una transferencia tradicional.</p>
             <div className="grid">
               <InputText label="Banco" icono={<v.iconotransferencia />}>
                 <select {...register("banco")}>
@@ -282,25 +352,109 @@ function Contenido() {
                   >
                     <input value={urlWebhook} readOnly onFocus={(e) => e.target.select()} />
                   </InputText>
+                  <button
+                    type="button"
+                    className="copiar"
+                    title="Copiar la URL de eventos"
+                    onClick={async () => {
+                      try {
+                        await navigator.clipboard.writeText(urlWebhook);
+                        notificarExito("URL de eventos copiada");
+                      } catch {
+                        notificarExito("Selecciona la URL y cópiala con Ctrl+C");
+                      }
+                    }}
+                  >
+                    <v.iconocopiar /> Copiar URL
+                  </button>
+                </div>
+                <div className="completo guardar-bloque">
+                  <Boton type="submit" icono={<v.iconoguardar />} cargando={isSubmitting} disabled={!isDirty}>
+                    Guardar llaves de Wompi
+                  </Boton>
                 </div>
               </div>
             )}
           </Bloque>
         </Columnas>
 
+        <Bloque>
+          <div className="encabezado">
+            <h2>
+              <v.iconocodigobarras /> Cobro con QR de Nequi Negocios
+            </h2>
+            {nequiDisponible ? (
+              <Etiqueta tono={nequi.data?.configurado ? "success" : "neutro"}>
+                {nequi.data?.configurado ? `Conectado · ${nequi.data.ambiente === "produccion" ? "Producción" : "Pruebas"}` : "Sin conectar"}
+              </Etiqueta>
+            ) : (
+              <Etiqueta tono="primary">Próximamente</Etiqueta>
+            )}
+          </div>
+          <p className="ayuda">
+            En la caja aparece un QR con el valor exacto de la venta. El cliente lo paga con su app Nequi y Stockly marca la
+            factura como pagada apenas Nequi lo confirma: un pantallazo no sirve para engañar. Las credenciales están en
+            las entrega Nequi al habilitar tu integración (developer.nequi.com.co → Solicita integración), y quedan
+            guardadas en el servidor sin que la app pueda leerlas.
+          </p>
+          {!nequiDisponible && (
+            <p className="ayuda">
+              <strong>Muy pronto:</strong> estamos terminando la conexión con Nequi. Mientras tanto, cobra con Bre-B: también llega al
+              instante desde cualquier banco o billetera.
+            </p>
+          )}
+          <label className="interruptor">
+            <input type="checkbox" disabled={!nequiDisponible} {...register("nequi_activo")} />
+            Cobrar con QR de Nequi
+          </label>
+          {nequiDisponible && nequiActivo && (
+            <div className="grid">
+              <InputText label="Ambiente" icono={<v.iconorayo />}>
+                <select {...register("nequi_ambiente")}>
+                  <option value="pruebas">Pruebas (sandbox)</option>
+                  <option value="produccion">Producción (cobros reales)</option>
+                </select>
+              </InputText>
+              <InputText
+                label="Código del comercio"
+                icono={<v.iconoempresa />}
+                ayuda="Tipo y número de identificación del comercio o de la caja que te asigna Nequi."
+              >
+                <input placeholder="El que te indique Nequi" {...register("nequi_codigo_comercio")} />
+              </InputText>
+              <InputText label="Client ID" icono={<v.iconopass />} ayuda={nequi.data?.configurado ? "Ya guardado. Escribe uno nuevo solo para cambiarlo." : undefined}>
+                <input autoComplete="off" placeholder={nequi.data?.configurado ? "••••••••" : ""} {...register("nequi_client_id")} />
+              </InputText>
+              <InputText label="Client Secret" icono={<v.iconopass />}>
+                <input type="password" autoComplete="off" placeholder={nequi.data?.configurado ? "••••••••" : ""} {...register("nequi_client_secret")} />
+              </InputText>
+              <InputText label="API Key" icono={<v.iconopass />}>
+                <input type="password" autoComplete="off" placeholder={nequi.data?.configurado ? "••••••••" : ""} {...register("nequi_api_key")} />
+              </InputText>
+            </div>
+          )}
+        </Bloque>
+
         <Bloque className="dian">
           <div className="encabezado">
             <h2>
               <v.iconoenviar /> Factura electrónica DIAN
             </h2>
-            <Etiqueta tono={permiteElectronica ? "info" : "neutro"}>
-              {permiteElectronica ? "Integración preparada" : "Disponible en Pro y Empresa"}
+            <Etiqueta tono={!dianDisponible ? "primary" : permiteElectronica ? "info" : "neutro"}>
+              {!dianDisponible ? "Próximamente" : permiteElectronica ? "Integración preparada" : "Disponible en Pro y Enterprise"}
             </Etiqueta>
           </div>
           <p className="ayuda">
             Stockly arma la factura y la entrega a tu proveedor tecnológico autorizado, que la valida ante la DIAN. La
             conexión con el proveedor está lista para activarse cuando tengas sus credenciales.
-            {!permiteElectronica && (
+            {!dianDisponible && (
+              <>
+                {" "}
+                <strong>Muy pronto</strong> podrás emitir facturas electrónicas desde Stockly. Mientras tanto, tus facturas salen
+                en PDF y por WhatsApp.
+              </>
+            )}
+            {dianDisponible && !permiteElectronica && (
               <>
                 {" "}
                 <Link to="/configurar/plan">Mejora tu plan</Link> para habilitarla.
@@ -344,15 +498,37 @@ function Contenido() {
           )}
         </Bloque>
 
-        <div className="acciones">
+        {/* Barra fija abajo: siempre visible para no perder cambios en una página tan larga. */}
+        <BarraGuardar $cambios={isDirty}>
+          <span>{isDirty ? "Tienes cambios sin guardar" : "Todo guardado"}</span>
           <Boton type="submit" icono={<v.iconoguardar />} cargando={isSubmitting} disabled={!isDirty}>
             Guardar cambios
           </Boton>
-        </div>
+        </BarraGuardar>
       </Formulario>
     </PaginaTemplate>
   );
 }
+
+const BarraGuardar = styled.div`
+  position: sticky;
+  bottom: 12px;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px 10px 18px;
+  border-radius: ${({ theme }) => theme.radiusXl};
+  border: 1px solid ${({ theme, $cambios }) => ($cambios ? theme.primary : theme.border)};
+  background: ${({ theme }) => theme.surface};
+  box-shadow: ${({ theme }) => theme.shadow};
+  > span {
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: ${({ theme, $cambios }) => ($cambios ? theme.primary : theme.textMuted)};
+  }
+`;
 
 const Columnas = styled.div`
   display: grid;
@@ -372,7 +548,8 @@ const Bloque = styled.section`
   border: 1px solid ${({ theme }) => theme.border};
   background: ${({ theme }) => theme.surface};
   box-shadow: ${({ theme }) => theme.shadow};
-  h2 {
+  h2,
+  h3 {
     display: flex;
     align-items: center;
     gap: 10px;
@@ -380,6 +557,12 @@ const Bloque = styled.section`
     svg {
       color: ${({ theme }) => theme.primary};
     }
+  }
+  h3 {
+    margin-top: 6px;
+    padding-top: 16px;
+    border-top: 1px solid ${({ theme }) => theme.border};
+    font-size: 0.92rem;
   }
   .encabezado {
     display: flex;
@@ -396,6 +579,27 @@ const Bloque = styled.section`
       color: ${({ theme }) => theme.primary};
       font-weight: 600;
     }
+  }
+  .copiar {
+    margin-top: 8px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: ${({ theme }) => theme.radiusSm};
+    border: 1px solid ${({ theme }) => theme.border};
+    background: ${({ theme }) => theme.surface};
+    color: ${({ theme }) => theme.primary};
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    &:hover {
+      border-color: ${({ theme }) => theme.primary};
+    }
+  }
+  .guardar-bloque {
+    display: flex;
+    justify-content: flex-end;
   }
   .interruptor {
     display: flex;

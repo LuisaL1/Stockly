@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import styled from "styled-components";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { PaginaTemplate } from "../Components/templatesReact/PaginaTemplate";
@@ -18,14 +18,18 @@ import {
   CambiarEstadoOrden,
   CrearOrdenCompra,
   EliminarOrdenCompra,
+  EnlaceFacturaProveedor,
+  GuardarFacturaProveedor,
+  MostrarFacturaProveedor,
   MostrarOrdenesCompra,
+  QuitarArchivoFacturaProveedor,
   RecibirOrdenCompra,
 } from "../supabase/crudCompras";
 import { MostrarBodegas } from "../supabase/crudBodegas";
 import { crudProveedores } from "../supabase/crudContactos";
 import { BuscarProductos } from "../supabase/crudProductos";
 import { MODULOS } from "../utils/permisos";
-import { confirmarEliminacion } from "../utils/notificaciones";
+import { confirmarEliminacion, notificarError, notificarExito } from "../utils/notificaciones";
 import { formatearFecha, formatearMonedaCorta, formatearNumero } from "../utils/conversiones";
 import { v } from "../styles/variables";
 
@@ -423,6 +427,7 @@ function DetalleOrden({ orden, dinero, onClose, onCambio }) {
           ))}
         </ul>
         <p className="total">Total {dinero(orden.total)}</p>
+        {orden.estado !== "cancelada" && <FacturaProveedor orden={orden} dinero={dinero} />}
       </DetalleLista>
     </Modal>
   );
@@ -480,6 +485,214 @@ const FormOrden = styled.div`
     color: ${({ theme }) => theme.danger};
     cursor: pointer;
     font-size: 16px;
+  }
+`;
+
+// Factura que envió el proveedor: número, fecha, valor y archivo (PDF, imagen, XML o ZIP).
+function FacturaProveedor({ orden, dinero }) {
+  const { dataempresa } = useEmpresaStore();
+  const queryClient = useQueryClient();
+  const entrada = useRef(null);
+  const consulta = useQuery({ queryKey: ["factura proveedor", orden.id], queryFn: () => MostrarFacturaProveedor(orden.id) });
+  const actual = consulta.data;
+  const [datos, setDatos] = useState({ numero: "", fecha: "", valor: "" });
+  const [archivo, setArchivo] = useState(null);
+  const [trabajando, setTrabajando] = useState(false);
+
+  useEffect(() => {
+    if (actual)
+      setDatos({
+        numero: actual.factura_proveedor_numero ?? "",
+        fecha: actual.factura_proveedor_fecha ?? "",
+        valor: actual.factura_proveedor_valor ?? "",
+      });
+  }, [actual]);
+
+  // Sin la migración de facturas de proveedor, la sección no se muestra.
+  if (consulta.error) return null;
+
+  const cambio =
+    !!archivo ||
+    datos.numero !== (actual?.factura_proveedor_numero ?? "") ||
+    datos.fecha !== (actual?.factura_proveedor_fecha ?? "") ||
+    String(datos.valor) !== String(actual?.factura_proveedor_valor ?? "");
+  const diferencia = datos.valor !== "" && Math.abs(Number(datos.valor) - Number(orden.total)) > 1;
+
+  async function guardar() {
+    setTrabajando(true);
+    try {
+      await GuardarFacturaProveedor({ idEmpresa: dataempresa.id, idOrden: orden.id, ...datos, archivo, actual });
+      setArchivo(null);
+      if (entrada.current) entrada.current.value = "";
+      await queryClient.invalidateQueries({ queryKey: ["factura proveedor", orden.id] });
+      notificarExito("Factura del proveedor guardada");
+    } catch (e) {
+      notificarError("No se pudo guardar la factura", e.message);
+    }
+    setTrabajando(false);
+  }
+
+  async function ver() {
+    try {
+      window.open(await EnlaceFacturaProveedor(actual.factura_proveedor_archivo), "_blank", "noopener");
+    } catch (e) {
+      notificarError("No se pudo abrir el archivo", e.message);
+    }
+  }
+
+  async function quitar() {
+    if (!(await confirmarEliminacion("Se quitará el archivo de la factura del proveedor."))) return;
+    setTrabajando(true);
+    try {
+      await QuitarArchivoFacturaProveedor({ idOrden: orden.id, actual });
+      await queryClient.invalidateQueries({ queryKey: ["factura proveedor", orden.id] });
+    } catch (e) {
+      notificarError("No se pudo quitar el archivo", e.message);
+    }
+    setTrabajando(false);
+  }
+
+  return (
+    <BloqueFactura>
+      <h3>
+        <v.iconofacturas /> Factura del proveedor
+      </h3>
+      <div className="campos">
+        <label>
+          N.º de factura
+          <input value={datos.numero} maxLength={60} placeholder="Ej.: FE-4521" onChange={(e) => setDatos({ ...datos, numero: e.target.value })} />
+        </label>
+        <label>
+          Fecha
+          <input type="date" value={datos.fecha} onChange={(e) => setDatos({ ...datos, fecha: e.target.value })} />
+        </label>
+        <label>
+          Valor
+          <input type="number" min="0" value={datos.valor} placeholder={String(Math.round(orden.total))} onChange={(e) => setDatos({ ...datos, valor: e.target.value })} />
+        </label>
+      </div>
+      {diferencia && <small className="aviso">El valor de la factura es distinto al total de la orden ({dinero(orden.total)}).</small>}
+      <div className="archivo">
+        {actual?.factura_proveedor_archivo && !archivo ? (
+          <>
+            <span className="nombre">
+              <v.iconodocumentoPdf /> {actual.factura_proveedor_nombre ?? "Archivo adjunto"}
+            </span>
+            <button type="button" onClick={ver}>
+              Ver
+            </button>
+            <button type="button" onClick={() => entrada.current?.click()}>
+              Cambiar
+            </button>
+            <button type="button" className="quitar" onClick={quitar} disabled={trabajando}>
+              Quitar
+            </button>
+          </>
+        ) : (
+          <>
+            <span className="nombre">{archivo ? archivo.name : "Sin archivo adjunto"}</span>
+            <button type="button" onClick={() => entrada.current?.click()}>
+              {archivo ? "Cambiar" : "Adjuntar archivo"}
+            </button>
+          </>
+        )}
+        <input
+          ref={entrada}
+          type="file"
+          hidden
+          accept=".pdf,.png,.jpg,.jpeg,.webp,.xml,.zip,application/pdf,image/*,application/xml,text/xml,application/zip"
+          onChange={(e) => setArchivo(e.target.files?.[0] ?? null)}
+        />
+      </div>
+      <small className="ayuda">PDF, foto, o el XML/ZIP de la factura electrónica. Máximo 10 MB. Se incluye en el informe para tu contador.</small>
+      {cambio && (
+        <Boton tamano="sm" icono={<v.iconoguardar />} cargando={trabajando} funcion={guardar}>
+          Guardar factura
+        </Boton>
+      )}
+    </BloqueFactura>
+  );
+}
+
+const BloqueFactura = styled.section`
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px;
+  border-radius: ${({ theme }) => theme.radius};
+  border: 1px solid ${({ theme }) => theme.border};
+  background: ${({ theme }) => theme.surfaceAlt};
+  h3 {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.95rem;
+    svg {
+      color: ${({ theme }) => theme.primary};
+    }
+  }
+  .campos {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 10px;
+    label {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      font-size: 0.74rem;
+      font-weight: 600;
+      color: ${({ theme }) => theme.textMuted};
+    }
+    input {
+      height: 38px;
+      padding: 0 10px;
+      border-radius: ${({ theme }) => theme.radiusSm};
+      border: 1px solid ${({ theme }) => theme.border};
+      background: ${({ theme }) => theme.surface};
+      color: ${({ theme }) => theme.text};
+      font-size: 0.88rem;
+    }
+  }
+  .archivo {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    .nombre {
+      flex: 1;
+      min-width: 0;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.86rem;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    button {
+      border: none;
+      background: none;
+      padding: 0;
+      color: ${({ theme }) => theme.primary};
+      font-weight: 600;
+      font-size: 0.84rem;
+      cursor: pointer;
+      &.quitar {
+        color: ${({ theme }) => theme.danger};
+      }
+    }
+  }
+  .aviso {
+    font-size: 0.78rem;
+    color: ${({ theme }) => theme.warning};
+    font-weight: 600;
+  }
+  .ayuda {
+    font-size: 0.76rem;
+    color: ${({ theme }) => theme.textMuted};
+  }
+  > button {
+    align-self: flex-end;
   }
 `;
 

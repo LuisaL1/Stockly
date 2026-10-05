@@ -90,7 +90,7 @@ function Contenido() {
           <span>Sedes activas</span>
           <strong>
             {lista.filter((x) => x.activa).length}
-            <small>{limite == null ? " · ilimitadas" : ` de ${limite}`}</small>
+            <small>{limite == null ? "" : ` de ${limite}`}</small>
           </strong>
         </div>
         <div>
@@ -230,7 +230,7 @@ function Contenido() {
                   Para más sucursales, <Link to="/configurar/plan">mejora tu plan</Link>.
                 </>
               ) : restantes == null ? (
-                "Tu plan permite sucursales ilimitadas."
+                "Tu plan te permite agregar más sucursales."
               ) : (
                 `Te ${restantes === 1 ? "queda" : "quedan"} ${restantes} de ${limite} en tu plan.`
               )}

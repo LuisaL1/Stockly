@@ -27,6 +27,10 @@ import { Sucursales } from "../pages/Sucursales";
 import { Inteligencia } from "../pages/Inteligencia";
 import { Auditoria } from "../pages/Auditoria";
 import { ConfigNovandra } from "../pages/ConfigNovandra";
+import { ImportarExportar } from "../pages/ImportarExportar";
+import { Ayuda } from "../pages/Ayuda";
+import { InformeContable } from "../pages/InformeContable";
+import { Privacidad, Terminos } from "../pages/Legal";
 
 // Los reportes usan @react-pdf/renderer (muy pesado): se cargan bajo demanda.
 const Reportes = lazy(() => import("../pages/Reportes"));
@@ -50,6 +54,8 @@ export function MyRoutes() {
         }
       />
       <Route path="/restablecer" element={<Restablecer />} />
+      <Route path="/terminos" element={<Terminos />} />
+      <Route path="/privacidad" element={<Privacidad />} />
       <Route
         element={
           <ProtectedRoute accessBy="authenticated">
@@ -78,6 +84,9 @@ export function MyRoutes() {
         <Route path="/inteligencia" element={<Inteligencia />} />
         <Route path="/auditoria" element={<Auditoria />} />
         <Route path="/configurar/novandra" element={<ConfigNovandra />} />
+        <Route path="/configurar/datos" element={<ImportarExportar />} />
+        <Route path="/ayuda" element={<Ayuda />} />
+        <Route path="/informe-contable" element={<InformeContable />} />
         <Route path="/kardex" element={<Kardex />} />
         <Route path="/reportes" element={conCarga(<Reportes />)}>
           <Route index element={<Navigate to="stock-actual-todos" replace />} />

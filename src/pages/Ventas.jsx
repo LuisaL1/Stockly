@@ -21,6 +21,7 @@ import { Canales, TiposBodega } from "../utils/dataEstatica";
 import { normalizarPagos, pagoVacio, validarPagos } from "../utils/pagos";
 import { PanelPagos } from "../Components/organismos/ventas/PanelPagos";
 import { EnviarFactura } from "../Components/organismos/ventas/EnviarFactura";
+import { PagoNequiQR } from "../Components/organismos/ventas/PagoNequiQR";
 import { MODULOS } from "../utils/permisos";
 import { formatearMonedaCorta, formatearNumero } from "../utils/conversiones";
 import { Device } from "../styles/breackpoints";
@@ -360,6 +361,8 @@ function PuntoDeVenta() {
             pagos={pagos}
             setPagos={setPagos}
             wompiActivo={!!cfg.data?.wompi_activo}
+            nequiActivo={!!cfg.data?.nequi_activo}
+            breb={{ llave: cfg.data?.breb_llave, tipo: cfg.data?.breb_tipo_llave }}
             dinero={dinero}
           />
 
@@ -433,6 +436,13 @@ function PuntoDeVenta() {
                 <span>Cambio para el cliente</span>
                 <strong>{dinero(resultado.cambio)}</strong>
               </div>
+            )}
+            {resultado.nequi_qr && (
+              <PagoNequiQR
+                idVenta={resultado.id}
+                dinero={dinero}
+                onPagado={() => setResultado((r) => (r ? { ...r, pendiente: false } : r))}
+              />
             )}
             <EnviarFactura idVenta={resultado.id} generarAlCargar={resultado.link_pago} />
           </Exito>
@@ -526,10 +536,9 @@ const Layout = styled.div`
     background: ${({ theme }) => theme.surface};
     color: inherit;
     cursor: pointer;
-    transition: border-color 0.15s, transform 0.15s, box-shadow 0.15s;
+    transition: border-color 0.15s, box-shadow 0.15s;
     &:hover:not(:disabled) {
       border-color: ${({ theme }) => theme.primary};
-      transform: translateY(-2px);
       box-shadow: ${({ theme }) => theme.shadow};
     }
     &:disabled {

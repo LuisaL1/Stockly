@@ -29,26 +29,74 @@ export function mensajeFactura({ venta, empresa, cfg, linkPago }) {
 
   if (saldo > 0 && venta.estado !== "anulada") {
     lineas.push(`Saldo por pagar: *${dinero(saldo)}*`);
-    if (linkPago) lineas.push("", `Paga en línea con tarjeta, PSE o Nequi aquí:`, linkPago);
+    if (linkPago) lineas.push("", `👉 *Paga aquí con tarjeta, PSE o Nequi:*`, linkPago);
+    if (cfg?.breb_llave) {
+      lineas.push("", `${linkPago ? "O paga" : "Paga"} al instante desde cualquier banco con Bre-B a la llave: *${cfg.breb_llave}*`);
+    }
     if (cfg?.numero_cuenta) {
       lineas.push(
         "",
-        "También puedes transferir a:",
+        cfg?.breb_llave ? "O transfiere a:" : "También puedes transferir a:",
         `${cfg.banco ?? "Banco"} · ${cfg.tipo_cuenta ?? "Cuenta"} ${cfg.numero_cuenta}`,
-        cfg.titular_cuenta ? `A nombre de ${cfg.titular_cuenta}` : null,
-        "Envíanos el comprobante por este chat."
+        cfg.titular_cuenta ? `A nombre de ${cfg.titular_cuenta}` : null
       );
     }
+    if (cfg?.breb_llave || cfg?.numero_cuenta) lineas.push("Envíanos el comprobante por este chat.");
   } else if (venta.estado !== "anulada") {
-    const medios = [...new Set(pagos.filter((p) => p.estado === "aprobado").map((p) => NombresMetodo[p.metodo] ?? p.metodo))];
-    lineas.push(`Pagada${medios.length ? ` con ${medios.join(" y ").toLowerCase()}` : ""}. ¡Gracias por tu compra!`);
+    const medios = [
+      ...new Set(
+        pagos
+          .filter((p) => p.estado === "aprobado")
+          .map((p) => (p.metodo === "bre_b" ? "Bre-B" : (NombresMetodo[p.metodo] ?? p.metodo).toLowerCase()))
+      ),
+    ];
+    lineas.push(`Pagada${medios.length ? ` con ${medios.join(" y ")}` : ""}. ¡Gracias por tu compra!`);
   }
   if (cfg?.nota_pie) lineas.push("", cfg.nota_pie);
   return lineas.filter((l) => l !== null).join("\n");
 }
 
+// Mensaje corto solo con el link de pago (para enviarlo aparte del PDF).
+export function mensajeLinkPago({ venta, empresa, linkPago, saldo }) {
+  const moneda = empresa?.simbolomoneda ?? "$";
+  const nombre = venta.clientes?.nombre?.split(" ")[0];
+  return [
+    `Hola${nombre ? ` ${nombre}` : ""}, este es el link para pagar tu factura *${venta.prefijo}-${venta.numero}* de *${empresa?.nombre ?? "nuestra tienda"}*` +
+      ` por *${formatearMonedaCorta(saldo, moneda)}*:`,
+    "",
+    `👉 ${linkPago}`,
+    "",
+    "Puedes pagar con tarjeta, PSE o Nequi. Apenas pagues, tu factura queda al día.",
+  ].join("\n");
+}
+
 export function abrirWhatsApp(telefono, mensaje) {
-  const numero = numeroWhatsApp(telefono);
-  const url = `https://wa.me/${numero}?text=${encodeURIComponent(mensaje)}`;
-  window.open(url, "_blank", "noopener");
+  window.open(urlWhatsApp(telefono, mensaje), "_blank", "noopener");
+}
+
+export function urlWhatsApp(telefono, mensaje) {
+  return `https://wa.me/${numeroWhatsApp(telefono)}?text=${encodeURIComponent(mensaje)}`;
+}
+
+// En celulares se comparte el PDF directo con el menú del teléfono (la persona elige WhatsApp
+// y el contacto). En computador WhatsApp no recibe archivos por enlace: se abre el chat con el
+// mensaje y un enlace para descargar el PDF.
+export function esCompartirDirecto() {
+  try {
+    const tactil = window.matchMedia?.("(pointer: coarse)").matches;
+    const prueba = new File([""], "factura.pdf", { type: "application/pdf" });
+    return !!(tactil && navigator.canShare?.({ files: [prueba] }));
+  } catch {
+    return false;
+  }
+}
+
+// Comparte el archivo con el menú del teléfono. Devuelve "compartido", "cancelado" o "fallo".
+export async function compartirArchivo(archivo, mensaje) {
+  try {
+    await navigator.share({ files: [archivo], title: archivo.name, text: mensaje });
+    return "compartido";
+  } catch (e) {
+    return e?.name === "AbortError" ? "cancelado" : "fallo";
+  }
 }

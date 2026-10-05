@@ -15,10 +15,18 @@ export function traducirErrorAuth(error) {
   return error?.message ?? "Algo salió mal. Intenta de nuevo.";
 }
 
+let bienvenidaPedida = false;
+
 // Crea (o completa) el perfil, la empresa, los permisos y el plan del usuario en sesión.
 export async function CompletarRegistro(datos) {
   const { data, error } = await supabase.rpc("stockly_completar_registro", { _datos: datos });
   if (error) throw new Error(error.message);
+  // Correo de bienvenida con los próximos pasos (el servidor lo envía una sola vez por empresa;
+  // aquí también se pide una sola vez por sesión, aunque el registro se complete desde dos lugares).
+  if (!bienvenidaPedida) {
+    bienvenidaPedida = true;
+    supabase.functions.invoke("bienvenida", { body: { origen: window.location.origin } }).catch(() => {});
+  }
   return data;
 }
 

@@ -12,6 +12,8 @@ import { ListaModulos } from "../ListaModulos";
 import { useUsuariosStore } from "../../../store/UsuariosStore";
 import { useEmpresaStore } from "../../../store/EmpresaStore";
 import { TipouserData } from "../../../utils/dataEstatica";
+import { ReenviarAcceso } from "../../../supabase/crudUsuarios";
+import { notificarError, notificarExito } from "../../../utils/notificaciones";
 import { v } from "../../../styles/variables";
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -64,11 +66,7 @@ export function RegistrarUsuarios({ onClose, dataSelect = {}, accion }) {
     };
     const ok = editando
       ? await Editar({ id: dataSelect.id, ...datos }, checkboxs)
-      : await Insertar(
-          { email: data.email.trim().toLowerCase(), pass: data.pass },
-          { ...datos, email: data.email.trim().toLowerCase(), id_empresa: dataempresa.id },
-          checkboxs
-        );
+      : await Insertar({ ...datos, email: data.email.trim().toLowerCase(), id_empresa: dataempresa.id }, checkboxs);
     if (ok) onClose();
   }
 
@@ -78,7 +76,11 @@ export function RegistrarUsuarios({ onClose, dataSelect = {}, accion }) {
   return (
     <Modal
       titulo={editando ? "Editar usuario" : "Nuevo usuario"}
-      subtitulo={editando ? dataSelect.email : "Se creará una cuenta de acceso para esta persona."}
+      subtitulo={
+        editando
+          ? dataSelect.email
+          : "Le enviaremos una invitación a su correo para que verifique su cuenta y cree su propia contraseña."
+      }
       onClose={onClose}
       ancho="820px"
     >
@@ -94,7 +96,7 @@ export function RegistrarUsuarios({ onClose, dataSelect = {}, accion }) {
                   <input
                     type="email"
                     readOnly={editando}
-                    placeholder="persona@empresa.com"
+                    placeholder="correo real de la persona"
                     {...register("email", {
                       required: "Escribe el correo",
                       pattern: { value: EMAIL, message: "El correo no es válido" },
@@ -102,24 +104,13 @@ export function RegistrarUsuarios({ onClose, dataSelect = {}, accion }) {
                   />
                 </InputText>
               </div>
-              {!editando && (
-                <div>
-                  <InputText
-                    label="Contraseña"
-                    icono={<v.iconopass />}
-                    error={errors.pass?.message}
-                    ayuda="Mínimo 8 caracteres. Compártela de forma segura con la persona."
-                  >
-                    <input
-                      type="password"
-                      autoComplete="new-password"
-                      {...register("pass", {
-                        required: "Escribe una contraseña",
-                        minLength: { value: 8, message: "Debe tener al menos 8 caracteres" },
-                      })}
-                    />
-                  </InputText>
-                </div>
+              {editando ? (
+                <AccesoUsuario usuario={dataSelect} idEmpresa={dataempresa?.id} />
+              ) : (
+                <p style={{ fontSize: "0.8rem", lineHeight: 1.45, opacity: 0.75, margin: "-4px 0 4px" }}>
+                  Usa el correo personal o de trabajo de la persona. Le llegará una invitación de Stockly: al abrirla verifica su
+                  correo y crea su contraseña. Después la puede cambiar cuando quiera desde Mi perfil.
+                </p>
               )}
 
               <span className="titulo-seccion">Datos personales</span>
@@ -165,12 +156,36 @@ export function RegistrarUsuarios({ onClose, dataSelect = {}, accion }) {
             <Boton variante="secundario" funcion={onClose}>
               Cancelar
             </Boton>
-            <Boton type="submit" icono={<v.iconoguardar />} cargando={isSubmitting}>
-              {editando ? "Guardar cambios" : "Crear usuario"}
+            <Boton type="submit" icono={editando ? <v.iconoguardar /> : <v.iconoenviar />} cargando={isSubmitting}>
+              {editando ? "Guardar cambios" : "Enviar invitación"}
             </Boton>
           </div>
         </Formulario>
       )}
     </Modal>
+  );
+}
+
+// Reenviar la invitación (si no la ha aceptado) o un enlace para cambiar la contraseña.
+function AccesoUsuario({ usuario, idEmpresa }) {
+  const [enviando, setEnviando] = useState(false);
+  const pendiente = usuario.estado === "invitado";
+  async function reenviar() {
+    setEnviando(true);
+    try {
+      const r = await ReenviarAcceso({ idEmpresa, email: usuario.email });
+      notificarExito(r?.tipo === "restablecer" ? `Enviamos a ${usuario.email} un enlace para cambiar su contraseña` : `Invitación reenviada a ${usuario.email}`);
+    } catch (e) {
+      notificarError("No se pudo enviar el correo", e.message);
+    }
+    setEnviando(false);
+  }
+  return (
+    <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 8, marginBottom: 4 }}>
+      <span style={{ fontSize: "0.8rem", opacity: 0.75 }}>{pendiente ? "Todavía no ha aceptado la invitación." : "Si olvidó su contraseña, envíale un enlace para crear una nueva."}</span>
+      <Boton variante="secundario" tamano="sm" icono={<v.iconoenviar />} cargando={enviando} funcion={reenviar}>
+        {pendiente ? "Reenviar invitación" : "Enviar enlace para cambiar contraseña"}
+      </Boton>
+    </div>
   );
 }
