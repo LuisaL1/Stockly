@@ -24,7 +24,7 @@ const cop = (n) => `$${formatearNumero(n)}`;
 
 // Capacidad adicional sobre el plan pagado: se cobra proporcional a los días que le
 // quedan al plan y vence con él. Al renovar el plan se pueden renovar juntos.
-export function Complementos({ idEmpresa, estado, ajustes, admin }) {
+export function Complementos({ idEmpresa, estado, ajustes, admin, alActivar }) {
   const catalogo = useQuery({ queryKey: ["complementos"], queryFn: MostrarComplementos, staleTime: 60 * 60 * 1000 });
   const mios = useQuery({ queryKey: ["mis complementos", idEmpresa], queryFn: () => MisComplementos(idEmpresa), enabled: !!idEmpresa });
   const [cantidades, setCantidades] = useState({});
@@ -46,14 +46,21 @@ export function Complementos({ idEmpresa, estado, ajustes, admin }) {
           `<br/><br/>Queda activo apenas pagues y vence con tu plan, el ${formatearFecha(cot.hasta)}. Al renovar tu plan puedes renovarlo junto con él.` +
           `<br/><br/>Pagas con Wompi: tarjeta, PSE, Nequi o Bancolombia.`,
         showCancelButton: true,
-        confirmButtonText: "Ir a pagar",
+        confirmButtonText: ajustes?.pagos_activos === false ? "Activar (modo pruebas)" : "Ir a pagar",
         cancelButtonText: "Cancelar",
         confirmButtonColor: "#8800B3",
         reverseButtons: true,
       });
       if (!isConfirmed) return setTrabajando(null);
-      const { url } = await CrearPagoComplemento({ idEmpresa, idComplemento: c.id, cantidad });
-      window.location.assign(url);
+      const r = await CrearPagoComplemento({ idEmpresa, idComplemento: c.id, cantidad });
+      if (r.aplicado) {
+        // Modo pruebas: activo sin pasar por Wompi.
+        await alActivar?.();
+        setTrabajando(null);
+        Swal.fire({ icon: "success", title: `${cantidad} × ${c.nombre} activo (modo pruebas)`, text: "No se hizo ningún cobro.", confirmButtonColor: "#8800B3" });
+        return;
+      }
+      window.location.assign(r.url);
     } catch (e) {
       notificarError("No se pudo iniciar el pago", e.message);
       setTrabajando(null);

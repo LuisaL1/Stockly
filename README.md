@@ -55,6 +55,7 @@ npm run dev
    23. `20261022000000_prueba_enterprise.sql`: prueba de Enterprise por 7 días registrando un medio de pago en Wompi (sin cobro); reemplaza el mes de prueba automático.
    24. `20261023000000_facturas_compartidas.sql`: almacenamiento privado del PDF de la factura para enviarlo por WhatsApp con un enlace de 30 días.
    25. `20261024000000_codigos_promo.sql`: códigos promocionales (por ejemplo, Pro gratis un mes) con topes de seguridad. Los códigos se crean en el SQL Editor, no en el repositorio.
+   26. `20261025000000_modo_pruebas_pagos.sql`: interruptor de pagos. Apagado (modo pruebas), las compras se activan sin Wompi.
 2. Despliega las Edge Functions y guarda la API key de Anthropic para Novandra:
 
 ```bash

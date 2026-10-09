@@ -189,6 +189,8 @@ function Contenido() {
   // Igual que en el servidor (stockly_cotizar_plan): con un plan pagado vigente, el mismo plan se
   // renueva solo en los últimos DIAS_RENOVAR días y no se puede comprar un plan menor.
   const planPagado = planes.find((x) => x.id === estado?.plan_pagado);
+  // Pagos apagados (stockly_ajustes_globales.pagos_activos = false): las compras se activan sin Wompi.
+  const modoPruebas = ajustes?.pagos_activos === false;
   function bloqueoCompra(p) {
     if (!planPagado || !estado?.vence_en) return null;
     const vence = new Date(estado.vence_en);
@@ -243,15 +245,28 @@ function Contenido() {
             : ""),
         ...(extras.length ? { input: "checkbox", inputValue: 1, inputPlaceholder: "Renovar también mis complementos" } : {}),
         showCancelButton: true,
-        confirmButtonText: "Ir a pagar",
+        confirmButtonText: modoPruebas ? "Activar (modo pruebas)" : "Ir a pagar",
         cancelButtonText: "Cancelar",
         confirmButtonColor: "#8800B3",
         reverseButtons: true,
       });
       if (!isConfirmed) return setTrabajando(null);
       const conComplementos = !extras.length || value === 1;
-      const { url } = await CrearPagoPlan({ idEmpresa: dataempresa.id, idPlan: p.id, ciclo: cicloElegido, conComplementos });
-      window.location.assign(url);
+      const r = await CrearPagoPlan({ idEmpresa: dataempresa.id, idPlan: p.id, ciclo: cicloElegido, conComplementos });
+      if (r.aplicado) {
+        // Modo pruebas: se activó sin pasar por Wompi.
+        await recargar();
+        queryClient.invalidateQueries();
+        setTrabajando(null);
+        Swal.fire({
+          icon: "success",
+          title: `Plan ${cot.nombre} activo (modo pruebas)`,
+          html: `Activo hasta el <b>${formatearFecha(r.pago?.periodo_hasta)}</b>. No se hizo ningún cobro.`,
+          confirmButtonColor: "#8800B3",
+        });
+        return;
+      }
+      window.location.assign(r.url);
     } catch (e) {
       notificarError("No se pudo iniciar el pago", e.message);
       setTrabajando(null);
@@ -322,6 +337,12 @@ function Contenido() {
         </Tarjeta>
       </BentoGrid>
 
+      {modoPruebas && admin && (
+        <ModoPruebas>
+          <strong>Modo pruebas:</strong> los pagos están desactivados. Comprar un plan, agregar complementos o empezar la prueba de
+          Enterprise se activa al instante, sin Wompi y sin cobro.
+        </ModoPruebas>
+      )}
       {admin && (
         <PruebaEnterprise
           idEmpresa={dataempresa?.id}
@@ -427,7 +448,13 @@ function Contenido() {
         })}
       </Planes>
 
-      <Complementos idEmpresa={dataempresa?.id} estado={estado} ajustes={ajustes} admin={admin} />
+      <Complementos
+        idEmpresa={dataempresa?.id}
+        estado={estado}
+        ajustes={ajustes}
+        admin={admin}
+        alActivar={() => Promise.all([recargar(), queryClient.invalidateQueries()])}
+      />
 
       <BentoGrid>
         <Tarjeta variante="acento" col={6} colTablet={6} titulo="Pagos seguros con Wompi" icono={<v.iconotarjeta />}>
@@ -485,6 +512,15 @@ const Actual = styled.div`
     margin-top: 6px;
     font-size: 0.92rem;
   }
+`;
+
+const ModoPruebas = styled.p`
+  padding: 12px 16px;
+  border-radius: ${({ theme }) => theme.radiusLg};
+  border: 1px dashed ${({ theme }) => theme.warning ?? theme.primary};
+  background: ${({ theme }) => theme.surface};
+  font-size: 0.9rem;
+  line-height: 1.5;
 `;
 
 const Usos = styled.div`

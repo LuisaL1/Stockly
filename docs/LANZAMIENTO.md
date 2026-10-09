@@ -139,6 +139,10 @@ Después, con **llaves de producción**, haz **una compra real pequeña con tu p
 Cada una se enciende con una línea en el SQL Editor, sin publicar una nueva versión de la app:
 
 ```sql
+-- Pagos reales con Wompi (apagados = modo pruebas: las compras se activan sin cobro).
+update stockly_ajustes_globales set valor = 'true' where clave = 'pagos_activos';
+-- Antes de abrir al público, borra los pagos de prueba para que esas empresas conserven el 50% de primera compra:
+-- delete from pagos_suscripcion where metodo = 'PRUEBAS';
 -- Novandra Max (IA): cuando tengas créditos de Anthropic y el secreto ANTHROPIC_API_KEY.
 update stockly_ajustes_globales set valor = 'true' where clave = 'novandra_ia_disponible';
 -- Factura electrónica DIAN: cuando el conector con el proveedor tecnológico esté listo.

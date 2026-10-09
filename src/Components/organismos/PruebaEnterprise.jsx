@@ -31,6 +31,19 @@ export function PruebaEnterprise({ idEmpresa, estado, alActivar, abrirAlCargar, 
     setTrabajando(true);
     try {
       const datos = await DatosPrueba(idEmpresa);
+      // Modo pruebas (pagos apagados): se activa sin Wompi ni medio de pago.
+      if (datos.modo_pruebas) {
+        const r = await ActivarPrueba({ idEmpresa, token: null, tipo: null });
+        await alActivar?.();
+        setTrabajando(false);
+        Swal.fire({
+          icon: "success",
+          title: "Prueba de Enterprise activa (modo pruebas)",
+          html: `Tienes todo Enterprise hasta el <b>${formatearFecha(r.prueba_hasta)}</b>. No se pidió medio de pago.`,
+          confirmButtonColor: "#8800B3",
+        });
+        return;
+      }
       const enlaces = [
         datos.terminos && `<a href="${datos.terminos}" target="_blank" rel="noreferrer">términos de Wompi</a>`,
         datos.datos_personales && `<a href="${datos.datos_personales}" target="_blank" rel="noreferrer">autorización de datos personales</a>`,

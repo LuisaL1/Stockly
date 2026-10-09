@@ -37,13 +37,20 @@ Deno.serve(async (req) => {
   // Se aceptan los nombres largos o los cortos (WOMPIPUBLIC, WOMPIINTEGR, WOMPIPRIV).
   const llavePublica = Deno.env.get("WOMPI_STOCKLY_PUBLIC_KEY") ?? Deno.env.get("WOMPIPUBLIC");
   const integridad = Deno.env.get("WOMPI_STOCKLY_INTEGRITY_SECRET") ?? Deno.env.get("WOMPIINTEGR");
-  if (!llavePublica || !integridad) return responder({ error: "Los pagos aún no están configurados. Escríbenos a equipo@appstockly.com." }, 503);
-  const apiWompi = llavePublica.startsWith("pub_prod_") ? "https://production.wompi.co/v1" : "https://sandbox.wompi.co/v1";
 
   const url = Deno.env.get("SUPABASE_URL")!;
   const db = createClient(url, Deno.env.get("SUPABASE_ANON_KEY")!, { global: { headers: { Authorization: authorization } } });
   const admin = createClient(url, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!, { auth: { persistSession: false } });
   const c = await req.json().catch(() => ({}));
+
+  // Interruptor global (stockly_ajustes_globales.pagos_activos). Apagado = modo pruebas: las compras,
+  // complementos y la prueba de Enterprise se activan sin Wompi y quedan con metodo = 'PRUEBAS'.
+  const { data: ajustePagos } = await admin.from("stockly_ajustes_globales").select("valor").eq("clave", "pagos_activos").maybeSingle();
+  const pagosActivos = ajustePagos?.valor === true;
+  if (pagosActivos && (!llavePublica || !integridad)) {
+    return responder({ error: "Los pagos aún no están configurados. Escríbenos a equipo@appstockly.com." }, 503);
+  }
+  const apiWompi = llavePublica?.startsWith("pub_prod_") ? "https://production.wompi.co/v1" : "https://sandbox.wompi.co/v1";
 
   // ------------------------------------------------------------- Prueba de Enterprise (sin cobro)
   // "datos_prueba": llave pública y enlaces de aceptación de Wompi para abrir el widget en modo tokenizar.
@@ -52,6 +59,21 @@ Deno.serve(async (req) => {
     const idEmpresa = Number(c.id_empresa);
     const { data: disponible } = await db.rpc("stockly_prueba_disponible", { _id_empresa: idEmpresa });
     if (disponible !== true) return responder({ error: "La prueba de Enterprise no está disponible para esta empresa." }, 403);
+    if (!pagosActivos) {
+      // Modo pruebas: sin Wompi ni medio de pago.
+      if (c.accion === "datos_prueba") return responder({ modo_pruebas: true });
+      const { data: sesionPrueba } = await db.auth.getUser();
+      if (!sesionPrueba?.user) return responder({ error: "Falta la sesión" }, 401);
+      const { data, error } = await admin.rpc("stockly_activar_prueba", {
+        _id_empresa: idEmpresa,
+        _uid: sesionPrueba.user.id,
+        _fuente: null,
+        _resumen: "Modo pruebas",
+        _huella_tarjeta: null,
+      });
+      if (error) return responder({ error: error.message }, 409);
+      return responder({ ...data, medio_pago: "modo pruebas (sin medio de pago)", modo_pruebas: true });
+    }
     const comercio = await fetch(`${apiWompi}/merchants/${llavePublica}`).then((r) => (r.ok ? r.json() : null)).catch(() => null);
     const aceptacion = comercio?.data?.presigned_acceptance;
     const datosPersonales = comercio?.data?.presigned_personal_data_auth;
@@ -243,6 +265,21 @@ Deno.serve(async (req) => {
   });
   if (errorPago) return responder({ error: "No se pudo registrar el pago" }, 500);
 
+  // Modo pruebas: se aprueba al instante, sin Wompi y sin enviar comprobante.
+  if (!pagosActivos) {
+    const { error: errorAplicar } = await admin.rpc("stockly_aplicar_pago_suscripcion", {
+      _referencia: referencia,
+      _estado: "APPROVED",
+      _transaccion: `pruebas-${referencia}`,
+      _monto_centavos: centavos,
+      _metodo: "PRUEBAS",
+    });
+    if (errorAplicar) return responder({ error: errorAplicar.message }, 500);
+    await admin.from("pagos_suscripcion").update({ recibo_enviado_en: new Date().toISOString() }).eq("referencia", referencia);
+    const { data: pago } = await db.rpc("stockly_estado_pago_suscripcion", { _referencia: referencia });
+    return responder({ aplicado: true, modo_pruebas: true, referencia, pago, cotizacion });
+  }
+
   const origen = String(c.origen ?? "");
   // Wompi bloquea (403) las direcciones de regreso locales: en pruebas locales no se envía y el
   // plan se activa con el webhook; la app revisa el pago al volver a "Plan y suscripción".
@@ -250,7 +287,7 @@ Deno.serve(async (req) => {
   const regreso = /^https?:\/\/[^\s/]+$/.test(origen) && !local ? `${origen}/configurar/plan?pago=${referencia}` : undefined;
   const firma = await sha256(`${referencia}${centavos}COP${integridad}`);
   const params = new URLSearchParams({
-    "public-key": llavePublica,
+    "public-key": llavePublica ?? "",
     currency: "COP",
     "amount-in-cents": String(centavos),
     reference: referencia,

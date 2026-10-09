@@ -57,11 +57,16 @@ export async function ReenviarConfirmacion(email) {
   if (error) throw new Error(traducirErrorAuth(error));
 }
 
+// El correo lo envía Stockly (Edge Function recuperar-contrasena) con su plantilla, igual que
+// los demás correos, en lugar del correo genérico de Supabase.
 export async function EnviarRecuperacion(email) {
-  const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${window.location.origin}/restablecer`,
+  const { error } = await supabase.functions.invoke("recuperar-contrasena", {
+    body: { email, origen: window.location.origin },
   });
-  if (error) throw new Error(traducirErrorAuth(error));
+  if (error) {
+    const detalle = await error.context?.json?.().catch(() => null);
+    throw new Error(detalle?.error ?? "No se pudo enviar el enlace. Intenta de nuevo.");
+  }
 }
 
 export async function CambiarContrasena(pass) {
