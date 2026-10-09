@@ -1,17 +1,52 @@
 <!doctype html>
-<html lang="es">
+<html lang="es-CO">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/png" href="/favicon.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="Stockly: inventario, ventas, facturación y cobros para tu negocio en Colombia. Prueba gratis 30 días." />
-    <meta property="og:title" content="Stockly · Inventario, ventas y facturación" />
-    <meta property="og:description" content="Controla tu inventario, vende y cobra con Bre-B, y recibe la ayuda de Novandra. Prueba gratis 30 días." />
-    <meta property="og:type" content="website" />
-    <meta name="theme-color" content="#8800B3" />
+    <title>Stockly | Software de inventario, ventas y facturación para negocios en Colombia</title>
+    <meta name="description" content="Controla tu inventario, vende rápido y factura desde un solo lugar. Punto de venta, varias bodegas, cobros con Bre-B y Wompi, y asistente inteligente. Empieza gratis." />
+    <link rel="canonical" href="https://appstockly.com/" />
+    <meta name="robots" content="index, follow, max-image-preview:large" />
     <meta name="author" content="MCCore" />
     <meta name="theme-color" content="#8800B3" />
-    <title>Stockly · Inventario, ventas y facturación</title>
+    <link rel="icon" type="image/png" href="/favicon.png" />
+    <link rel="apple-touch-icon" href="/favicon.png" />
+
+    <!-- Vista previa al compartir (WhatsApp, Facebook, LinkedIn, X) -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Stockly" />
+    <meta property="og:locale" content="es_CO" />
+    <meta property="og:url" content="https://appstockly.com/" />
+    <meta property="og:title" content="Stockly | Inventario, ventas y facturación en un solo lugar" />
+    <meta property="og:description" content="Punto de venta, control de inventario en varias bodegas, facturas por WhatsApp y cobros con Bre-B y Wompi. Plan gratis para siempre." />
+    <meta property="og:image" content="https://appstockly.com/og-stockly.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Stockly: inventario, ventas y facturación para negocios en Colombia" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Stockly | Inventario, ventas y facturación en un solo lugar" />
+    <meta name="twitter:description" content="Punto de venta, inventario en varias bodegas, facturas por WhatsApp y cobros con Bre-B y Wompi. Plan gratis." />
+    <meta name="twitter:image" content="https://appstockly.com/og-stockly.png" />
+
+    <link rel="preconnect" href="https://csiwkliqxivjkvogkfdi.supabase.co" crossorigin />
+
+    <!-- La página pública viene prerenderizada dentro de #root. Si la persona ya inició sesión
+         o abre otra ruta de la app, se oculta mientras carga la app (evita un parpadeo). -->
+    <script>
+      (function () {
+        try {
+          var conSesion = Object.keys(localStorage).some(function (k) {
+            return /^sb-.*-auth-token$/.test(k);
+          });
+          if (location.pathname !== "/" || conSesion) document.documentElement.className += " app";
+        } catch (e) {
+          if (location.pathname !== "/") document.documentElement.className += " app";
+        }
+      })();
+    </script>
+    <style>
+      html.app #root > [data-landing] { display: none; }
+    </style>
   </head>
   <body>
     <div id="root"></div>

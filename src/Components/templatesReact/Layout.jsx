@@ -1,5 +1,5 @@
 import { AvisoSuscripcion } from "../organismos/AvisoSuscripcion";
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import styled from "styled-components";
 import { Outlet, useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -143,7 +143,9 @@ export function Layout() {
           <BarraSuperior />
         </div>
         <AvisoSuscripcion />
-        <Outlet />
+        <Suspense fallback={<SpinnerLoader />}>
+          <Outlet />
+        </Suspense>
       </main>
       <PanelNovandra />
     </Container>

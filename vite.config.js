@@ -4,6 +4,9 @@ import react from "@vitejs/plugin-react";
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
+  // Prerender de la página pública (vite build --ssr): styled-components se empaqueta para evitar
+  // problemas de importación CommonJS/ESM en Node.
+  ssr: { noExternal: ["styled-components"] },
   build: {
     rollupOptions: {
       output: {

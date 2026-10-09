@@ -1,0 +1,28 @@
+# Stockly · appstockly.com
+User-agent: *
+Allow: /$
+Allow: /terminos
+Allow: /privacidad
+Allow: /login
+Allow: /assets/
+Allow: /favicon.png
+Allow: /og-stockly.png
+# La app (pantallas con datos de cada empresa) no se indexa.
+Disallow: /configurar
+Disallow: /ventas
+Disallow: /bodegas
+Disallow: /compras
+Disallow: /clientes
+Disallow: /proveedores
+Disallow: /notificaciones
+Disallow: /perfil
+Disallow: /sucursales
+Disallow: /inteligencia
+Disallow: /auditoria
+Disallow: /ayuda
+Disallow: /informe-contable
+Disallow: /kardex
+Disallow: /reportes
+Disallow: /restablecer
+
+Sitemap: https://appstockly.com/sitemap.xml

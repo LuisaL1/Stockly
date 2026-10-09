@@ -3,9 +3,19 @@ import { supabase } from "../supabase/supabase.config";
 import { SpinnerLoader } from "../Components/moleculas/SpinnerLoader";
 import { AuthContext } from "./contextoAuth";
 
+// ¿Hay una sesión guardada en este navegador? Si no la hay, no se muestra la pantalla de carga:
+// la página pública y el inicio de sesión aparecen de inmediato.
+function haySesionGuardada() {
+  try {
+    return Object.keys(localStorage).some((k) => /^sb-.*-auth-token$/.test(k));
+  } catch {
+    return true;
+  }
+}
+
 export function AuthContextProvider({ children }) {
   const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(haySesionGuardada);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {

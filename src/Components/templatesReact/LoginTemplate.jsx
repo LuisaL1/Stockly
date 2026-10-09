@@ -7,11 +7,14 @@ import { FormRegistro } from "../organismos/auth/FormRegistro";
 import { FormRecuperar, VistaVerificar } from "../organismos/auth/VistasCorreo";
 import { Device } from "../../styles/breackpoints";
 import { v } from "../../styles/variables";
-import ilustracion from "../../assets/login-ilustracion.png";
+import ilustracion from "../../assets/login-ilustracion.jpg";
 
 // Pantalla de acceso: ingresar, crear empresa, recuperar contraseña y confirmar correo.
 export function LoginTemplate() {
-  const [vista, setVista] = useState("ingresar"); // ingresar | registrar | recuperar | verificar
+  // ?registro=1 (desde la página pública) abre directamente el registro.
+  const [vista, setVista] = useState(() =>
+    new URLSearchParams(window.location.search).get("registro") ? "registrar" : "ingresar",
+  ); // ingresar | registrar | recuperar | verificar
   const [email, setEmail] = useState("");
   const registrando = vista === "registrar";
 
