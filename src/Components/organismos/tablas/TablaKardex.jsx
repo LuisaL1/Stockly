@@ -28,7 +28,7 @@ export function TablaKardex({ data, alCambiar }) {
     {
       accessorKey: "producto",
       header: "Producto",
-      meta: { width: "26%" },
+      meta: { width: "240px" },
       cell: ({ row }) => (
         <Producto $anulado={row.original.estado === "anulado"}>
           <strong>{row.original.producto}</strong>
