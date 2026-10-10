@@ -1,4 +1,5 @@
 import styled, { keyframes } from "styled-components";
+import personaje from "../assets/personaje-stockly.webp";
 import { GRIS, LINEA, MORADO, MORADO_CLARO, PAPEL, SUAVE, TINTA, TINTA2, VERDE } from "./tokens";
 
 // Visuales animados de la página pública. Solo CSS (keyframes): funcionan prerenderizados
@@ -891,3 +892,61 @@ const CintaBase = styled.div`
   }
 `;
 
+
+// --------------------------------------------------------------- Escena del hero (estática)
+// El personaje de la marca, recortado, con dos ondas en vector detrás (completas, extremos redondeados).
+const ESCENA_ANCHO = 620;
+const ESCENA_ALTO = 640;
+export function Escena() {
+  return (
+    <EscenaMarco className="escena-marco" aria-hidden="true">
+      <div className="lienzo">
+        <svg className="ondas" viewBox={`0 0 ${ESCENA_ANCHO} ${ESCENA_ALTO}`} width={ESCENA_ANCHO} height={ESCENA_ALTO}>
+          <defs>
+            <linearGradient id="onda-lila" x1="0" x2="1" y1="0" y2="0">
+              <stop offset="0" stopColor="#e6c2ff" />
+              <stop offset="0.55" stopColor="#f4e9ff" />
+              <stop offset="1" stopColor="#e9cdff" />
+            </linearGradient>
+          </defs>
+          <path d="M 96 276 C 170 246, 220 306, 300 276 S 440 246, 500 276 C 550 300, 590 300, 626 330" />
+          <path d="M -16 470 C 80 430, 140 510, 230 470 S 380 430, 460 470 S 580 510, 640 470" />
+        </svg>
+        <img src={personaje} alt="" width="2000" height="2765" fetchPriority="high" />
+      </div>
+    </EscenaMarco>
+  );
+}
+const EscenaMarco = styled.div`
+  --k: 1;
+  position: relative;
+  width: calc(${ESCENA_ANCHO}px * var(--k));
+  height: calc(${ESCENA_ALTO}px * var(--k));
+  .lienzo {
+    position: absolute;
+    inset: 0;
+    width: ${ESCENA_ANCHO}px;
+    height: ${ESCENA_ALTO}px;
+    transform: scale(var(--k));
+    transform-origin: 0 0;
+  }
+  .ondas {
+    position: absolute;
+    inset: 0;
+    overflow: visible;
+    path {
+      fill: none;
+      stroke: url(#onda-lila);
+      stroke-width: 22;
+      stroke-linecap: round;
+    }
+  }
+  img {
+    position: absolute;
+    left: 100px;
+    top: 10px;
+    height: 600px;
+    width: auto;
+    transform: scaleX(-1);
+  }
+`;

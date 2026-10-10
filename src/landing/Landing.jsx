@@ -1,8 +1,7 @@
 import styled from "styled-components";
 import logo from "../assets/logo.png";
-import personaje from "../assets/personaje-stockly.webp";
 import { FAQ, FUNCIONES, HERO, PASOS, PLANES, SITIO, cop } from "./contenido";
-import { Cinta, PanelHoy, PanelPlan, PanelStock, PanelTicket, PanelVentas, VentanaApp, VisualBodegas, VisualCaja, VisualNovandra, VisualTelefono } from "./widgets";
+import { Cinta, Escena, PanelHoy, PanelPlan, PanelStock, PanelTicket, PanelVentas, VentanaApp, VisualBodegas, VisualCaja, VisualNovandra, VisualTelefono } from "./widgets";
 import { GRIS, LINEA, MORADO, MORADO_CLARO, PAPEL, SUAVE, TINTA, sinMovimiento } from "./tokens";
 
 // Página pública de Stockly. Titular grande, la app en una ventana, y una historia por función.
@@ -54,7 +53,7 @@ export function Landing() {
               ))}
             </ul>
           </div>
-          <img className="personaje" src={personaje} alt="Persona del equipo de Stockly revisando el inventario con un lector de códigos" width="1000" height="1290" fetchPriority="high" />
+          <Escena />
           <VentanaApp className="ventana" aria-label="Así se ve el panel de Stockly">
             <div className="barra">
               <i />
@@ -422,14 +421,17 @@ const Hero = styled.section`
       font-weight: 700;
     }
   }
-  /* El personaje mira al titular (espejado) y apunta el lector a las palabras; sus pies pisan la ventana de la app */
-  .personaje {
+  /* La escena (ondas en vector + personaje) nace al final del titular y pisa la ventana de la app */
+  .escena-marco {
+    --k: 0.56;
     position: relative;
     z-index: 2;
-    height: 300px;
-    width: auto;
-    margin: 10px 0 -14px;
-    transform: scaleX(-1);
+    margin: 8px auto -36px;
+  }
+  @media (min-width: 480px) {
+    .escena-marco {
+      --k: 0.7;
+    }
   }
   .ventana {
     position: relative;
@@ -450,11 +452,11 @@ const Hero = styled.section`
     .notas {
       justify-content: flex-start;
     }
-    .personaje {
+    .escena-marco {
+      --k: 1;
       position: absolute;
       top: -6px;
-      right: 56px;
-      height: 590px;
+      right: 0;
       margin: 0;
     }
     .ventana {
