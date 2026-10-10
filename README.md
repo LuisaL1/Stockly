@@ -57,6 +57,7 @@ npm run dev
    25. `20261024000000_codigos_promo.sql`: códigos promocionales (por ejemplo, Pro gratis un mes) con topes de seguridad. Los códigos se crean en el SQL Editor, no en el repositorio.
    26. `20261025000000_modo_pruebas_pagos.sql`: interruptor de pagos. Apagado (modo pruebas), las compras se activan sin Wompi.
    27. `20261027000000_kardex.sql`: kardex como libro inmutable: fecha y hora, origen y referencia, ajustes con motivo, anulación con movimiento contrario, traslados en el kardex y consulta con saldo (`stockly_kardex`).
+   28. `20261028000000_productos_lista.sql`: la lista y la búsqueda de productos incluyen categoría y marca (LEFT JOIN) y solo responden a miembros de la empresa.
 2. Despliega las Edge Functions y guarda la API key de Anthropic para Novandra:
 
 ```bash
