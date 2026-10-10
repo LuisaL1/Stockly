@@ -423,7 +423,7 @@ const Hero = styled.section`
     --k: 0.6;
     position: relative;
     z-index: 2;
-    margin: 10px auto 0;
+    margin: 36px auto 0;
   }
   .ventana {
     display: none;
