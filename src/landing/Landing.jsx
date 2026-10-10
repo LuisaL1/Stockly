@@ -1,8 +1,8 @@
 import styled from "styled-components";
 import logo from "../assets/logo.png";
-import ilustracion from "../assets/login-ilustracion.jpg";
+import escena from "../assets/escena-inventario.webp";
 import { FAQ, FUNCIONES, HERO, PASOS, PLANES, SITIO, cop } from "./contenido";
-import { Cinta, Flotante, PanelHoy, PanelPlan, PanelStock, PanelTicket, PanelVentas, VentanaApp, VisualBodegas, VisualCaja, VisualNovandra, VisualTelefono } from "./widgets";
+import { Cinta, PanelHoy, PanelPlan, PanelStock, PanelTicket, PanelVentas, VentanaApp, VisualBodegas, VisualCaja, VisualNovandra, VisualTelefono } from "./widgets";
 import { GRIS, LINEA, MORADO, MORADO_CLARO, PAPEL, SUAVE, TINTA, sinMovimiento } from "./tokens";
 
 // Página pública de Stockly. Titular grande, la app en una ventana, y una historia por función.
@@ -54,7 +54,7 @@ export function Landing() {
               ))}
             </ul>
           </div>
-          <Flotante className="arte" src={ilustracion} alt="Persona de Stockly registrando inventario con un lector de códigos" width="1400" height="2001" fetchPriority="high" />
+          <img className="escena" src={escena} alt="Persona de Stockly registrando inventario con un lector de códigos" width="1300" height="1391" fetchPriority="high" />
           <VentanaApp className="ventana" aria-label="Así se ve el panel de Stockly">
             <div className="barra">
               <i />
@@ -360,13 +360,15 @@ const Barra = styled.header`
 `;
 
 const Hero = styled.section`
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 28px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
   align-items: center;
-  padding-top: 16px;
   text-align: center;
+  padding-top: 16px;
   .texto {
+    position: relative;
+    z-index: 3;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -420,33 +422,47 @@ const Hero = styled.section`
       font-weight: 700;
     }
   }
-  .arte {
-    justify-self: center;
-    width: min(100%, 300px);
+  /* La escena se monta sobre la ventana de la app: el personaje sale del titular hacia la app */
+  .escena {
+    position: relative;
+    z-index: 2;
+    width: min(100%, 340px);
     height: auto;
+    margin: 12px 0 -10px;
   }
   .ventana {
-    grid-column: 1 / -1;
-    margin-top: 16px;
+    position: relative;
+    z-index: 1;
+    width: 100%;
   }
-  @media (min-width: 880px) {
-    grid-template-columns: 1.1fr 0.9fr;
-    gap: 40px;
+  @media (min-width: 960px) {
+    display: block;
     text-align: left;
-    padding-top: 32px;
+    padding-top: 36px;
     .texto {
       align-items: flex-start;
+      justify-content: center;
+      max-width: 640px;
+      min-height: 520px;
     }
     .ctas,
     .notas {
       justify-content: flex-start;
     }
-    .arte {
-      justify-self: end;
-      width: min(100%, 420px);
+    .escena {
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 580px;
+      margin: 0;
     }
     .ventana {
-      margin-top: 32px;
+      margin-top: 12px;
+    }
+  }
+  @media (min-width: 1200px) {
+    .escena {
+      right: -36px;
     }
   }
 `;

@@ -55,10 +55,6 @@ const pensar = keyframes`
   32%, 38% { opacity: 1; }
   40%, 100% { opacity: 0; }
 `;
-const flotar = keyframes`
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-10px); }
-`;
 const desplazar = keyframes`
   from { transform: translateX(0); }
   to { transform: translateX(-50%); }
@@ -895,8 +891,3 @@ const CintaBase = styled.div`
   }
 `;
 
-// Ilustración que flota suavemente.
-export const Flotante = styled.img`
-  animation: ${flotar} 7s ease-in-out infinite;
-  will-change: transform;
-`;
