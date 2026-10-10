@@ -4,23 +4,25 @@ Lista de lo que hay que hacer para publicar Stockly y empezar a cobrar. Sigue el
 
 ## Qué incluye el lanzamiento
 
-| | Básico | Pro | Enterprise |
-|---|---|---|---|
-| Precio mensual (precio final, sin IVA) | Gratis | $69.900 | $189.900 |
-| Precio anual (2 meses gratis) | — | $699.000 | $1.899.000 |
-| Primera compra (−50%) | — | $34.950 / $349.500 | $94.950 / $949.500 |
-| Productos | 1.000 | 5.000 | 50.000 |
-| Ventas al mes | 300 | 5.000 | 30.000 |
-| Bodegas / sedes | 1 / 1 | 5 / 3 | 30 / 15 |
-| Usuarios | 2 | 5 | 20 |
-| Clientes / proveedores | 200 / 20 | 5.000 / 300 | 50.000 / 3.000 |
-| Archivos (logo y facturas de proveedores) | 50 MB | 2 GB | 10 GB |
-| Envíos del informe al contador | — | 15 al mes | 60 al mes |
-| Novandra esencial | Sí | Sí | Sí |
-| Novandra Max (IA) | — | 80 consultas al mes (próximamente) | 250 consultas al mes (próximamente) |
-| Tope de gasto en IA por empresa | — | COP 20.000/mes | COP 60.000/mes |
-| Factura electrónica DIAN | — | Próximamente | Próximamente |
+| | Básico | Pro | Enterprise | Partner |
+|---|---|---|---|---|
+| Precio mensual (precio final, sin IVA) | Gratis | $69.900 | $189.900 | $249.900 |
+| Precio anual (2 meses gratis) | — | $699.000 | $1.899.000 | $2.499.000 |
+| Primera compra (−50%) | — | $34.950 / $349.500 | $94.950 / $949.500 | $124.950 / $1.249.500 |
+| Productos | 1.000 | 5.000 | 50.000 | 50.000 |
+| Ventas al mes | 300 | 5.000 | 30.000 | 30.000 |
+| Bodegas / sedes | 1 / 1 | 5 / 3 | 30 / 15 | 30 / 15 |
+| Usuarios | 2 | 5 | 20 | 20 |
+| Clientes / proveedores | 200 / 20 | 5.000 / 300 | 50.000 / 3.000 | 50.000 / 3.000 |
+| Archivos (logo y facturas de proveedores) | 50 MB | 2 GB | 10 GB | 10 GB |
+| Envíos del informe al contador | — | 15 al mes | 60 al mes | 60 al mes |
+| Novandra esencial | Sí | Sí | Sí | Sí |
+| Novandra Max (IA) | — | 80 consultas al mes (próximamente) | 250 consultas al mes (próximamente) | 250 consultas al mes (próximamente) |
+| Tope de gasto en IA por empresa | — | COP 20.000/mes | COP 60.000/mes | COP 60.000/mes |
+| Factura electrónica DIAN | — | Próximamente | Próximamente | Próximamente |
+| Red de empresas (partners / franquicias) | — | — | — | 5 vínculos incluidos; +$19.900/mes por vínculo adicional |
 
+- **Plan Partner:** para matrices y franquicias. Solo la matriz necesita el plan; los partners usan cualquier plan (incluso Básico). Vínculo por código (7 días), cada parte decide qué comparte (stock, costos, catálogo). Envíos: salida en el kardex de origen al enviar; entrada en destino al recibir (se crean los productos que falten por código); si se rechaza, vuelve al origen. Pedidos a uno o varios vínculos; el que recibe despacha con un clic.
 - **Nada es ilimitado.** Los topes se revisan en el servidor. Están calculados para que, aun con una empresa al tope, el costo en Supabase sea mínimo frente al precio: unos 6 KB por venta, así que una empresa Enterprise al tope (30.000 ventas al mes) crece ~180 MB al mes, menos de USD 0,03 de base de datos adicional por mes.
 - **Novandra Max:** cada consulta cuesta en promedio ~COP 160 con Sonnet 5.5 (USD 2 / 10 por millón de tokens). Cada consulta tiene tope de 6 vueltas, ~90.000 tokens de entrada y 4.000 de salida. Al tope de consultas, la IA cuesta como máximo ~COP 12.800 en Pro (≈19% del precio neto) y ~COP 40.000 en Enterprise (≈22%), y el tope de gasto mensual corta antes si las consultas son muy largas. Al llegar a cualquiera de los dos, Novandra sigue respondiendo en modo esencial.
 - **Complementos:** con un plan pagado vigente se puede comprar capacidad adicional sin cambiar de plan. Se cobra proporcional a los días que le quedan al plan (mínimo $3.000) y vence con él; al renovar el plan se renuevan juntos (opcional). Cada uno tiene tope de unidades. Precios por unidad al mes, más caros que lo incluido en los planes:

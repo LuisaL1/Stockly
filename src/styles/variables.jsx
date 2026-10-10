@@ -1,4 +1,5 @@
 import {
+  LuNetwork,
   LuHouse,
   LuChartColumn,
   LuBuilding2,
@@ -88,6 +89,7 @@ export const v = {
   iconocategorias: LuLayoutGrid,
   iconomarca: LuTag,
   iconokardex: LuArrowLeftRight,
+  iconored: LuNetwork,
   iconoUser: LuUserRound,
   iconoUsuarios: LuUsers,
   iconoCerrarSesion: LuLogOut,

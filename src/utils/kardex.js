@@ -20,6 +20,7 @@ export const ORIGENES = {
   compra: { descripcion: "Compra", tono: "success", ruta: "/compras" },
   importacion: { descripcion: "Importación", tono: "neutro", ruta: "/configurar/importar-exportar" },
   traslado: { descripcion: "Traslado", tono: "neutro", ruta: "/bodegas" },
+  red: { descripcion: "Red", tono: "info", ruta: "/red" },
   ajuste: { descripcion: "Ajuste", tono: "primary", ruta: null },
 };
 

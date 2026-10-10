@@ -14,6 +14,7 @@ const LIMITES = {
   informes_mes: "limite_informes_mes",
   ventas_mes: "limite_ventas_mes",
   novandra_mes: "limite_novandra_mes",
+  vinculos: "limite_vinculos",
 };
 
 // Plan que rige hoy (pagado, mes de prueba o Básico), uso del mes y ayudas para revisar límites.

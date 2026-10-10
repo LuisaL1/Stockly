@@ -66,6 +66,14 @@ export const PLANES = [
     detalle: "Para negocios con varias sedes y equipos grandes.",
     incluye: ["50.000 productos", "30.000 ventas al mes", "30 bodegas y 15 sedes", "20 usuarios", "Todo lo de Pro", "Prueba gratis 7 días"],
   },
+  {
+    id: "partner",
+    nombre: "Partner",
+    precio: 249900,
+    precioAnual: 2499000,
+    detalle: "Para matrices y franquicias que operan en red.",
+    incluye: ["Todo lo de Enterprise", "5 empresas vinculadas", "Stock de tus partners en tiempo real", "Envíos y pedidos entre empresas", "Catálogo compartido", "Partners con cualquier plan"],
+  },
 ];
 
 export const FAQ = [

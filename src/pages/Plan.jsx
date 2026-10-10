@@ -62,6 +62,9 @@ function caracteristicas(p, ajustes) {
     p.reportes_avanzados
       ? `Informe contable (${n(p.limite_informes_mes)} envíos al mes), inteligencia y auditoría`
       : "Reportes básicos",
+    ...(Number(p.limite_vinculos) > 0
+      ? [`Red de empresas: hasta ${plural(p.limite_vinculos, "partner o franquicia vinculada", "partners o franquicias vinculadas")}, con stock en tiempo real, envíos, pedidos y catálogo compartido`]
+      : []),
   ];
 }
 
@@ -330,6 +333,7 @@ function Contenido() {
             <BarraUso etiqueta="Clientes" usado={usado("clientes")} limite={limite("clientes")} />
             <BarraUso etiqueta="Proveedores" usado={usado("proveedores")} limite={limite("proveedores")} />
             <BarraUso etiqueta="Archivos (MB)" usado={usado("archivos_mb")} limite={limite("archivos_mb")} />
+            {Number(limite("vinculos")) > 0 && <BarraUso etiqueta="Empresas vinculadas" usado={usado("vinculos")} limite={limite("vinculos")} />}
             {plan?.novandra_ia && ajustes?.novandra_ia_disponible === true && (
               <BarraUso etiqueta="Consultas a Novandra Max" usado={usado("novandra_mes")} limite={limite("novandra_mes")} />
             )}

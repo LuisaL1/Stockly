@@ -354,6 +354,27 @@ export const GUIAS = [
     ir: { texto: "Ir a Kardex", a: "/kardex" },
   },
   {
+    id: "red-empresas",
+    categoria: "Inventario",
+    titulo: "Red de empresas: partners y franquicias",
+    resumen: "Vincula otra empresa de Stockly para ver su stock en tiempo real, enviarle mercancía y recibir pedidos.",
+    rutas: ["/red", "/configurar/plan"],
+    claves: "red partner franquicia vinculo vincular matriz sucursal independiente otra empresa enviar mercancia pedido codigo",
+    pasos: [
+      "Con el plan Partner, ve a Red de empresas y toca Invitar empresa: obtienes un código (vale 7 días).",
+      "La otra empresa (con cualquier plan) entra a Red de empresas → Tengo un código y lo pega. Listo: quedan vinculadas.",
+      "Cada una decide qué comparte: stock en tiempo real, costos y catálogo. Se cambia cuando quieras en la tarjeta del vínculo.",
+      "Para enviar mercancía: Enviar mercancía, eliges bodega y productos. Sale de tu inventario; cuando la otra empresa la recibe, entra al suyo (y se crean los productos que no tenga).",
+      "Para pedir: Pedir, eliges una o varias empresas y los productos. Quien recibe el pedido lo despacha con un clic.",
+    ],
+    consejos: [
+      "Un partner no necesita el plan Partner: solo la matriz que invita.",
+      "Si recibes un envío que no corresponde, recházalo: la mercancía vuelve al inventario de quien la envió.",
+      "Todo queda en el kardex de ambas empresas con origen Red.",
+    ],
+    ir: { texto: "Ir a Red de empresas", a: "/red" },
+  },
+  {
     id: "bodegas-traslados",
     categoria: "Inventario",
     titulo: "Crear bodegas y trasladar stock",

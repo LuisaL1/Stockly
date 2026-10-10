@@ -18,6 +18,7 @@ const Productos = lazy(() => import("../pages/Productos").then((m) => ({ default
 const Usuarios = lazy(() => import("../pages/Usuarios").then((m) => ({ default: m.Usuarios })));
 const Empresa = lazy(() => import("../pages/Empresa").then((m) => ({ default: m.Empresa })));
 const Kardex = lazy(() => import("../pages/Kardex").then((m) => ({ default: m.Kardex })));
+const Red = lazy(() => import("../pages/Red").then((m) => ({ default: m.Red })));
 const Ventas = lazy(() => import("../pages/Ventas").then((m) => ({ default: m.Ventas })));
 const Facturas = lazy(() => import("../pages/Facturas").then((m) => ({ default: m.Facturas })));
 const Bodegas = lazy(() => import("../pages/Bodegas").then((m) => ({ default: m.Bodegas })));
@@ -92,6 +93,7 @@ export function MyRoutes() {
         <Route path="/ayuda" element={<Ayuda />} />
         <Route path="/informe-contable" element={<InformeContable />} />
         <Route path="/kardex" element={<Kardex />} />
+        <Route path="/red" element={<Red />} />
         <Route path="/reportes" element={conCarga(<Reportes />)}>
           <Route index element={<Navigate to="stock-actual-todos" replace />} />
           <Route path="stock-actual-todos" element={conCarga(<StockActualTodos />)} />

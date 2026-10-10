@@ -58,6 +58,7 @@ npm run dev
    26. `20261025000000_modo_pruebas_pagos.sql`: interruptor de pagos. Apagado (modo pruebas), las compras se activan sin Wompi.
    27. `20261027000000_kardex.sql`: kardex como libro inmutable: fecha y hora, origen y referencia, ajustes con motivo, anulación con movimiento contrario, traslados en el kardex y consulta con saldo (`stockly_kardex`).
    28. `20261028000000_productos_lista.sql`: la lista y la búsqueda de productos incluyen categoría y marca (LEFT JOIN) y solo responden a miembros de la empresa.
+   29. `20261029000000_red_partners.sql`: plan Partner, complemento de vínculos y red de empresas (vínculos por código, stock en tiempo real, catálogo compartido, envíos con entrada/salida en ambos kardex y pedidos a uno o varios vínculos).
 2. Despliega las Edge Functions y guarda la API key de Anthropic para Novandra:
 
 ```bash

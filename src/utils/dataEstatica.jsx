@@ -26,6 +26,7 @@ export const NavGrupos = [
       { label: "Productos", icon: <v.iconostock />, to: "/configurar/productos" },
       { label: "Sucursales", icon: <v.iconosucursales />, to: "/sucursales" },
       { label: "Bodegas", icon: <v.iconobodegas />, to: "/bodegas" },
+      { label: "Red de empresas", icon: <v.iconored />, to: "/red" },
       { label: "Reportes", icon: <v.iconoreportes />, to: "/reportes" },
     ],
   },

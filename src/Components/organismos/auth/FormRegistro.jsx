@@ -236,7 +236,7 @@ export function FormRegistro({ irA, alRegistrar }) {
               </button>
             </Ciclo>
             <Planes role="radiogroup" aria-label="Plan">
-              {(planes.data ?? []).map((p) => {
+              {(planes.data ?? []).filter((p) => !Number(p.limite_vinculos)).map((p) => {
                 const precio = anual ? p.precio_anual : p.precio_mensual;
                 return (
                   <label key={p.id} className={planElegido === p.id ? "elegido" : ""}>

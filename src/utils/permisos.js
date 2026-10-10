@@ -14,6 +14,7 @@ export const MODULOS = {
   facturacion: "Facturación",
   sucursales: "Sucursales",
   inteligencia: "Inteligencia",
+  red: "Red",
 };
 
 // Dueño o administrador de la empresa (la auditoría y los permisos de Novandra son solo para ellos).

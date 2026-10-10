@@ -31,6 +31,8 @@ const ACCIONES = {
   producto_editado: "Editó un producto",
   producto_eliminado: "Eliminó un producto",
   traslado: "Trasladó mercancía",
+  envio_red: "Envió mercancía a una empresa de la red",
+  recepcion_red: "Recibió mercancía de la red",
   orden_creada: "Creó una orden de compra",
   orden_enviada: "Envió una orden de compra",
   orden_recibida: "Recibió una orden de compra",

@@ -48,7 +48,7 @@ export function TablaKardex({ data, alCambiar }) {
         const f = row.original;
         const o = ORIGENES[f.origen];
         const chip = <Etiqueta tono={o?.tono ?? "neutro"}>{etiquetaOrigen(f)}</Etiqueta>;
-        const detalle = f.origen === "ajuste" ? f.nota : f.origen === "traslado" ? f.detalle : null;
+        const detalle = f.origen === "ajuste" ? f.nota : f.origen === "traslado" || f.origen === "red" ? f.detalle : null;
         return (
           <Origen>
             {o?.ruta ? <Link to={o.ruta}>{chip}</Link> : chip}
