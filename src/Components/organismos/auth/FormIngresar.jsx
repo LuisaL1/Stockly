@@ -66,7 +66,7 @@ export function FormIngresar({ irA, emailInicial = "" }) {
             ¿Olvidaste tu contraseña?
           </Enlace>
         </div>
-        <Boton type="submit" tamano="lg" bloque cargando={isSubmitting} icono={<v.iconoflechaderecha />}>
+        <Boton type="submit" tamano="lg" bloque cargando={isSubmitting}>
           Ingresar
         </Boton>
       </FormAuth>

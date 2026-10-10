@@ -37,7 +37,7 @@ export function VistaVerificar({ email, irA }) {
         </p>
       </Encabezado>
       {estado && <Alerta $tipo={estado.tipo}>{estado.texto}</Alerta>}
-      <Boton tamano="lg" bloque funcion={() => irA("ingresar", email)} icono={<v.iconoflechaderecha />}>
+      <Boton tamano="lg" bloque funcion={() => irA("ingresar", email)}>
         Ya confirmé, ingresar
       </Boton>
       <PieAuth>
@@ -108,7 +108,7 @@ export function FormRecuperar({ irA, emailInicial = "" }) {
       </FormAuth>
       <PieAuth>
         <Enlace type="button" onClick={() => irA("ingresar")}>
-          ← Volver a iniciar sesión
+          Volver a iniciar sesión
         </Enlace>
       </PieAuth>
     </>
