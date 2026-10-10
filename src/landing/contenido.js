@@ -142,7 +142,7 @@ export function datosEstructurados() {
       name: SITIO.empresa,
       url: SITIO.empresaUrl,
       email: SITIO.correo,
-      logo: `${SITIO.url}/favicon.png`,
+      logo: `${SITIO.url}/favicon-512.png`,
       address: { "@type": "PostalAddress", addressLocality: "Quimbaya", addressRegion: "Quindío", addressCountry: "CO" },
     },
     {
