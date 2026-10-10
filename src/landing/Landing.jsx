@@ -1,6 +1,6 @@
 import styled from "styled-components";
 import logo from "../assets/logo.png";
-import escena from "../assets/escena-inventario.webp";
+import personaje from "../assets/personaje-stockly.webp";
 import { FAQ, FUNCIONES, HERO, PASOS, PLANES, SITIO, cop } from "./contenido";
 import { Cinta, PanelHoy, PanelPlan, PanelStock, PanelTicket, PanelVentas, VentanaApp, VisualBodegas, VisualCaja, VisualNovandra, VisualTelefono } from "./widgets";
 import { GRIS, LINEA, MORADO, MORADO_CLARO, PAPEL, SUAVE, TINTA, sinMovimiento } from "./tokens";
@@ -54,7 +54,7 @@ export function Landing() {
               ))}
             </ul>
           </div>
-          <img className="escena" src={escena} alt="Persona de Stockly registrando inventario con un lector de códigos" width="1300" height="1391" fetchPriority="high" />
+          <img className="personaje" src={personaje} alt="Persona del equipo de Stockly revisando el inventario con un lector de códigos" width="1000" height="1290" fetchPriority="high" />
           <VentanaApp className="ventana" aria-label="Así se ve el panel de Stockly">
             <div className="barra">
               <i />
@@ -422,13 +422,14 @@ const Hero = styled.section`
       font-weight: 700;
     }
   }
-  /* La escena se monta sobre la ventana de la app: el personaje sale del titular hacia la app */
-  .escena {
+  /* El personaje mira al titular (espejado) y apunta el lector a las palabras; sus pies pisan la ventana de la app */
+  .personaje {
     position: relative;
     z-index: 2;
-    width: min(100%, 340px);
-    height: auto;
-    margin: 12px 0 -10px;
+    height: 300px;
+    width: auto;
+    margin: 10px 0 -14px;
+    transform: scaleX(-1);
   }
   .ventana {
     position: relative;
@@ -442,27 +443,22 @@ const Hero = styled.section`
     .texto {
       align-items: flex-start;
       justify-content: center;
-      max-width: 640px;
+      max-width: 620px;
       min-height: 520px;
     }
     .ctas,
     .notas {
       justify-content: flex-start;
     }
-    .escena {
+    .personaje {
       position: absolute;
-      top: 0;
-      right: 0;
-      width: 580px;
+      top: -6px;
+      right: 56px;
+      height: 590px;
       margin: 0;
     }
     .ventana {
-      margin-top: 12px;
-    }
-  }
-  @media (min-width: 1200px) {
-    .escena {
-      right: -36px;
+      margin-top: 14px;
     }
   }
 `;
