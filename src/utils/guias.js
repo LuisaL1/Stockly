@@ -364,9 +364,9 @@ export const GUIAS = [
     pasos: [
       "Con el plan Partner, ve a Red de empresas y toca Invitar empresa: obtienes un código (vale 7 días).",
       "La otra empresa (con cualquier plan) entra a Red de empresas → Tengo un código y lo pega. Listo: quedan vinculadas.",
-      "Cada una decide qué comparte: stock en tiempo real, costos y catálogo. Se cambia cuando quieras en la tarjeta del vínculo.",
+      "Cada una decide qué comparte: stock en tiempo real y costos. Se cambia cuando quieras en la tarjeta del vínculo.",
       "Para enviar mercancía: Enviar mercancía, eliges bodega y productos. Sale de tu inventario; cuando la otra empresa la recibe, entra al suyo (y se crean los productos que no tenga).",
-      "Para pedir: Pedir, eliges una o varias empresas y los productos. Quien recibe el pedido lo despacha con un clic.",
+      "Para pedir: Pedir, eliges una o varias empresas y los productos. Quien recibe el pedido lo despacha con un clic. Los productos que no tenías se crean en tu catálogo al recibir el envío; nada se agrega sin mercancía de por medio.",
     ],
     consejos: [
       "Un partner no necesita el plan Partner: solo la matriz que invita.",

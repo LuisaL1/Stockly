@@ -40,13 +40,6 @@ export async function ConfigurarVinculo(idVinculo, idEmpresa, config) {
   return data;
 }
 
-export async function ImportarCatalogoRed(idVinculo, idEmpresa, ids = null) {
-  const { data, error } = await supabase.rpc("stockly_red_importar_catalogo", { _id_vinculo: idVinculo, _id_empresa: idEmpresa, _ids: ids });
-  if (manejarError(error, "No se pudo importar el catálogo")) return null;
-  notificarExito(data.creados ? `${data.creados} producto(s) agregados a tu catálogo` : "Ya tenías todos esos productos");
-  return data;
-}
-
 export async function EnviarMercancia({ idVinculo, idEmpresa, idBodega, items, nota, idPedido }) {
   const { data, error } = await supabase.rpc("stockly_red_enviar", {
     _id_vinculo: idVinculo,

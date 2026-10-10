@@ -28,7 +28,6 @@ import {
   ConfigurarVinculo,
   EnviarMercancia,
   EnviosRed,
-  ImportarCatalogoRed,
   InvitarEmpresa,
   MisVinculos,
   PedidosRed,
@@ -144,7 +143,7 @@ function Contenido() {
       {pestana === "vinculos" && (
         <Vinculos vinculos={vinculos} admin={admin} idEmpresa={idEmpresa} recargar={recargar} abrir={setModal} />
       )}
-      {pestana === "stock" && <StockDeLaRed activos={activos} idEmpresa={idEmpresa} admin={admin} recargar={recargar} abrir={setModal} />}
+      {pestana === "stock" && <StockDeLaRed activos={activos} idEmpresa={idEmpresa} abrir={setModal} />}
       {pestana === "envios" && (
         <Envios lista={envios.data ?? []} idEmpresa={idEmpresa} opcionesBodega={opcionesBodega} recargar={recargar} abrir={setModal} />
       )}
@@ -219,7 +218,6 @@ function Vinculos({ vinculos, admin, idEmpresa, recargar, abrir }) {
                 {[
                   ["stock", "Mi stock en tiempo real"],
                   ["costos", "Mis costos de compra"],
-                  ["catalogo", "Mi catálogo (para que lo importe)"],
                 ].map(([clave, texto]) => (
                   <label key={clave}>
                     <input type="checkbox" checked={!!x.comparto?.[clave]} disabled={!admin} onChange={(e) => cambiar(x, clave, e.target.checked)} />
@@ -228,7 +226,7 @@ function Vinculos({ vinculos, admin, idEmpresa, recargar, abrir }) {
                 ))}
                 <span className="titulo">{x.otra} comparte</span>
                 <span className="resumen">
-                  {[x.comparte?.stock && "stock", x.comparte?.costos && "costos", x.comparte?.catalogo && "catálogo"].filter(Boolean).join(" · ") || "nada por ahora"}
+                  {[x.comparte?.stock && "stock", x.comparte?.costos && "costos"].filter(Boolean).join(" · ") || "nada por ahora"}
                 </span>
               </Comparte>
               <Pendientes>
@@ -264,7 +262,7 @@ function Vinculos({ vinculos, admin, idEmpresa, recargar, abrir }) {
 }
 
 // ------------------------------------------------------------------ Stock de la red
-function StockDeLaRed({ activos, idEmpresa, admin, recargar, abrir }) {
+function StockDeLaRed({ activos, idEmpresa, abrir }) {
   const [vinculo, setVinculo] = useState(null);
   const [texto, setTexto] = useState("");
   const opciones = activos.map((x) => ({ ...x, descripcion: x.otra }));
@@ -278,10 +276,6 @@ function StockDeLaRed({ activos, idEmpresa, admin, recargar, abrir }) {
   });
   if (!activos.length) return <EstadoVacio titulo="Sin empresas vinculadas" mensaje="Cuando tengas un vínculo activo verás aquí su inventario." icono={<v.iconored />} />;
   const datos = stock.data;
-  const importar = async (ids) => {
-    const r = await ImportarCatalogoRed(actual.id, idEmpresa, ids);
-    if (r) recargar();
-  };
   const columnas = [
     {
       accessorKey: "descripcion",
@@ -305,16 +299,7 @@ function StockDeLaRed({ activos, idEmpresa, admin, recargar, abrir }) {
     {
       id: "mio",
       header: "En mi catálogo",
-      cell: ({ row }) =>
-        row.original.mi_producto ? (
-          <Etiqueta tono="success">Lo tienes</Etiqueta>
-        ) : datos?.catalogo && admin ? (
-          <Boton tamano="sm" variante="fantasma" funcion={() => importar([row.original.id])}>
-            Agregar
-          </Boton>
-        ) : (
-          <Etiqueta tono="neutro">No</Etiqueta>
-        ),
+      cell: ({ row }) => (row.original.mi_producto ? <Etiqueta tono="success">Lo tienes</Etiqueta> : <Etiqueta tono="neutro">Aún no</Etiqueta>),
     },
   ];
   return (
@@ -326,11 +311,6 @@ function StockDeLaRed({ activos, idEmpresa, admin, recargar, abrir }) {
           <Boton tamano="sm" variante="secundario" icono={<v.iconocompras />} funcion={() => abrir({ tipo: "pedir", vinculo: actual })}>
             Pedir a {actual?.otra}
           </Boton>
-          {datos?.catalogo && admin && (
-            <Boton tamano="sm" variante="secundario" icono={<v.iconostock />} funcion={() => importar(null)}>
-              Importar todo el catálogo
-            </Boton>
-          )}
         </span>
       </Filtros>
       {stock.isLoading ? (
@@ -338,7 +318,7 @@ function StockDeLaRed({ activos, idEmpresa, admin, recargar, abrir }) {
       ) : datos && !datos.comparte ? (
         <EstadoVacio titulo={`${actual?.otra} no comparte su stock`} mensaje="Pídele que active “Mi stock en tiempo real” en su Red de empresas." icono={<v.iconored />} />
       ) : (
-        <DataTable data={datos?.productos ?? []} columns={columnas} tamanoPagina={25} vacio={<EstadoVacio titulo="Sin productos" mensaje="Esa empresa aún no tiene productos con ese nombre." />} />
+        <DataTable data={datos?.productos ?? []} columns={columnas} tamanoPagina={25} vacio={<EstadoVacio titulo="Sin productos" mensaje="Esa empresa aún no tiene productos con ese nombre. Para traerlos a tu inventario, haz un pedido: entran cuando recibas el envío." />} />
       )}
     </>
   );

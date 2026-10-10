@@ -72,7 +72,7 @@ export const PLANES = [
     precio: 249900,
     precioAnual: 2499000,
     detalle: "Para matrices y franquicias que operan en red.",
-    incluye: ["Todo lo de Enterprise", "5 empresas vinculadas", "Stock de tus partners en tiempo real", "Envíos y pedidos entre empresas", "Catálogo compartido", "Partners con cualquier plan"],
+    incluye: ["Todo lo de Enterprise", "5 empresas vinculadas", "Stock de tus partners en tiempo real", "Envíos y pedidos entre empresas", "Partners con cualquier plan"],
   },
 ];
 
