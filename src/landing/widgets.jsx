@@ -215,8 +215,8 @@ export function PanelVentas() {
       <div className="titulo">
         <i>↗</i> Ventas del periodo · últimos 30 días
       </div>
-      <Cifra>$ 18.972.051</Cifra>
-      <span className="muted">57 ventas</span>
+      <Cifra>$ 17.740.282</Cifra>
+      <span className="muted">54 ventas</span>
       <Grafica viewBox="0 0 320 70" aria-hidden="true">
         <defs>
           <linearGradient id="gv" x1="0" x2="0" y1="0" y2="1">
@@ -853,67 +853,129 @@ const Novandra = styled.div`
   }
 `;
 
-// --------------------------------------------------------------- Teléfono con la app y avisos flotantes (hero)
-const MOVIL_ANCHO = 460;
-const MOVIL_ALTO = 600;
+// --------------------------------------------------------------- Teléfono con la app y paneles flotantes (hero)
+// Mismo lenguaje que la portada de MCCore: escenario con perspectiva, el dispositivo entra girando,
+// los paneles aparecen escalonados y flotan apenas; las notificaciones entran una a una y Novandra responde.
+const ESC_ANCHO = 560;
+const ESC_ALTO = 620;
+const NOTIFICACIONES = [
+  ["▣", "Nueva venta #1042", "3 productos · $ 116.620 · Bre-B", ""],
+  ["⚠", "Stock bajo: Gorra negra bordada", "Quedan 4 unidades", "aviso"],
+  ["▤", "Llegó el pedido del proveedor", "120 unidades · Bodega principal", ""],
+  ["✦", "Novandra sugiere reabastecer", "Gorra negra antes del viernes", ""],
+];
 export function Movil() {
   return (
-    <MovilEscena className="movil-escena" aria-hidden="true">
+    <Escena className="movil-escena" aria-hidden="true">
       <div className="lienzo">
         <div className="telefono">
           <div className="pantalla">
             <img src={movil} alt="" width="780" height="1688" fetchPriority="high" />
           </div>
         </div>
-        <div className="flot aviso">
-          <i>⚠</i>
-          <div>
-            <b>Stock bajo</b>
-            <span>Gorra negra bordada · quedan 4</span>
-          </div>
+
+        <div className="panel notifs">
+          <b className="titulo">Notificaciones</b>
+          {NOTIFICACIONES.map(([ic, t, d, clase], i) => (
+            <div className={`notif ${clase}`} key={t} style={{ "--i": i }}>
+              <i>{ic}</i>
+              <span>
+                <b>{t}</b>
+                <small>{d}</small>
+              </span>
+            </div>
+          ))}
         </div>
-        <div className="flot novandra">
-          <i>✦</i>
-          <div>
-            <b>Novandra</b>
-            <span>Pide 30 gorras a Textiles del Eje antes del viernes.</span>
-            <em>Crear orden</em>
+
+        <div className="panel novandra">
+          <div className="cab">
+            <i>✦</i>
+            <span>
+              <b>Novandra</b>
+              <small>Asistente de operaciones · ve tus datos en tiempo real</small>
+            </span>
           </div>
-        </div>
-        <div className="flot venta">
-          <i>✓</i>
-          <div>
-            <b>Venta registrada</b>
-            <span>$ 116.620 · Bre-B</span>
+          <div className="cuerpo">
+            <p className="msg mia">¿Qué debo reabastecer?</p>
+            <p className="escribiendo">
+              <span />
+              <span />
+              <span />
+            </p>
+            <p className="msg bot">
+              Repón <b>2 productos</b>. El más urgente: <b>Gorra negra bordada</b>, quedan 4 y se venden 6 por semana.
+            </p>
+            <div className="borrador">
+              <i>▥</i>
+              <span>
+                <b>Orden de compra en borrador</b>
+                <small>2 productos · lista para revisar</small>
+              </span>
+            </div>
           </div>
         </div>
       </div>
-    </MovilEscena>
+    </Escena>
   );
 }
-const MovilEscena = styled.div`
+const entrar = keyframes`
+  from { opacity: 0; transform: rotateY(-40deg) rotateX(14deg) translateX(8%) translateY(6%); }
+`;
+const aparecer3d = keyframes`
+  from { opacity: 0; translate: 0 30px; }
+`;
+const flotarSuave = keyframes`
+  to { translate: 0 -12px; }
+`;
+const notifEntra = keyframes`
+  from { opacity: 0; translate: 12px 0; }
+`;
+const msgEntra = keyframes`
+  from { opacity: 0; translate: 0 10px; }
+`;
+const desplegar = keyframes`
+  from { opacity: 0; max-height: 0; padding-block: 0; margin-top: -8px; border-width: 0; }
+  to { opacity: 1; max-height: 160px; }
+`;
+const cajaEscribiendo = keyframes`
+  0% { opacity: 0; max-height: 0; padding-block: 0; }
+  15% { opacity: 1; max-height: 40px; padding-block: 9px; }
+  85% { opacity: 1; max-height: 40px; padding-block: 9px; }
+  100% { opacity: 0; max-height: 0; padding-block: 0; margin-top: -8px; }
+`;
+const punto = keyframes`
+  0%, 60%, 100% { transform: translateY(0); opacity: 0.5; }
+  30% { transform: translateY(-3px); opacity: 1; }
+`;
+const Escena = styled.div`
   --k: 1;
   position: relative;
-  width: calc(${MOVIL_ANCHO}px * var(--k));
-  height: calc(${MOVIL_ALTO}px * var(--k));
+  width: calc(${ESC_ANCHO}px * var(--k));
+  height: calc(${ESC_ALTO}px * var(--k));
+  pointer-events: none;
   .lienzo {
     position: absolute;
     inset: 0;
-    width: ${MOVIL_ANCHO}px;
-    height: ${MOVIL_ALTO}px;
+    width: ${ESC_ANCHO}px;
+    height: ${ESC_ALTO}px;
     transform: scale(var(--k));
     transform-origin: 0 0;
+    perspective: 1800px;
   }
   .telefono {
     position: absolute;
-    left: 88px;
-    top: 0;
-    width: 284px;
-    height: ${MOVIL_ALTO}px;
+    left: 164px;
+    top: 16px;
+    width: 280px;
+    height: 580px;
     padding: 10px;
     border-radius: 44px;
     background: ${TINTA};
-    box-shadow: 0 40px 90px -40px rgba(23, 19, 29, 0.6), inset 0 0 0 1px rgba(244, 241, 236, 0.12);
+    box-shadow: 0 50px 90px -40px rgba(23, 19, 29, 0.6), inset 0 0 0 1px rgba(244, 241, 236, 0.12);
+    transform-style: preserve-3d;
+    transform: rotateY(-16deg) rotateX(6deg) rotateZ(1deg);
+    transform-origin: 40% 60%;
+    animation: ${entrar} 1.4s cubic-bezier(0.2, 0.7, 0.1, 1) 0.2s backwards;
   }
   .pantalla {
     width: 100%;
@@ -927,82 +989,166 @@ const MovilEscena = styled.div`
       height: auto;
     }
   }
-  .flot {
+  .panel {
     position: absolute;
-    display: flex;
-    align-items: flex-start;
-    gap: 10px;
-    padding: 12px 14px;
     border-radius: 16px;
     background: #fff;
     border: 1px solid ${LINEA};
-    box-shadow: 0 24px 50px -28px rgba(23, 19, 29, 0.45);
-    font-size: 0.8rem;
+    box-shadow: 0 30px 50px -28px rgba(23, 19, 29, 0.5);
+    font-size: 0.78rem;
     line-height: 1.35;
-    width: 230px;
+  }
+  /* Notificaciones: arriba a la derecha */
+  .notifs {
+    top: 0;
+    right: -14px;
+    width: 228px;
+    padding: 12px 14px;
+    transform: rotateY(-20deg) rotateX(6deg) rotateZ(-2deg);
+    animation: ${aparecer3d} 1s cubic-bezier(0.2, 0.7, 0.1, 1) 0.9s backwards, ${flotarSuave} 8s ease-in-out 2.5s infinite alternate-reverse;
+    .titulo {
+      display: block;
+      margin-bottom: 4px;
+      font-size: 0.9rem;
+    }
+  }
+  .notif {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 7px 0;
+    animation: ${notifEntra} 0.6s ease backwards;
+    animation-delay: calc(1.4s + var(--i) * 0.25s);
     i {
       flex: none;
-      width: 30px;
-      height: 30px;
-      border-radius: 10px;
+      width: 28px;
+      height: 28px;
+      border-radius: 9px;
       display: grid;
       place-items: center;
       font-style: normal;
       font-weight: 800;
+      color: ${MORADO};
+      background: ${SUAVE};
     }
     b {
       display: block;
-      font-size: 0.84rem;
+      font-weight: 600;
     }
-    span {
+    small {
       color: ${GRIS};
     }
-    em {
-      display: inline-block;
-      margin-top: 8px;
-      padding: 5px 10px;
-      border-radius: 8px;
-      background: ${MORADO};
-      color: #fff;
-      font-style: normal;
-      font-weight: 700;
-      font-size: 0.76rem;
+    &.aviso i {
+      color: #b7791f;
+      background: #fdf0d8;
     }
   }
-  .aviso {
-    left: -44px;
-    top: 150px;
-    i {
-      background: #fde8e8;
-      color: #b91c1c;
-    }
-  }
+  /* Novandra: abajo a la izquierda */
   .novandra {
-    right: -36px;
-    top: 300px;
-    width: 236px;
-    background: ${TINTA2};
-    border-color: rgba(244, 241, 236, 0.1);
-    color: ${PAPEL};
-    span {
-      color: rgba(244, 241, 236, 0.7);
+    left: 0;
+    bottom: -14px;
+    width: 244px;
+    overflow: hidden;
+    transform: rotateY(-14deg) rotateX(6deg);
+    animation: ${aparecer3d} 1s cubic-bezier(0.2, 0.7, 0.1, 1) 0.7s backwards, ${flotarSuave} 7s ease-in-out 2s infinite alternate;
+    .cab {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      padding: 11px 13px;
+      color: #fff;
+      background: ${TINTA};
+      i {
+        flex: none;
+        width: 32px;
+        height: 32px;
+        border-radius: 9px;
+        display: grid;
+        place-items: center;
+        font-style: normal;
+        font-weight: 800;
+        color: ${TINTA};
+        background: ${MORADO_CLARO};
+      }
+      b {
+        display: block;
+        font-size: 0.9rem;
+      }
+      small {
+        color: rgba(255, 255, 255, 0.6);
+        line-height: 1.25;
+        display: block;
+      }
     }
-    i {
-      background: ${MORADO_CLARO};
-      color: ${TINTA};
+    .cuerpo {
+      display: grid;
+      gap: 8px;
+      padding: 12px;
+      background: ${PAPEL};
     }
-    em {
-      background: ${MORADO_CLARO};
-      color: ${TINTA};
+    .msg {
+      max-width: 90%;
+      padding: 8px 10px;
+      border-radius: 11px;
     }
-  }
-  .venta {
-    left: -30px;
-    bottom: 70px;
-    width: 214px;
-    i {
-      background: #dcfce7;
-      color: #15803d;
+    .mia {
+      justify-self: end;
+      color: #fff;
+      background: ${MORADO};
+      border-bottom-right-radius: 3px;
+      animation: ${msgEntra} 0.4s ease 1.6s backwards;
+    }
+    .bot {
+      background: #fff;
+      border: 1px solid rgba(23, 19, 29, 0.07);
+      border-bottom-left-radius: 3px;
+      animation: ${desplegar} 0.5s ease 3s backwards;
+    }
+    .escribiendo {
+      display: flex;
+      gap: 4px;
+      width: max-content;
+      padding: 9px 10px;
+      border-radius: 11px;
+      background: #fff;
+      opacity: 0;
+      max-height: 0;
+      overflow: hidden;
+      animation: ${cajaEscribiendo} 1s ease 2s both;
+      span {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: ${GRIS};
+        animation: ${punto} 0.9s ease-in-out infinite;
+      }
+      span:nth-child(2) {
+        animation-delay: 0.15s;
+      }
+      span:nth-child(3) {
+        animation-delay: 0.3s;
+      }
+    }
+    .borrador {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      padding: 9px 10px;
+      border-radius: 11px;
+      border: 1.5px dashed ${MORADO};
+      background: ${SUAVE};
+      animation: ${desplegar} 0.5s ease 3.6s backwards;
+      i {
+        font-style: normal;
+        font-weight: 800;
+        color: ${MORADO};
+      }
+      b {
+        display: block;
+      }
+      small {
+        color: ${GRIS};
+      }
     }
   }
 `;

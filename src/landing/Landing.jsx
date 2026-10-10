@@ -420,14 +420,14 @@ const Hero = styled.section`
   }
   /* La app en el teléfono, con avisos flotantes; abajo, la ventana de escritorio */
   .movil-escena {
-    --k: 0.62;
+    --k: 0.6;
     position: relative;
     z-index: 2;
     margin: 10px auto -6px;
   }
   @media (min-width: 480px) {
     .movil-escena {
-      --k: 0.8;
+      --k: 0.78;
     }
   }
   .ventana {
@@ -452,8 +452,8 @@ const Hero = styled.section`
     .movil-escena {
       --k: 1;
       position: absolute;
-      top: -6px;
-      right: 48px;
+      top: -10px;
+      right: 8px;
       margin: 0;
     }
     .ventana {
