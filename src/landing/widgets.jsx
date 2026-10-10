@@ -858,7 +858,7 @@ const Novandra = styled.div`
 // --------------------------------------------------------------- Teléfono con la app y paneles flotantes (hero)
 // Mismo lenguaje que la portada de MCCore: escenario con perspectiva, el dispositivo entra girando,
 // los paneles aparecen escalonados y flotan apenas; las notificaciones entran una a una y Novandra responde.
-const ESC_ANCHO = 560;
+const ESC_ANCHO = 574; // ancho real del conjunto (Novandra a la izquierda, Notificaciones a la derecha), para centrarlo
 const ESC_ALTO = 620;
 const NOTIFICACIONES = [
   ["$", "Pago recibido FV-1042", "Wompi · Nequi · $ 116.620", "pago"],
@@ -993,6 +993,7 @@ const Escena = styled.div`
   }
   .panel {
     position: absolute;
+    text-align: left;
     border-radius: 16px;
     background: #fff;
     border: 1px solid ${LINEA};
@@ -1003,7 +1004,7 @@ const Escena = styled.div`
   /* Notificaciones: arriba a la derecha */
   .notifs {
     top: 0;
-    right: -14px;
+    right: 0;
     width: 228px;
     padding: 12px 14px;
     transform: rotateY(-20deg) rotateX(6deg) rotateZ(-2deg);
