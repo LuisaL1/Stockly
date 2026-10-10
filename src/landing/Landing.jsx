@@ -2,21 +2,16 @@ import styled from "styled-components";
 import logo from "../assets/logo.png";
 import ilustracion from "../assets/login-ilustracion.jpg";
 import { FAQ, FUNCIONES, HERO, PASOS, PLANES, SITIO, cop } from "./contenido";
-import { BordeVivo, Cinta, Flotante, Formas, WidgetNovandra, WidgetPagos, WidgetStock, WidgetTicket, WidgetVentas, WidgetWhatsApp } from "./widgets";
+import { Cinta, Flotante, PanelHoy, PanelPlan, PanelStock, PanelTicket, PanelVentas, VentanaApp, VisualBodegas, VisualCaja, VisualNovandra, VisualTelefono } from "./widgets";
 import { GRIS, LINEA, MORADO, MORADO_CLARO, PAPEL, SUAVE, TINTA, sinMovimiento } from "./tokens";
 
-// Página pública de Stockly (estilo bento, con mini-widgets animados de la interfaz).
-// Se prerenderiza al compilar (scripts/prerender.mjs): solo CSS para el movimiento.
+// Página pública de Stockly. Titular grande, la app en una ventana, y una historia por función.
+// Se prerenderiza al compilar (scripts/prerender.mjs): el movimiento es solo CSS.
 export function Landing() {
   const cinta = ["Caja ágil", "Bre-B", "Link de pago con Wompi", "Facturas por WhatsApp", "Bodegas y sedes", "Kardex", "Informe para tu contador", "Novandra", "Importa desde Excel", "Gratis para siempre"];
-  const iconos = ["▣", "▤", "⌂", "✆", "⇄", "▥", "◔", "✦", "☺"];
+  const mas = [1, 2, 4, 5, 6, 8].map((i) => FUNCIONES[i]);
   return (
     <Pagina data-landing>
-      <Formas aria-hidden="true">
-        <span />
-        <span />
-        <span />
-      </Formas>
       <Barra>
         <a className="marca" href="/" aria-label="Stockly, inicio">
           <img src={logo} alt="" width="30" height="30" />
@@ -39,81 +34,109 @@ export function Landing() {
 
       <main>
         <Hero>
-          <div className="texto">
-            <span className="etiqueta">{HERO.etiqueta}</span>
-            <h1>
-              Tu inventario, <em>por fin en orden.</em>
-            </h1>
-            <p>{HERO.texto}</p>
-            <div className="ctas">
-              <a className="boton grande" href={HERO.ctaPrincipal.href}>
-                {HERO.ctaPrincipal.texto}
-              </a>
-              <a className="boton secundario grande" href={HERO.ctaSecundario.href}>
-                {HERO.ctaSecundario.texto}
-              </a>
-            </div>
-            <ul className="notas">
-              {HERO.notas.map((n) => (
-                <li key={n}>{n}</li>
-              ))}
-            </ul>
+          <span className="etiqueta">{HERO.etiqueta}</span>
+          <h1>
+            Tu inventario, <em>por fin en orden.</em>
+          </h1>
+          <p>{HERO.texto}</p>
+          <div className="ctas">
+            <a className="boton grande" href={HERO.ctaPrincipal.href}>
+              {HERO.ctaPrincipal.texto}
+            </a>
+            <a className="enlace grande" href="#funciones">
+              Ver cómo funciona ↓
+            </a>
           </div>
-          <div className="bento" aria-label="Así se ve Stockly en acción">
-            <div className="celda ventas">
-              <WidgetVentas />
+          <ul className="notas">
+            {HERO.notas.map((n) => (
+              <li key={n}>{n}</li>
+            ))}
+          </ul>
+          <VentanaApp aria-label="Así se ve el panel de Stockly">
+            <div className="barra">
+              <i />
+              <i />
+              <i />
+              <span>appstockly.com · Tienda Luisa</span>
             </div>
-            <div className="celda ticket">
-              <WidgetTicket />
+            <div className="cuerpo">
+              <div className="lateral">
+                <b>GENERAL</b>
+                <span className="activo">Inicio</span>
+                <span>Inteligencia</span>
+                <b>OPERACIÓN</b>
+                <span>Vender</span>
+                <span>Facturas</span>
+                <span>Compras</span>
+                <b>INVENTARIO</b>
+                <span>Productos</span>
+                <span>Bodegas</span>
+                <span>Reportes</span>
+              </div>
+              <div className="panel">
+                <div className="saludo">
+                  <strong>Buenas tardes, Luisa</strong>
+                  <span>Así va Tienda Luisa hoy.</span>
+                </div>
+                <PanelVentas />
+                <PanelHoy />
+                <PanelTicket />
+                <PanelStock />
+                <PanelPlan />
+              </div>
             </div>
-            <div className="celda wa">
-              <WidgetWhatsApp />
-            </div>
-            <div className="celda stock">
-              <WidgetStock />
-            </div>
-            <div className="celda nov">
-              <WidgetNovandra />
-            </div>
-          </div>
+          </VentanaApp>
         </Hero>
 
         <Cinta items={cinta} />
 
-        <Seccion id="funciones" aria-labelledby="titulo-funciones">
-          <h2 id="titulo-funciones">Todo tu negocio. Bajo un mismo techo.</h2>
-          <div className="bento-funciones">
-            <article className="grande">
-              <div className="cab">
-                <span className="icono">{iconos[0]}</span>
-                <h3>{FUNCIONES[0].titulo}</h3>
-              </div>
-              <p>{FUNCIONES[0].texto}</p>
-              <div className="demo">
-                <WidgetPagos />
-              </div>
-            </article>
-            <article className="alta">
-              <div className="cab">
-                <span className="icono">{iconos[7]}</span>
-                <h3>{FUNCIONES[7].titulo}</h3>
-              </div>
-              <p>{FUNCIONES[7].texto}</p>
-              <div className="demo">
-                <WidgetNovandra />
-              </div>
-            </article>
-            {[1, 2, 3, 4, 5, 6, 8].map((i) => (
-              <article key={FUNCIONES[i].titulo}>
-                <div className="cab">
-                  <span className="icono">{iconos[i]}</span>
-                  <h3>{FUNCIONES[i].titulo}</h3>
-                </div>
-                <p>{FUNCIONES[i].texto}</p>
-              </article>
-            ))}
+        <Historia id="funciones">
+          <div className="texto">
+            <span className="eyebrow">Caja</span>
+            <h2>Cobra en segundos. Como tu cliente quiera.</h2>
+            <p>Efectivo, tarjeta, Bre-B, Nequi o un link de pago. Pago mixto y crédito, si lo necesitas. Buscas el producto, cobras y el inventario se descuenta solo.</p>
           </div>
-        </Seccion>
+          <VisualCaja />
+        </Historia>
+
+        <Historia className="invertida">
+          <div className="texto">
+            <span className="eyebrow">Inventario</span>
+            <h2>Sabe qué tienes. En cada bodega.</h2>
+            <p>Productos, códigos de barras y stock mínimo. Cada sede con su stock, traslados que se actualizan solos y un aviso antes de que algo se agote.</p>
+          </div>
+          <VisualBodegas />
+        </Historia>
+
+        <Historia>
+          <div className="texto">
+            <span className="eyebrow">Facturas y cobros</span>
+            <h2>La factura va por WhatsApp. El pago llega solo.</h2>
+            <p>Con tu logo, en PDF y con el link de pago de Wompi. Cuando el cliente paga, la factura se marca sola. Sin perseguir a nadie.</p>
+          </div>
+          <VisualTelefono />
+        </Historia>
+
+        <Oscura>
+          <div className="texto">
+            <span className="eyebrow">Novandra</span>
+            <h2>Pregúntale a tu negocio. Te responde.</h2>
+            <p>Novandra conoce tus ventas, tu stock y tus proveedores. Qué reponer, qué no rota, cuánto pedir. Y deja las órdenes de compra listas: tú solo apruebas.</p>
+          </div>
+          <VisualNovandra />
+        </Oscura>
+
+        <Mas aria-labelledby="titulo-mas">
+          <h2 id="titulo-mas">Y todo lo demás que tu negocio necesita.</h2>
+          <ul>
+            {mas.map((f) => (
+              <li key={f.titulo}>
+                <h3>{f.titulo}</h3>
+                <p>{f.texto}</p>
+              </li>
+            ))}
+          </ul>
+        </Mas>
 
         <Seccion aria-labelledby="titulo-pasos">
           <h2 id="titulo-pasos">Tres pasos. Y a vender.</h2>
@@ -131,40 +154,31 @@ export function Landing() {
           <h2 id="titulo-planes">Un plan para cada momento.</h2>
           <p className="intro">Precios finales, en pesos. Mensual o anual con 2 meses gratis. Y 50% de descuento en tu primera compra.</p>
           <div className="planes">
-            {PLANES.map((p) => {
-              const tarjeta = (
-                <article className={p.destacado ? "destacado" : ""}>
-                  {p.destacado && <span className="cinta-plan">Más elegido</span>}
-                  <h3>{p.nombre}</h3>
-                  <p className="detalle">{p.detalle}</p>
-                  <p className="precio">
-                    {p.precio ? (
-                      <>
-                        <strong>{cop(p.precio)}</strong> <span>/ mes</span>
-                      </>
-                    ) : (
-                      <strong>Gratis</strong>
-                    )}
-                  </p>
-                  {p.precioAnual ? <p className="anual">o {cop(p.precioAnual)} al año</p> : <p className="anual">Para siempre</p>}
-                  <ul>
-                    {p.incluye.map((i) => (
-                      <li key={i}>{i}</li>
-                    ))}
-                  </ul>
-                  <a className={`boton ${p.destacado ? "" : "secundario"}`} href={HERO.ctaPrincipal.href}>
-                    {p.precio ? `Elegir ${p.nombre}` : "Empezar gratis"}
-                  </a>
-                </article>
-              );
-              return p.destacado ? (
-                <BordeVivo key={p.id}>
-                  <div>{tarjeta}</div>
-                </BordeVivo>
-              ) : (
-                <div key={p.id}>{tarjeta}</div>
-              );
-            })}
+            {PLANES.map((p) => (
+              <article key={p.id} className={p.destacado ? "destacado" : ""}>
+                {p.destacado && <span className="cinta-plan">Más elegido</span>}
+                <h3>{p.nombre}</h3>
+                <p className="detalle">{p.detalle}</p>
+                <p className="precio">
+                  {p.precio ? (
+                    <>
+                      <strong>{cop(p.precio)}</strong> <span>/ mes</span>
+                    </>
+                  ) : (
+                    <strong>Gratis</strong>
+                  )}
+                </p>
+                {p.precioAnual ? <p className="anual">o {cop(p.precioAnual)} al año</p> : <p className="anual">Para siempre</p>}
+                <ul>
+                  {p.incluye.map((i) => (
+                    <li key={i}>{i}</li>
+                  ))}
+                </ul>
+                <a className={`boton ${p.destacado ? "" : "secundario"}`} href={HERO.ctaPrincipal.href}>
+                  {p.precio ? `Elegir ${p.nombre}` : "Empezar gratis"}
+                </a>
+              </article>
+            ))}
           </div>
         </Seccion>
 
@@ -212,7 +226,6 @@ export function Landing() {
 
 const Pagina = styled.div`
   ${sinMovimiento}
-  position: relative;
   min-height: 100vh;
   background: ${PAPEL};
   color: ${TINTA};
@@ -220,21 +233,20 @@ const Pagina = styled.div`
   line-height: 1.6;
   overflow-x: hidden;
   main {
-    position: relative;
-    z-index: 1;
     display: flex;
     flex-direction: column;
-    gap: 76px;
-    max-width: 1160px;
+    gap: 96px;
+    max-width: 1120px;
     margin: 0 auto;
-    padding: 20px 20px 80px;
+    padding: 24px 20px 80px;
   }
   h1,
   h2,
   h3 {
     margin: 0;
-    line-height: 1.12;
+    line-height: 1.1;
     text-wrap: balance;
+    letter-spacing: -0.025em;
   }
   p {
     margin: 0;
@@ -242,6 +254,7 @@ const Pagina = styled.div`
   a {
     color: inherit;
   }
+  /* Solo lo clicable reacciona al cursor */
   .boton {
     display: inline-flex;
     align-items: center;
@@ -253,11 +266,11 @@ const Pagina = styled.div`
     font-weight: 700;
     text-decoration: none;
     border: 1.5px solid ${MORADO};
-    transition: transform 0.15s, background 0.15s, box-shadow 0.15s;
+    cursor: pointer;
+    transition: background 0.15s, transform 0.15s;
     &:hover {
       background: #6d0090;
       transform: translateY(-1px);
-      box-shadow: 0 12px 30px -12px rgba(136, 0, 179, 0.6);
     }
     &.secundario {
       background: #fff;
@@ -267,13 +280,34 @@ const Pagina = styled.div`
       }
     }
     &.grande {
-      padding: 15px 26px;
+      padding: 15px 28px;
       font-size: 1.04rem;
+      border-radius: 14px;
     }
     &:focus-visible {
       outline: 3px solid ${SUAVE};
       outline-offset: 2px;
     }
+  }
+  .enlace {
+    color: ${MORADO};
+    font-weight: 600;
+    text-decoration: none;
+    &:hover {
+      text-decoration: underline;
+    }
+    &.grande {
+      font-size: 1.04rem;
+      padding: 15px 8px;
+    }
+  }
+  .eyebrow {
+    display: inline-block;
+    color: ${MORADO};
+    font-weight: 700;
+    font-size: 0.82rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
   }
 `;
 
@@ -284,10 +318,10 @@ const Barra = styled.header`
   display: flex;
   align-items: center;
   gap: 16px;
-  max-width: 1160px;
+  max-width: 1120px;
   margin: 0 auto;
   padding: 14px 20px;
-  background: rgba(244, 241, 236, 0.85);
+  background: rgba(244, 241, 236, 0.9);
   backdrop-filter: blur(12px);
   .marca {
     display: flex;
@@ -320,11 +354,6 @@ const Barra = styled.header`
     gap: 14px;
     white-space: nowrap;
   }
-  .enlace {
-    font-weight: 600;
-    text-decoration: none;
-    color: ${MORADO};
-  }
   @media (max-width: 420px) {
     padding: 12px 16px;
     gap: 10px;
@@ -339,23 +368,13 @@ const Barra = styled.header`
 `;
 
 const Hero = styled.section`
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 36px;
+  display: flex;
+  flex-direction: column;
   align-items: center;
-  padding-top: 28px;
-  @media (min-width: 960px) {
-    grid-template-columns: 0.95fr 1.05fr;
-    gap: 44px;
-  }
-  .texto {
-    display: flex;
-    flex-direction: column;
-    gap: 18px;
-    min-width: 0;
-  }
+  text-align: center;
+  gap: 18px;
+  padding-top: 40px;
   .etiqueta {
-    align-self: flex-start;
     padding: 6px 12px;
     border-radius: 999px;
     background: ${SUAVE};
@@ -365,29 +384,33 @@ const Hero = styled.section`
     letter-spacing: 0.03em;
   }
   h1 {
-    font-size: clamp(2.2rem, 5vw, 3.6rem);
+    font-size: clamp(2.6rem, 6.4vw, 4.6rem);
     font-weight: 800;
-    letter-spacing: -0.025em;
+    max-width: 16ch;
     em {
       font-style: normal;
       color: ${MORADO};
     }
   }
-  .texto > p {
-    font-size: 1.12rem;
+  > p {
+    font-size: clamp(1.05rem, 1.6vw, 1.3rem);
     color: ${GRIS};
-    max-width: 56ch;
+    max-width: 48ch;
   }
   .ctas {
     display: flex;
     flex-wrap: wrap;
-    gap: 12px;
+    justify-content: center;
+    align-items: center;
+    gap: 10px 18px;
+    margin-top: 6px;
   }
   .notas {
     display: flex;
     flex-wrap: wrap;
+    justify-content: center;
     gap: 8px 18px;
-    margin: 0;
+    margin: 0 0 26px;
     padding: 0;
     list-style: none;
     color: ${GRIS};
@@ -398,54 +421,88 @@ const Hero = styled.section`
       font-weight: 700;
     }
   }
-  /* Cuadrícula bento con los widgets */
-  .bento {
-    display: grid;
-    gap: 12px;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    grid-auto-rows: auto;
-    min-width: 0;
-    @media (min-width: 560px) {
-      grid-template-columns: repeat(6, minmax(0, 1fr));
+`;
+
+const Historia = styled.section`
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 28px;
+  align-items: center;
+  scroll-margin-top: 84px;
+  @media (min-width: 880px) {
+    grid-template-columns: 0.85fr 1.15fr;
+    gap: 56px;
+    &.invertida {
+      grid-template-columns: 1.15fr 0.85fr;
+      .texto {
+        order: 2;
+      }
     }
   }
-  .celda {
-    min-width: 0;
+  .texto {
     display: flex;
-    > * {
-      flex: 1;
-    }
+    flex-direction: column;
+    gap: 12px;
+    min-width: 0;
   }
-  .ventas {
-    grid-column: span 2;
-    @media (min-width: 560px) {
-      grid-column: span 3;
-    }
+  h2 {
+    font-size: clamp(1.9rem, 3.6vw, 2.8rem);
+    font-weight: 800;
   }
-  .ticket {
-    grid-column: span 2;
-    @media (min-width: 560px) {
-      grid-column: span 3;
-      grid-row: span 2;
-    }
+  p {
+    color: ${GRIS};
+    font-size: 1.08rem;
+    max-width: 44ch;
   }
-  .wa {
-    grid-column: span 2;
-    @media (min-width: 560px) {
-      grid-column: span 3;
-    }
+`;
+
+const Oscura = styled(Historia)`
+  background: ${TINTA};
+  color: ${PAPEL};
+  border-radius: 28px;
+  padding: 40px 28px;
+  @media (min-width: 880px) {
+    padding: 56px;
   }
-  .stock {
-    grid-column: span 2;
-    @media (min-width: 560px) {
-      grid-column: span 3;
-    }
+  .eyebrow {
+    color: ${MORADO_CLARO};
   }
-  .nov {
-    grid-column: span 2;
-    @media (min-width: 560px) {
-      grid-column: span 3;
-    }
+  p {
+    color: rgba(244, 241, 236, 0.72);
+  }
+`;
+
+const Mas = styled.section`
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  h2 {
+    font-size: clamp(1.7rem, 3.2vw, 2.3rem);
+    font-weight: 800;
+    max-width: 24ch;
+  }
+  ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 28px 32px;
+  }
+  li {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding-top: 16px;
+    border-top: 2px solid ${TINTA};
+    min-width: 0;
+  }
+  h3 {
+    font-size: 1.05rem;
+  }
+  p {
+    color: ${GRIS};
+    font-size: 0.96rem;
   }
 `;
 
@@ -455,84 +512,13 @@ const Seccion = styled.section`
   gap: 24px;
   scroll-margin-top: 84px;
   h2 {
-    font-size: clamp(1.7rem, 3.4vw, 2.3rem);
+    font-size: clamp(1.7rem, 3.2vw, 2.3rem);
     font-weight: 800;
-    letter-spacing: -0.015em;
     max-width: 26ch;
   }
   .intro {
     color: ${GRIS};
     max-width: 65ch;
-  }
-  .bento-funciones {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-    gap: 14px;
-    grid-auto-flow: dense;
-    article {
-      min-width: 0;
-      padding: 22px;
-      border-radius: 20px;
-      background: #fff;
-      border: 1px solid ${LINEA};
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      transition: transform 0.2s, box-shadow 0.2s;
-      &:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 24px 50px -30px rgba(23, 19, 29, 0.35);
-      }
-    }
-    .grande {
-      grid-column: span 2;
-      @media (max-width: 560px) {
-        grid-column: span 1;
-      }
-    }
-    .alta {
-      grid-row: span 2;
-      background: ${TINTA};
-      color: ${PAPEL};
-      border: none;
-      p {
-        color: rgba(244, 241, 236, 0.72);
-      }
-      .icono {
-        background: rgba(226, 164, 255, 0.16);
-        color: ${MORADO_CLARO};
-      }
-    }
-    .cab {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-    .icono {
-      width: 36px;
-      height: 36px;
-      border-radius: 11px;
-      display: grid;
-      place-items: center;
-      background: ${SUAVE};
-      color: ${MORADO};
-      font-size: 1rem;
-      flex: none;
-    }
-    h3 {
-      font-size: 1.05rem;
-    }
-    p {
-      color: ${GRIS};
-      font-size: 0.95rem;
-    }
-    .demo {
-      margin-top: auto;
-      display: flex;
-      > * {
-        flex: 1;
-      }
-    }
   }
   .pasos {
     display: grid;
@@ -549,8 +535,8 @@ const Seccion = styled.section`
       gap: 6px;
       padding: 22px;
       border-radius: 20px;
-      border: 1px dashed ${MORADO};
       background: #fff;
+      border: 1px solid ${LINEA};
     }
     li::before {
       content: counter(paso);
@@ -559,7 +545,7 @@ const Seccion = styled.section`
       width: 32px;
       height: 32px;
       border-radius: 10px;
-      background: ${MORADO};
+      background: ${TINTA};
       color: #fff;
       font-weight: 800;
     }
@@ -572,13 +558,8 @@ const Seccion = styled.section`
     grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
     gap: 14px;
     align-items: stretch;
-    > div {
-      display: flex;
-      min-width: 0;
-    }
     article {
       position: relative;
-      flex: 1;
       display: flex;
       flex-direction: column;
       gap: 10px;
@@ -589,7 +570,7 @@ const Seccion = styled.section`
       min-width: 0;
     }
     article.destacado {
-      border: none;
+      border: 2px solid ${MORADO};
     }
     .cinta-plan {
       position: absolute;
@@ -648,14 +629,13 @@ const Seccion = styled.section`
 `;
 
 const Final = styled.section`
-  position: relative;
   display: grid;
   grid-template-columns: 1fr;
   align-items: center;
   gap: 20px;
   padding: 44px 28px;
   border-radius: 28px;
-  background: radial-gradient(ellipse at 20% 20%, #a51bd1 0%, ${MORADO} 40%, #4b0063 100%);
+  background: ${MORADO};
   color: #fff;
   overflow: hidden;
   @media (min-width: 820px) {
@@ -667,15 +647,14 @@ const Final = styled.section`
     flex-direction: column;
     gap: 14px;
     align-items: flex-start;
-    position: relative;
-    z-index: 1;
   }
   h2 {
-    font-size: clamp(1.7rem, 3.4vw, 2.4rem);
+    font-size: clamp(1.9rem, 3.6vw, 2.8rem);
     font-weight: 800;
   }
   p {
-    color: rgba(255, 255, 255, 0.8);
+    color: rgba(255, 255, 255, 0.82);
+    font-size: 1.08rem;
   }
   .boton {
     background: #fff;
@@ -687,21 +666,18 @@ const Final = styled.section`
   }
   img {
     justify-self: center;
-    width: min(100%, 320px);
+    width: min(100%, 300px);
     height: auto;
     border-radius: 24px;
-    box-shadow: 0 40px 80px -40px rgba(0, 0, 0, 0.6);
   }
 `;
 
 const Pie = styled.footer`
-  position: relative;
-  z-index: 1;
   display: flex;
   flex-wrap: wrap;
   justify-content: space-between;
   gap: 12px;
-  max-width: 1160px;
+  max-width: 1120px;
   margin: 0 auto;
   padding: 24px 20px 40px;
   border-top: 1px solid ${LINEA};
