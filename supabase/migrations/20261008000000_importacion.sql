@@ -29,6 +29,7 @@ returns jsonb
 language plpgsql security definer set search_path = public
 as $$
 declare
+  _unidad text;
   _usuario bigint := public.stockly_id_usuario();
   _plan public.stockly_planes;
   _res jsonb := '{}'::jsonb;
@@ -199,6 +200,10 @@ begin
     continue when _nombre is null;
     _ci := nullif(btrim(_f->>'codigo_interno'), '');
     _cb := nullif(regexp_replace(coalesce(_f->>'codigo_barras', ''), '\D', '', 'g'), '');
+    _unidad := public.stockly_unidad_id(_f->>'unidad');
+    if nullif(btrim(_f->>'unidad'), '') is not null and _unidad is null then
+      raise exception 'Producto "%": la unidad "%" no existe. Usa una de las unidades de Stockly (und, par, caja, g, kg, ml, l, m...).', _nombre, _f->>'unidad';
+    end if;
 
     _cat := null;
     if nullif(btrim(_f->>'categoria'), '') is not null then
@@ -237,10 +242,10 @@ begin
       execute format(
         'select public.insertarproductos(_descripcion := %L, _idmarca := %L, _stock := 0, _stock_minimo := %L,
            _codigobarras := %L, _codigointerno := %L, _precioventa := %L, _preciocompra := %L,
-           _id_categoria := %L, _id_empresa := %L)',
+           _id_categoria := %L, _id_empresa := %L, _unidad := %L)',
         _nombre, _marca, coalesce(nullif(_f->>'stock_minimo', '')::numeric, 0), _cb, _ci,
         coalesce(nullif(_f->>'precio_venta', '')::numeric, 0), coalesce(nullif(_f->>'precio_compra', '')::numeric, 0),
-        _cat, _id_empresa);
+        _cat, _id_empresa, _unidad);
       select id into _id from productos where id_empresa = _id_empresa and stockly_norm(descripcion) = stockly_norm(_nombre)
        order by id desc limit 1;
       _creados := _creados + 1;
@@ -253,7 +258,8 @@ begin
              idmarca = coalesce(_marca, idmarca),
              precioventa = coalesce(nullif(_f->>'precio_venta', '')::numeric, precioventa),
              preciocompra = coalesce(nullif(_f->>'precio_compra', '')::numeric, preciocompra),
-             stock_minimo = coalesce(nullif(_f->>'stock_minimo', '')::numeric, stock_minimo)
+             stock_minimo = coalesce(nullif(_f->>'stock_minimo', '')::numeric, stock_minimo),
+             unidad = coalesce(_unidad, unidad)
        where id = _id;
       _actualizados := _actualizados + 1;
     end if;
@@ -421,7 +427,7 @@ begin
                                                              'direccion', b.direccion, 'responsable', b.responsable) order by b.tipo <> 'principal', b.id)
                            from bodegas b left join sucursales s on s.id = b.id_sucursal where b.id_empresa = _id_empresa), '[]'),
     'productos', coalesce((select jsonb_agg(jsonb_build_object(
-                             'nombre', p.descripcion, 'codigo_interno', p.codigointerno, 'codigo_barras', p.codigobarras::text,
+                             'nombre', p.descripcion, 'codigo_interno', p.codigointerno, 'codigo_barras', p.codigobarras::text, 'unidad', p.unidad,
                              'categoria', c.descripcion, 'marca', m.descripcion, 'precio_compra', p.preciocompra,
                              'precio_venta', p.precioventa, 'stock_minimo', p.stock_minimo,
                              'stock', public.stockly_disponible(_principal, p.id), 'stock_total', p.stock) order by p.descripcion)

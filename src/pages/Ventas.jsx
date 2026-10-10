@@ -16,6 +16,7 @@ import { MostrarBodegas, MostrarStockBodega } from "../supabase/crudBodegas";
 import { crudClientes } from "../supabase/crudContactos";
 import { MostrarConfigFacturacion } from "../supabase/crudFacturacion";
 import { RegistrarVenta } from "../supabase/crudVentas";
+import { abrev, cantidadConUnidad, permiteDecimales } from "../utils/unidades";
 import { usePlan } from "../hooks/usePlan";
 import { Canales, TiposBodega } from "../utils/dataEstatica";
 import { normalizarPagos, pagoVacio, validarPagos } from "../utils/pagos";
@@ -114,6 +115,7 @@ function PuntoDeVenta() {
           precio: Number(p.precioventa ?? 0),
           cantidad: 1,
           disponible: Number(p.cantidad),
+          unidad: p.unidad,
         },
       ];
     });
@@ -243,7 +245,7 @@ function PuntoDeVenta() {
                     <strong>{p.descripcion}</strong>
                     <span className="precio">{dinero(p.precioventa)}</span>
                     <span className={`stock ${bajo ? "bajo" : ""}`}>
-                      {agotado && !enCarrito ? "Agotado" : `${formatearNumero(p.cantidad)} disponibles`}
+                      {agotado && !enCarrito ? "Agotado" : `${cantidadConUnidad(p.cantidad, p.unidad)} disponibles`}
                     </span>
                   </button>
                 );
@@ -294,7 +296,7 @@ function PuntoDeVenta() {
                   <div className="info">
                     <strong>{l.descripcion}</strong>
                     <span>
-                      {dinero(l.precio)} c/u · máx. {formatearNumero(l.disponible)}
+                      {dinero(l.precio)} por {abrev(l.unidad)} · máx. {cantidadConUnidad(l.disponible, l.unidad)}
                     </span>
                   </div>
                   <div className="cantidad">
@@ -304,7 +306,7 @@ function PuntoDeVenta() {
                     <input
                       type="number"
                       min="0"
-                      step="any"
+                      step={permiteDecimales(l.unidad) ? "any" : "1"}
                       value={l.cantidad}
                       onChange={(e) => cambiarCantidad(l.id_producto, Number(e.target.value))}
                       aria-label={`Cantidad de ${l.descripcion}`}

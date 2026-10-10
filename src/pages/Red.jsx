@@ -40,6 +40,7 @@ import {
 import { MODULOS, esAdmin } from "../utils/permisos";
 import { confirmarEliminacion } from "../utils/notificaciones";
 import { formatearFechaHora, formatearMoneda, formatearNumero } from "../utils/conversiones";
+import { cantidadConUnidad } from "../utils/unidades";
 import { v } from "../styles/variables";
 
 // Red de empresas: partners y franquicias vinculados. Stock en tiempo real, catálogo, envíos y pedidos.
@@ -293,7 +294,7 @@ function StockDeLaRed({ activos, idEmpresa, admin, recargar, abrir }) {
         </span>
       ),
     },
-    { accessorKey: "stock", header: "Stock", meta: { align: "right" }, cell: (i) => <strong>{formatearNumero(i.getValue())}</strong> },
+    { accessorKey: "stock", header: "Stock", meta: { align: "right" }, cell: ({ row }) => <strong>{cantidadConUnidad(row.original.stock, row.original.unidad)}</strong> },
     {
       id: "bodegas",
       header: "Por bodega",

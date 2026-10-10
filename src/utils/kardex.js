@@ -48,7 +48,7 @@ export function etiquetaOrigen(fila) {
 export async function exportarKardexExcel(filas, archivo = "kardex.xlsx") {
   const XLSX = await import("xlsx");
   const datos = [
-    ["Fecha", "Producto", "Código", "Bodega", "Movimiento", "Origen", "Detalle", "Cantidad", "Saldo", "Usuario", "Estado"],
+    ["Fecha", "Producto", "Código", "Bodega", "Movimiento", "Origen", "Detalle", "Cantidad", "Unidad", "Saldo", "Usuario", "Estado"],
     ...filas.map((f) => [
       new Date(f.creado_en),
       f.producto,
@@ -58,13 +58,14 @@ export async function exportarKardexExcel(filas, archivo = "kardex.xlsx") {
       etiquetaOrigen(f),
       f.origen === "ajuste" ? f.nota ?? "" : f.detalle ?? "",
       Number(f.tipo === "Salida" ? -f.cantidad : f.cantidad),
+      f.unidad ?? "und",
       Number(f.saldo),
       f.usuario ?? "",
       f.estado === "anulado" ? "Anulado" : "",
     ]),
   ];
   const hoja = XLSX.utils.aoa_to_sheet(datos, { cellDates: true });
-  hoja["!cols"] = [{ wch: 18 }, { wch: 34 }, { wch: 12 }, { wch: 18 }, { wch: 11 }, { wch: 26 }, { wch: 30 }, { wch: 10 }, { wch: 10 }, { wch: 20 }, { wch: 10 }];
+  hoja["!cols"] = [{ wch: 18 }, { wch: 34 }, { wch: 12 }, { wch: 18 }, { wch: 11 }, { wch: 26 }, { wch: 30 }, { wch: 10 }, { wch: 8 }, { wch: 10 }, { wch: 20 }, { wch: 10 }];
   const libro = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(libro, hoja, "Kardex");
   XLSX.writeFile(libro, archivo);

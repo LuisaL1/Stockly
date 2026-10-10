@@ -8,6 +8,7 @@ import { AnularMovimiento } from "../../../supabase/crudKardex";
 import { confirmarEliminacion } from "../../../utils/notificaciones";
 import { ORIGENES, etiquetaOrigen } from "../../../utils/kardex";
 import { formatearFechaHora, formatearNumero } from "../../../utils/conversiones";
+import { cantidadConUnidad } from "../../../utils/unidades";
 
 // Libro de movimientos. Solo los ajustes manuales activos se pueden anular (con el movimiento contrario);
 // lo demás se revierte desde su origen (la venta, la compra, el traslado).
@@ -66,7 +67,7 @@ export function TablaKardex({ data, alCambiar }) {
       cell: ({ row }) => (
         <Cantidad $salida={row.original.tipo === "Salida"}>
           {row.original.tipo === "Salida" ? "−" : "+"}
-          {formatearNumero(row.original.cantidad)}
+          {cantidadConUnidad(row.original.cantidad, row.original.unidad)}
         </Cantidad>
       ),
     },
@@ -74,7 +75,7 @@ export function TablaKardex({ data, alCambiar }) {
       accessorKey: "saldo",
       header: "Saldo",
       meta: { align: "right" },
-      cell: (info) => <strong>{formatearNumero(info.getValue())}</strong>,
+      cell: ({ row }) => <strong>{cantidadConUnidad(row.original.saldo, row.original.unidad)}</strong>,
     },
     { accessorKey: "usuario", header: "Usuario" },
     {

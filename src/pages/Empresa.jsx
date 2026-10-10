@@ -16,6 +16,7 @@ import logoStockly from "../assets/logo.png";
 import { notificarError, notificarExito } from "../utils/notificaciones";
 import { v } from "../styles/variables";
 import { Sectores, Monedas, MONEDA_PREDETERMINADA } from "../utils/dataEstatica";
+import { UnidadesEmpresa } from "../Components/organismos/UnidadesEmpresa";
 
 export function Empresa() {
   return (
@@ -66,6 +67,7 @@ function Contenido() {
       volverA={{ to: "/configurar", texto: "Configuración" }}
     >
       <LogoEmpresa />
+      <UnidadesEmpresa />
       <Tarjeta>
         <Formulario onSubmit={handleSubmit(guardar)}>
           <InputText label="Nombre de la empresa" icono={<v.iconoempresa />} error={errors.nombre?.message}>

@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { useUnidades } from "../../../hooks/useUnidades";
+import { permiteDecimales } from "../../../utils/unidades";
 import { useForm } from "react-hook-form";
 import { useQuery } from "@tanstack/react-query";
 import { Modal } from "../../moleculas/Modal";
@@ -53,6 +55,10 @@ export function RegistrarProductos({ onClose, dataSelect = {}, accion }) {
 
   const marcaActual = marca ?? marcas.data?.[0] ?? null;
   const categoriaActual = categoria ?? categorias.data?.[0] ?? null;
+  const unidades = useUnidades();
+  const [unidad, setUnidad] = useState(null);
+  const unidadActual = unidad ?? unidades.activas.find((u) => u.id === (editando ? dataSelect.unidad : unidades.predeterminada)) ?? unidades.activas[0] ?? null;
+  const conDecimales = permiteDecimales(unidadActual?.id);
 
   const {
     register,
@@ -86,6 +92,7 @@ export function RegistrarProductos({ onClose, dataSelect = {}, accion }) {
           preciocompra: data.preciocompra,
           id_categoria: categoriaActual.id,
           id_empresa: idEmpresa,
+          unidad: unidadActual?.id ?? "und",
         })
       : await Insertar({
           _descripcion: CovertirCapitalize(data.descripcion),
@@ -98,6 +105,7 @@ export function RegistrarProductos({ onClose, dataSelect = {}, accion }) {
           _preciocompra: data.preciocompra,
           _id_categoria: categoriaActual.id,
           _id_empresa: idEmpresa,
+          _unidad: unidadActual?.id ?? "und",
         });
     if (ok) onClose();
   }
@@ -168,13 +176,22 @@ export function RegistrarProductos({ onClose, dataSelect = {}, accion }) {
           </div>
 
           <span className="titulo-seccion completo">Inventario</span>
+          <div>
+            <span className="etiqueta">Unidad de medida</span>
+            <div style={{ marginTop: 6 }}>
+              <Selector opciones={unidades.activas} valor={unidadActual} onChange={setUnidad} icono={<v.iconostock />} placeholder="Unidad" />
+            </div>
+            <small style={{ display: "block", marginTop: 4, opacity: 0.7 }}>
+              {conDecimales ? "Admite decimales (por ejemplo 250 g o 1,5 l)." : "Se cuenta por piezas enteras."} Las unidades se configuran en Tu empresa.
+            </small>
+          </div>
           <InputText
             label="Stock inicial"
             icono={<v.iconostock />}
             error={errors.stock?.message}
             ayuda={editando ? "Para cambiar el stock registra un ajuste de inventario en Kardex: así queda el historial." : undefined}
           >
-            <input type="number" step="any" readOnly={editando} {...register("stock", numero("Indica el stock"))} />
+            <input type="number" step={conDecimales ? "any" : "1"} readOnly={editando} {...register("stock", numero("Indica el stock"))} />
           </InputText>
           <InputText label="Stock mínimo" icono={<v.iconostockminimo />} error={errors.stockminimo?.message} ayuda="Te avisaremos cuando el stock llegue a este nivel.">
             <input type="number" step="any" {...register("stockminimo", numero("Indica el stock mínimo"))} />

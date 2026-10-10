@@ -7,7 +7,8 @@ import { ColorContentTabla } from "../../atomos/ColorContenTabla";
 import { useProductosStore } from "../../../store/ProductosStore";
 import { useEmpresaStore } from "../../../store/EmpresaStore";
 import { confirmarEliminacion } from "../../../utils/notificaciones";
-import { formatearMoneda, formatearNumero } from "../../../utils/conversiones";
+import { formatearMoneda } from "../../../utils/conversiones";
+import { cantidadConUnidad } from "../../../utils/unidades";
 
 export function TablaProductos({ data, editar }) {
   const navigate = useNavigate();
@@ -28,11 +29,11 @@ export function TablaProductos({ data, editar }) {
       header: "Stock",
       meta: { align: "right" },
       cell: ({ row }) => {
-        const { stock, stock_minimo } = row.original;
+        const { stock, stock_minimo, unidad } = row.original;
         const bajo = Number(stock) <= Number(stock_minimo);
         return (
-          <Stock $bajo={bajo} title={bajo ? `Mínimo: ${stock_minimo}` : undefined}>
-            {formatearNumero(stock)}
+          <Stock $bajo={bajo} title={bajo ? `Mínimo: ${cantidadConUnidad(stock_minimo, unidad)}` : undefined}>
+            {cantidadConUnidad(stock, unidad)}
           </Stock>
         );
       },

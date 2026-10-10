@@ -15,9 +15,12 @@ import {
 import { formatearNumero } from "../conversiones";
 import { NombresMetodo } from "../dataEstatica";
 import { DIAS_SEMANA, buscarNombre, diaSemana, fechaCorta, porcentaje } from "./texto";
+import { cantidadEnPalabras } from "../unidades";
 import { GUIAS, buscarGuias } from "../guias";
 
 const n = (x, d = 0) => formatearNumero(Number(x ?? 0), d);
+// Cantidad en la unidad del producto: "3 frascos", "250 g".
+const und = (x, p) => cantidadEnPalabras(x, p?.unidad);
 const lista = (items) => items.map((i) => `- ${i}`).join("\n");
 const tabla = (encabezados, filas) =>
   [`| ${encabezados.join(" | ")} |`, `| ${encabezados.map(() => "---").join(" | ")} |`, ...filas.map((f) => `| ${f.join(" | ")} |`)].join("\n");
@@ -145,7 +148,7 @@ export const RESPUESTAS = {
       `**Ventas de ${per.etiqueta}${dondeSede(ctx)}:** ${ctx.dinero(d.total_periodo)} en ${n(d.num_ventas)} ventas (ticket promedio ${ctx.dinero(Math.round(Number(d.total_periodo) / Number(d.num_ventas)))}).${variacion(pct, `los ${per.dias} días anteriores`)}`,
     ];
     if (mejor && per.dias > 1) partes.push(`Tu mejor día fue el **${diaSemana(mejor.fecha)} ${fechaCorta(mejor.fecha)}** con ${ctx.dinero(mejor.total)}.`);
-    if (top.length) partes.push(`**Lo que más se vendió:**\n${lista(top.map((p) => `${p.descripcion}: ${n(p.cantidad)} und · ${ctx.dinero(p.total)}`))}`);
+    if (top.length) partes.push(`**Lo que más se vendió:**\n${lista(top.map((p) => `${p.descripcion}: ${und(p.cantidad, ctx.entidades?.catalogo?.find?.((c) => c.descripcion === p.descripcion))} · ${ctx.dinero(p.total)}`))}`);
     if (metodo) partes.push(`La mayoría te paga con **${(NombresMetodo[metodo.metodo] ?? metodo.metodo).toLowerCase()}** (${ctx.dinero(metodo.total)}).`);
     if (pct != null && pct <= -20) partes.push("Las ventas bajaron bastante: revisa si hay productos estrella agotados o detenidos.");
     return {
@@ -219,11 +222,10 @@ export const RESPUESTAS = {
     // Varios productos coinciden ("camisetas"): stock de cada uno.
     if (ctx.entidades.productos?.length > 1) {
       const varios = ctx.entidades.productos.slice(0, 15);
-      const total = varios.reduce((a, p) => a + Number(p.stock ?? 0), 0);
       return {
         texto: [
-          `Encontré ${ctx.entidades.productos.length} productos que coinciden (${n(total)} unidades en total):`,
-          tabla(["Producto", "Stock", "Mínimo"], varios.map((p) => [p.descripcion, n(p.stock), n(p.stock_minimo)])),
+          `Encontré ${ctx.entidades.productos.length} productos que coinciden:`,
+          tabla(["Producto", "Stock", "Mínimo"], varios.map((p) => [p.descripcion, und(p.stock, p), und(p.stock_minimo, p)])),
         ].join("\n\n"),
         sugerencias: varios.slice(0, 2).map((p) => `¿Cuánto hay de ${p.descripcion}?`),
       };
@@ -231,10 +233,10 @@ export const RESPUESTAS = {
     const [bodegas, rot] = await Promise.all([StockProducto(ctx.idEmpresa, prod.id), rotacion(ctx).catch(() => null)]);
     const total = (bodegas ?? []).reduce((a, b) => a + Number(b.cantidad), 0);
     const r = rot?.productos?.find((p) => p.id === prod.id);
-    const partes = [`**${prod.descripcion}:** ${n(total)} unidades en total.`];
+    const partes = [`**${prod.descripcion}:** ${und(total, prod)} en total.`];
     const conStock = (bodegas ?? []).filter((b) => Number(b.cantidad) > 0);
     if (conStock.length > 1 || (conStock.length === 1 && conStock[0].tipo !== "principal")) {
-      partes.push(lista(conStock.map((b) => `${b.bodega}: ${n(b.cantidad)}`)));
+      partes.push(lista(conStock.map((b) => `${b.bodega}: ${und(b.cantidad, prod)}`)));
     }
     if (r && Number(r.venta_diaria) > 0) {
       partes.push(
@@ -299,10 +301,10 @@ export const RESPUESTAS = {
       const tendencia = Number(r.tendencia);
       return {
         texto: [
-          `**${prod.descripcion}:** ${n(r.stock)} unidades. Vendes ~${n(r.venta_diaria, 1)} por día.`,
+          `**${prod.descripcion}:** ${und(r.stock, prod)}. Vendes ~${und(Number(r.venta_diaria).toFixed(1), prod)} por día.`,
           lista([
-            `Próximos 7 días: ~${n(r.pronostico_7)} unidades.`,
-            `Próximos 30 días: ~${n(r.pronostico_30)} unidades.`,
+            `Próximos 7 días: ~${und(r.pronostico_7, prod)}.`,
+            `Próximos 30 días: ~${und(r.pronostico_30, prod)}.`,
             r.fecha_agotamiento ? `Al ritmo actual se agota hacia el **${fechaCorta(r.fecha_agotamiento)}** (~${n(r.dias_cobertura)} días).` : "",
             tendencia ? `Tendencia de las últimas 2 semanas: **${tendencia > 0 ? "+" : ""}${n(tendencia)}%**.` : "",
           ].filter(Boolean)),

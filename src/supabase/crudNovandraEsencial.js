@@ -33,7 +33,7 @@ export async function PerfilNovandra(idEmpresa) {
 export async function CatalogoNovandra(idEmpresa) {
   const { data, error } = await supabase
     .from("productos")
-    .select("id, descripcion, stock, stock_minimo, precioventa, preciocompra, codigointerno")
+    .select("id, descripcion, stock, stock_minimo, precioventa, preciocompra, codigointerno, unidad")
     .eq("id_empresa", idEmpresa)
     .limit(5000);
   if (error) throw error;

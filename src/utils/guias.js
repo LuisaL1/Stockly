@@ -93,6 +93,7 @@ export const GUIAS = [
       "Toca Guardar producto.",
     ],
     consejos: [
+      "Elige la unidad del producto (unidad, par, frasco, gramos, mililitros, metros...). Las unidades disponibles se configuran en Tu empresa → Unidades de tu inventario; vienen preajustadas según tu sector.",
       "Después de crearlo, el stock ya no se edita en el producto: se ajusta con entradas y salidas en Kardex, para que quede el historial.",
       "En Productos tienes el botón Guía, que muestra una ficha de ejemplo campo por campo.",
     ],

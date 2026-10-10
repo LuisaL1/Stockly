@@ -1,3 +1,4 @@
+import { cantidadConUnidad } from "./unidades";
 import { formatearMonedaCorta, formatearNumero } from "./conversiones";
 import { NombresMetodo } from "./dataEstatica";
 
@@ -22,7 +23,7 @@ export function mensajeFactura({ venta, empresa, cfg, linkPago }) {
     `Hola${nombre ? ` ${nombre}` : ""}, te compartimos tu factura de *${empresa?.nombre ?? "nuestra tienda"}*.`,
     "",
     `*Factura ${venta.prefijo}-${venta.numero}* · ${new Date(venta.fecha).toLocaleDateString("es-CO")}`,
-    ...venta.detalle_venta.map((d) => `• ${formatearNumero(d.cantidad)} × ${d.descripcion}: ${dinero(d.total)}`),
+    ...venta.detalle_venta.map((d) => `• ${d.unidad && d.unidad !== "und" ? cantidadConUnidad(d.cantidad, d.unidad) : formatearNumero(d.cantidad)} × ${d.descripcion}: ${dinero(d.total)}`),
     "",
     `*Total: ${dinero(venta.total)}*`,
   ];

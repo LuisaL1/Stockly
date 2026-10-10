@@ -238,7 +238,7 @@ $$;
 
 -- Crea el producto en la empresa (stock 0) con categoría y marca por nombre; devuelve su id.
 create or replace function public.stockly_red_crear_producto(_id_empresa bigint, _descripcion text, _codigointerno text, _codigobarras text,
-  _precioventa numeric, _preciocompra numeric, _categoria text, _marca text, _stock_minimo numeric default 0)
+  _precioventa numeric, _preciocompra numeric, _categoria text, _marca text, _stock_minimo numeric default 0, _unidad text default null)
 returns bigint language plpgsql security definer set search_path = public
 as $$
 declare
@@ -259,9 +259,9 @@ begin
   if exists (select 1 from productos where id_empresa = _id_empresa and descripcion = _desc) then
     _desc := _desc || ' (' || coalesce(nullif(btrim(_codigointerno), ''), nullif(btrim(_codigobarras), ''), 'red') || ')';
   end if;
-  insert into productos (descripcion, idmarca, stock, stock_minimo, codigobarras, codigointerno, precioventa, preciocompra, id_categoria, id_empresa)
+  insert into productos (descripcion, idmarca, stock, stock_minimo, codigobarras, codigointerno, precioventa, preciocompra, id_categoria, id_empresa, unidad)
   values (_desc, _mar, 0, coalesce(_stock_minimo, 0), nullif(btrim(_codigobarras), ''), nullif(btrim(_codigointerno), ''),
-          coalesce(_precioventa, 0), coalesce(_preciocompra, 0), _cat, _id_empresa)
+          coalesce(_precioventa, 0), coalesce(_preciocompra, 0), _cat, _id_empresa, coalesce(_unidad, 'und'))
   returning id into _id;
   return _id;
 end $$;
@@ -399,7 +399,7 @@ begin
   return jsonb_build_object('comparte', true, 'costos', coalesce((_cfg->>'costos')::boolean, false),
     'catalogo', coalesce((_cfg->>'catalogo')::boolean, false),
     'productos', coalesce((select jsonb_agg(to_jsonb(x) order by x.descripcion) from (
-      select p.id, p.descripcion, p.codigointerno, p.codigobarras, p.stock, p.stock_minimo, p.precioventa,
+      select p.id, p.descripcion, p.codigointerno, p.codigobarras, p.stock, p.stock_minimo, p.precioventa, p.unidad,
              case when coalesce((_cfg->>'costos')::boolean, false) then p.preciocompra end as preciocompra,
              c.descripcion as categoria, m.descripcion as marca,
              (select jsonb_agg(jsonb_build_object('bodega', vb.bodega, 'cantidad', vb.cantidad) order by vb.bodega)
@@ -438,7 +438,7 @@ begin
       _existentes := _existentes + 1;
     else
       perform public.stockly_red_crear_producto(_id_empresa, _p.descripcion, _p.codigointerno::text, _p.codigobarras::text, _p.precioventa,
-        case when coalesce((_cfg->>'costos')::boolean, false) then _p.preciocompra end, _p.categoria, _p.marca, _p.stock_minimo);
+        case when coalesce((_cfg->>'costos')::boolean, false) then _p.preciocompra end, _p.categoria, _p.marca, _p.stock_minimo, _p.unidad);
       _creados := _creados + 1;
     end if;
   end loop;
@@ -490,10 +490,10 @@ begin
     if public.stockly_disponible(_bodega, _p.id) < _cant then
       raise exception 'Stock insuficiente de % en esta bodega (disponible: %)', _p.descripcion, trim_scale(public.stockly_disponible(_bodega, _p.id));
     end if;
-    insert into red_envios_detalle (id_envio, id_producto_origen, descripcion, codigointerno, codigobarras, cantidad, costo_unitario, precio_venta, categoria, marca, stock_minimo)
+    insert into red_envios_detalle (id_envio, id_producto_origen, descripcion, codigointerno, codigobarras, cantidad, costo_unitario, precio_venta, categoria, marca, stock_minimo, unidad)
     values (_id, _p.id, _p.descripcion, _p.codigointerno::text, _p.codigobarras::text, _cant,
             case when coalesce((_cfg->>'costos')::boolean, false) then _p.preciocompra end, _p.precioventa,
-            (select descripcion from categorias where id = _p.id_categoria), (select descripcion from marca where id = _p.idmarca), _p.stock_minimo);
+            (select descripcion from categorias where id = _p.id_categoria), (select descripcion from marca where id = _p.idmarca), _p.stock_minimo, _p.unidad);
     insert into kardex (tipo, cantidad, detalle, id_empresa, id_producto, id_bodega, origen, referencia, nota)
     values ('Salida', _cant, 'Envío a ' || _otro_nombre || ' RED-' || _numero, _id_empresa, _p.id, _bodega, 'red', _id, nullif(btrim(_nota), ''));
     _unidades := _unidades + _cant;
@@ -534,7 +534,7 @@ begin
   for _d in select * from red_envios_detalle where id_envio = _id_envio loop
     _idp := public.stockly_red_buscar_producto(_id_empresa, _d.codigointerno, _d.codigobarras, _d.descripcion);
     if _idp is null then
-      _idp := public.stockly_red_crear_producto(_id_empresa, _d.descripcion, _d.codigointerno, _d.codigobarras, _d.precio_venta, _d.costo_unitario, _d.categoria, _d.marca, _d.stock_minimo);
+      _idp := public.stockly_red_crear_producto(_id_empresa, _d.descripcion, _d.codigointerno, _d.codigobarras, _d.precio_venta, _d.costo_unitario, _d.categoria, _d.marca, _d.stock_minimo, _d.unidad);
       _creados := _creados + 1;
     end if;
     update red_envios_detalle set id_producto_destino = _idp where id = _d.id;

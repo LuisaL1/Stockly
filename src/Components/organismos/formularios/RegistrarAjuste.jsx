@@ -15,6 +15,7 @@ import { RegistrarAjuste as Registrar } from "../../../supabase/crudKardex";
 import { MostrarBodegas, MostrarStockBodega } from "../../../supabase/crudBodegas";
 import { MOTIVOS_AJUSTE } from "../../../utils/kardex";
 import { formatearNumero } from "../../../utils/conversiones";
+import { cantidadConUnidad, permiteDecimales } from "../../../utils/unidades";
 import { v } from "../../../styles/variables";
 
 // Ajuste manual de inventario: entrada o salida con motivo. Queda en el kardex y se puede anular.
@@ -118,11 +119,11 @@ export function RegistrarAjuste({ onClose, onGuardado, productoInicial = null })
           label="Cantidad"
           icono={<v.iconocalculadora />}
           error={errors.cantidad?.message}
-          ayuda={producto && cantidad > 0 && !errors.cantidad ? `Quedarán ${formatearNumero(resultante)} en ${bodegaActual?.nombre ?? "la bodega"}.` : undefined}
+          ayuda={producto && cantidad > 0 && !errors.cantidad ? `Quedarán ${cantidadConUnidad(resultante, producto.unidad)} en ${bodegaActual?.nombre ?? "la bodega"}.` : producto ? `Cantidad en ${cantidadConUnidad(1, producto.unidad).replace(/^1 /, "")}.` : undefined}
         >
           <input
             type="number"
-            step="any"
+            step={permiteDecimales(producto?.unidad) ? "any" : "1"}
             placeholder="0"
             {...register("cantidad", {
               required: "Indica la cantidad",

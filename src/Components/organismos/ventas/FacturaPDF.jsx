@@ -1,3 +1,4 @@
+import { abrev } from "../../../utils/unidades";
 import { Document, Page, Text, View, Image, Link, StyleSheet, PDFDownloadLink } from "@react-pdf/renderer";
 import { useQuery } from "@tanstack/react-query";
 import { useEmpresaStore } from "../../../store/EmpresaStore";
@@ -124,7 +125,7 @@ export function DocumentoFactura({ venta, cfg, empresa, logoEmpresa }) {
         {venta.detalle_venta.map((d) => (
           <View key={d.id} style={s.fila} wrap={false}>
             <Text style={s.cDesc}>{d.descripcion}</Text>
-            <Text style={s.cNum}>{formatearNumero(d.cantidad, Number.isInteger(Number(d.cantidad)) ? 0 : 2)}</Text>
+            <Text style={s.cNum}>{formatearNumero(d.cantidad, Number.isInteger(Number(d.cantidad)) ? 0 : 2)}{d.unidad && d.unidad !== "und" ? ` ${abrev(d.unidad)}` : ""}</Text>
             <Text style={s.cNum}>{dinero(d.precio_unitario)}</Text>
             <Text style={s.cNum}>{Number(d.descuento) ? dinero(d.descuento) : "—"}</Text>
             <Text style={s.cNum}>{formatearNumero(d.iva)}%</Text>
