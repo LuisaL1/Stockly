@@ -438,12 +438,12 @@ const Hero = styled.section`
   @media (min-width: 960px) {
     display: block;
     text-align: left;
-    padding-top: 36px;
+    padding-top: 60px;
     .texto {
       align-items: flex-start;
       justify-content: center;
       max-width: 620px;
-      min-height: 520px;
+      min-height: 540px;
     }
     .ctas,
     .notas {
@@ -452,7 +452,7 @@ const Hero = styled.section`
     .movil-escena {
       --k: 1;
       position: absolute;
-      top: -10px;
+      top: 34px;
       right: 8px;
       margin: 0;
     }
