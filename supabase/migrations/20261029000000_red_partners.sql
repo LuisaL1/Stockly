@@ -122,8 +122,14 @@ create table if not exists public.red_envios_detalle (
   codigobarras text,
   cantidad numeric(14, 3) not null check (cantidad > 0),
   costo_unitario numeric,
-  precio_venta numeric
+  precio_venta numeric,
+  categoria text,
+  marca text,
+  stock_minimo numeric
 );
+alter table public.red_envios_detalle add column if not exists categoria text;
+alter table public.red_envios_detalle add column if not exists marca text;
+alter table public.red_envios_detalle add column if not exists stock_minimo numeric;
 create index if not exists red_envios_detalle_envio_idx on public.red_envios_detalle (id_envio);
 
 create table if not exists public.red_pedidos (
@@ -484,9 +490,10 @@ begin
     if public.stockly_disponible(_bodega, _p.id) < _cant then
       raise exception 'Stock insuficiente de % en esta bodega (disponible: %)', _p.descripcion, trim_scale(public.stockly_disponible(_bodega, _p.id));
     end if;
-    insert into red_envios_detalle (id_envio, id_producto_origen, descripcion, codigointerno, codigobarras, cantidad, costo_unitario, precio_venta)
+    insert into red_envios_detalle (id_envio, id_producto_origen, descripcion, codigointerno, codigobarras, cantidad, costo_unitario, precio_venta, categoria, marca, stock_minimo)
     values (_id, _p.id, _p.descripcion, _p.codigointerno::text, _p.codigobarras::text, _cant,
-            case when coalesce((_cfg->>'costos')::boolean, false) then _p.preciocompra end, _p.precioventa);
+            case when coalesce((_cfg->>'costos')::boolean, false) then _p.preciocompra end, _p.precioventa,
+            (select descripcion from categorias where id = _p.id_categoria), (select descripcion from marca where id = _p.idmarca), _p.stock_minimo);
     insert into kardex (tipo, cantidad, detalle, id_empresa, id_producto, id_bodega, origen, referencia, nota)
     values ('Salida', _cant, 'Envío a ' || _otro_nombre || ' RED-' || _numero, _id_empresa, _p.id, _bodega, 'red', _id, nullif(btrim(_nota), ''));
     _unidades := _unidades + _cant;
@@ -527,7 +534,7 @@ begin
   for _d in select * from red_envios_detalle where id_envio = _id_envio loop
     _idp := public.stockly_red_buscar_producto(_id_empresa, _d.codigointerno, _d.codigobarras, _d.descripcion);
     if _idp is null then
-      _idp := public.stockly_red_crear_producto(_id_empresa, _d.descripcion, _d.codigointerno, _d.codigobarras, _d.precio_venta, _d.costo_unitario, null, null, 0);
+      _idp := public.stockly_red_crear_producto(_id_empresa, _d.descripcion, _d.codigointerno, _d.codigobarras, _d.precio_venta, _d.costo_unitario, _d.categoria, _d.marca, _d.stock_minimo);
       _creados := _creados + 1;
     end if;
     update red_envios_detalle set id_producto_destino = _idp where id = _d.id;

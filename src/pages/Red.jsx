@@ -19,6 +19,7 @@ import { Boton } from "../Components/atomos/Boton";
 import { Etiqueta } from "../Components/atomos/Etiqueta";
 import { useEmpresaStore } from "../store/EmpresaStore";
 import { useUsuariosStore } from "../store/UsuariosStore";
+import { useProductosStore } from "../store/ProductosStore";
 import { MostrarBodegas } from "../supabase/crudBodegas";
 import {
   AceptarVinculo,
@@ -66,7 +67,10 @@ function Contenido() {
   const envios = useQuery({ queryKey: ["red envios", idEmpresa], queryFn: () => EnviosRed(idEmpresa), enabled: !!idEmpresa });
   const pedidos = useQuery({ queryKey: ["red pedidos", idEmpresa], queryFn: () => PedidosRed(idEmpresa), enabled: !!idEmpresa });
   const bodegas = useQuery({ queryKey: ["bodegas", idEmpresa], queryFn: () => MostrarBodegas(idEmpresa), enabled: !!idEmpresa });
-  const recargar = () => queryClient.invalidateQueries();
+  const recargar = () => {
+    queryClient.invalidateQueries();
+    useProductosStore.getState().recargar();
+  };
 
   if (red.isLoading) return <SpinnerLoader />;
   if (red.error) return <ErrorMolecula mensaje={red.error.message} reintentar={red.refetch} />;
