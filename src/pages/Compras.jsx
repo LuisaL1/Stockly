@@ -9,6 +9,8 @@ import { EstadoVacio } from "../Components/moleculas/EstadoVacio";
 import { Modal } from "../Components/moleculas/Modal";
 import { BentoGrid, Cifra, Tarjeta } from "../Components/moleculas/Bento";
 import { DataTable } from "../Components/organismos/tablas/DataTable";
+import { Buscador } from "../Components/organismos/Buscador";
+import { BotonLimpiar, SelectFiltro } from "../Components/moleculas/Filtros";
 import { Selector } from "../Components/organismos/Selector";
 import { Boton } from "../Components/atomos/Boton";
 import { Etiqueta, EtiquetaEstado } from "../Components/atomos/Etiqueta";
@@ -47,6 +49,9 @@ function Contenido() {
   const dinero = (n) => formatearMonedaCorta(n, dataempresa?.simbolomoneda ?? "$");
   const abrirNovandra = useNovandraStore((s) => s.abrir);
   const queryClient = useQueryClient();
+  const [texto, setTexto] = useState("");
+  const [estadoFiltro, setEstadoFiltro] = useState("");
+  const [proveedorFiltro, setProveedorFiltro] = useState("");
   const [nueva, setNueva] = useState(false);
   const [detalle, setDetalle] = useState(null);
 
@@ -60,6 +65,17 @@ function Contenido() {
   if (ordenes.error) return <ErrorMolecula mensaje={ordenes.error.message} reintentar={ordenes.refetch} />;
 
   const lista = ordenes.data ?? [];
+  const normal = (t) => String(t ?? "").toLowerCase();
+  const proveedoresLista = [...new Map(lista.map((o) => [o.proveedores?.nombre, o.proveedores?.nombre]).filter(([k]) => k)).keys()].sort().map((n) => ({ id: n, descripcion: n }));
+  const filtradas = lista.filter((o) => {
+    if (estadoFiltro && o.estado !== estadoFiltro) return false;
+    if (proveedorFiltro && o.proveedores?.nombre !== proveedorFiltro) return false;
+    if (texto) {
+      const t = normal(texto);
+      if (!(`oc-${o.numero}`.includes(t) || String(o.numero).includes(t) || normal(o.proveedores?.nombre).includes(t) || normal(o.nota).includes(t))) return false;
+    }
+    return true;
+  });
   const abiertas = lista.filter((o) => ["borrador", "enviada"].includes(o.estado));
   const deNovandra = lista.filter((o) => o.creada_por === "novandra" && o.estado === "borrador");
 
@@ -106,6 +122,25 @@ function Contenido() {
     <PaginaTemplate
       titulo="Compras"
       descripcion="Pide a tus proveedores. Al recibir, el inventario se suma solo."
+      herramientas={
+        <>
+          <Buscador setBuscador={setTexto} placeholder="Número, proveedor o nota…" />
+          <SelectFiltro
+            etiqueta="Estado"
+            todos="Todos los estados"
+            valor={estadoFiltro}
+            onChange={setEstadoFiltro}
+            opciones={[
+              { id: "borrador", descripcion: "Borradores" },
+              { id: "enviada", descripcion: "Enviadas" },
+              { id: "recibida", descripcion: "Recibidas" },
+              { id: "cancelada", descripcion: "Canceladas" },
+            ]}
+          />
+          <SelectFiltro etiqueta="Proveedor" todos="Todos los proveedores" valor={proveedorFiltro} onChange={setProveedorFiltro} opciones={proveedoresLista} />
+          <BotonLimpiar visible={!!(estadoFiltro || proveedorFiltro)} onClick={() => { setEstadoFiltro(""); setProveedorFiltro(""); }} />
+        </>
+      }
       acciones={
         <>
           <Boton
@@ -143,11 +178,11 @@ function Contenido() {
       </BentoGrid>
 
       <DataTable
-        data={lista}
+        data={filtradas}
         columns={columns}
         vacio={
           <EstadoVacio
-            titulo="Sin órdenes de compra"
+            titulo={lista.length ? "Sin resultados" : "Sin órdenes de compra"}
             mensaje="Crea una orden o pídele a Novandra que prepare una con lo que está por agotarse."
             icono={<v.iconocompras />}
           />

@@ -18,6 +18,7 @@ export function CrudTemplate({
   volverA = { to: "/configurar", texto: "Configuración" },
   accionesExtra,
   bloqueoNuevo,
+  filtros,
 }) {
   const [registro, setRegistro] = useState(null); // { accion, dataSelect }
 
@@ -39,7 +40,12 @@ export function CrudTemplate({
           </Boton>
         </>
       }
-      herramientas={<Buscador setBuscador={setBuscador} placeholder={placeholderBusqueda} />}
+      herramientas={
+        <>
+          <Buscador setBuscador={setBuscador} placeholder={placeholderBusqueda} />
+          {filtros}
+        </>
+      }
     >
       <Tabla data={data} editar={(fila) => setRegistro({ accion: "Editar", dataSelect: fila })} />
       {registro && (

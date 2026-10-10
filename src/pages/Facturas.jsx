@@ -11,6 +11,8 @@ import { EstadoVacio } from "../Components/moleculas/EstadoVacio";
 import { Modal } from "../Components/moleculas/Modal";
 import { BentoGrid, Cifra, Tarjeta } from "../Components/moleculas/Bento";
 import { DataTable } from "../Components/organismos/tablas/DataTable";
+import { BotonLimpiar, SelectFiltro } from "../Components/moleculas/Filtros";
+import { opcionesDesde } from "../utils/filtros";
 import { Buscador } from "../Components/organismos/Buscador";
 import { Boton } from "../Components/atomos/Boton";
 import { EtiquetaEstado } from "../Components/atomos/Etiqueta";
@@ -53,6 +55,8 @@ function Contenido() {
   const dinero = (n) => formatearMonedaCorta(n, dataempresa?.simbolomoneda ?? "$");
   const [dias, setDias] = useState(30);
   const [estado, setEstado] = useState("");
+  const [metodo, setMetodo] = useState("");
+  const [canal, setCanal] = useState("");
   const [texto, setTexto] = useState("");
   const [detalle, setDetalle] = useState(null);
 
@@ -67,7 +71,7 @@ function Contenido() {
   if (ventas.isLoading) return <SpinnerLoader />;
   if (ventas.error) return <ErrorMolecula mensaje={ventas.error.message} reintentar={ventas.refetch} />;
 
-  const filas = ventas.data ?? [];
+  const filas = (ventas.data ?? []).filter((f) => (!metodo || f.metodo_pago === metodo) && (!canal || f.canal === canal));
   const validas = filas.filter((f) => f.estado !== "anulada");
   const facturado = validas.reduce((acc, f) => acc + Number(f.total), 0);
   const pendientes = filas.filter((f) => f.estado === "pendiente");
@@ -132,6 +136,9 @@ function Contenido() {
             <option value="pendiente">Pendientes de pago</option>
             <option value="anulada">Anuladas</option>
           </Select>
+          <SelectFiltro etiqueta="Medio de pago" todos="Todos los medios de pago" valor={metodo} onChange={setMetodo} opciones={Object.entries(NombresMetodo).map(([id, descripcion]) => ({ id, descripcion }))} />
+          <SelectFiltro etiqueta="Canal" todos="Todos los canales" valor={canal} onChange={setCanal} opciones={opcionesDesde(ventas.data, "canal")} />
+          <BotonLimpiar visible={!!(estado || metodo || canal)} onClick={() => { setEstado(""); setMetodo(""); setCanal(""); }} />
         </>
       }
     >
