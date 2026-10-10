@@ -1,14 +1,12 @@
 import styled from "styled-components";
 import logo from "../assets/logo.png";
-import personaje from "../assets/personaje-stockly.webp";
 import { FAQ, FUNCIONES, HERO, PASOS, PLANES, SITIO, cop } from "./contenido";
-import { Cinta, PanelHoy, PanelPlan, PanelStock, PanelTicket, PanelVentas, VentanaApp, VisualBodegas, VisualCaja, VisualNovandra, VisualTelefono } from "./widgets";
+import { Movil, PanelHoy, PanelPlan, PanelStock, PanelTicket, PanelVentas, VentanaApp, VisualBodegas, VisualCaja, VisualNovandra, VisualTelefono } from "./widgets";
 import { GRIS, LINEA, MORADO, MORADO_CLARO, PAPEL, SUAVE, TINTA, sinMovimiento } from "./tokens";
 
 // Página pública de Stockly. Titular grande, la app en una ventana, y una historia por función.
 // Se prerenderiza al compilar (scripts/prerender.mjs): el movimiento es solo CSS.
 export function Landing() {
-  const cinta = ["Caja ágil", "Bre-B", "Link de pago con Wompi", "Facturas por WhatsApp", "Bodegas y sedes", "Kardex", "Informe para tu contador", "Novandra", "Importa desde Excel", "Gratis para siempre"];
   const mas = [1, 2, 4, 5, 6, 8].map((i) => FUNCIONES[i]);
   return (
     <Pagina data-landing>
@@ -54,7 +52,7 @@ export function Landing() {
               ))}
             </ul>
           </div>
-          <img className="personaje" src={personaje} alt="Persona del equipo de Stockly revisando el inventario con un lector de códigos" width="1000" height="1290" fetchPriority="high" />
+          <Movil />
           <VentanaApp className="ventana" aria-label="Así se ve el panel de Stockly">
             <div className="barra">
               <i />
@@ -90,8 +88,6 @@ export function Landing() {
             </div>
           </VentanaApp>
         </Hero>
-
-        <Cinta items={cinta} />
 
         <Historia id="funciones">
           <div className="texto">
@@ -422,14 +418,17 @@ const Hero = styled.section`
       font-weight: 700;
     }
   }
-  /* El personaje mira al titular (espejado) y apunta el lector a las palabras; sus pies pisan la ventana de la app */
-  .personaje {
+  /* La app en el teléfono, con avisos flotantes; abajo, la ventana de escritorio */
+  .movil-escena {
+    --k: 0.62;
     position: relative;
     z-index: 2;
-    height: 300px;
-    width: auto;
-    margin: 10px 0 -14px;
-    transform: scaleX(-1);
+    margin: 10px auto -6px;
+  }
+  @media (min-width: 480px) {
+    .movil-escena {
+      --k: 0.8;
+    }
   }
   .ventana {
     position: relative;
@@ -450,11 +449,11 @@ const Hero = styled.section`
     .notas {
       justify-content: flex-start;
     }
-    .personaje {
+    .movil-escena {
+      --k: 1;
       position: absolute;
       top: -6px;
-      right: 56px;
-      height: 590px;
+      right: 48px;
       margin: 0;
     }
     .ventana {

@@ -1,4 +1,5 @@
 import styled, { keyframes } from "styled-components";
+import movil from "../assets/movil-inicio.webp";
 import { GRIS, LINEA, MORADO, MORADO_CLARO, PAPEL, SUAVE, TINTA, TINTA2, VERDE } from "./tokens";
 
 // Visuales animados de la página pública. Solo CSS (keyframes): funcionan prerenderizados
@@ -54,10 +55,6 @@ const pensar = keyframes`
   0%, 30% { opacity: 0; }
   32%, 38% { opacity: 1; }
   40%, 100% { opacity: 0; }
-`;
-const desplazar = keyframes`
-  from { transform: translateX(0); }
-  to { transform: translateX(-50%); }
 `;
 const encender = keyframes`
   0%, 100% { background: #fff; color: ${TINTA}; border-color: ${LINEA}; }
@@ -856,38 +853,156 @@ const Novandra = styled.div`
   }
 `;
 
-// Cinta deslizante con lo que incluye Stockly.
-export function Cinta({ items }) {
-  const lista = [...items, ...items];
+// --------------------------------------------------------------- Teléfono con la app y avisos flotantes (hero)
+const MOVIL_ANCHO = 460;
+const MOVIL_ALTO = 600;
+export function Movil() {
   return (
-    <CintaBase aria-hidden="true">
-      <div className="pista">
-        {lista.map((t, i) => (
-          <span key={i}>{t}</span>
-        ))}
+    <MovilEscena className="movil-escena" aria-hidden="true">
+      <div className="lienzo">
+        <div className="telefono">
+          <div className="pantalla">
+            <img src={movil} alt="" width="780" height="1688" fetchPriority="high" />
+          </div>
+        </div>
+        <div className="flot aviso">
+          <i>⚠</i>
+          <div>
+            <b>Stock bajo</b>
+            <span>Gorra negra bordada · quedan 4</span>
+          </div>
+        </div>
+        <div className="flot novandra">
+          <i>✦</i>
+          <div>
+            <b>Novandra</b>
+            <span>Pide 30 gorras a Textiles del Eje antes del viernes.</span>
+            <em>Crear orden</em>
+          </div>
+        </div>
+        <div className="flot venta">
+          <i>✓</i>
+          <div>
+            <b>Venta registrada</b>
+            <span>$ 116.620 · Bre-B</span>
+          </div>
+        </div>
       </div>
-    </CintaBase>
+    </MovilEscena>
   );
 }
-const CintaBase = styled.div`
-  overflow: hidden;
-  padding: 6px 0;
-  mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent);
-  .pista {
-    display: flex;
-    gap: 14px;
-    width: max-content;
-    animation: ${desplazar} 40s linear infinite;
+const MovilEscena = styled.div`
+  --k: 1;
+  position: relative;
+  width: calc(${MOVIL_ANCHO}px * var(--k));
+  height: calc(${MOVIL_ALTO}px * var(--k));
+  .lienzo {
+    position: absolute;
+    inset: 0;
+    width: ${MOVIL_ANCHO}px;
+    height: ${MOVIL_ALTO}px;
+    transform: scale(var(--k));
+    transform-origin: 0 0;
   }
-  span {
-    white-space: nowrap;
-    font-weight: 600;
-    color: ${TINTA};
-    font-size: 0.88rem;
-    padding: 8px 14px;
-    border-radius: 999px;
-    border: 1px solid ${LINEA};
+  .telefono {
+    position: absolute;
+    left: 88px;
+    top: 0;
+    width: 284px;
+    height: ${MOVIL_ALTO}px;
+    padding: 10px;
+    border-radius: 44px;
+    background: ${TINTA};
+    box-shadow: 0 40px 90px -40px rgba(23, 19, 29, 0.6), inset 0 0 0 1px rgba(244, 241, 236, 0.12);
+  }
+  .pantalla {
+    width: 100%;
+    height: 100%;
+    border-radius: 34px;
+    overflow: hidden;
+    background: #0e0b12;
+    img {
+      display: block;
+      width: 100%;
+      height: auto;
+    }
+  }
+  .flot {
+    position: absolute;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 12px 14px;
+    border-radius: 16px;
     background: #fff;
+    border: 1px solid ${LINEA};
+    box-shadow: 0 24px 50px -28px rgba(23, 19, 29, 0.45);
+    font-size: 0.8rem;
+    line-height: 1.35;
+    width: 230px;
+    i {
+      flex: none;
+      width: 30px;
+      height: 30px;
+      border-radius: 10px;
+      display: grid;
+      place-items: center;
+      font-style: normal;
+      font-weight: 800;
+    }
+    b {
+      display: block;
+      font-size: 0.84rem;
+    }
+    span {
+      color: ${GRIS};
+    }
+    em {
+      display: inline-block;
+      margin-top: 8px;
+      padding: 5px 10px;
+      border-radius: 8px;
+      background: ${MORADO};
+      color: #fff;
+      font-style: normal;
+      font-weight: 700;
+      font-size: 0.76rem;
+    }
+  }
+  .aviso {
+    left: -44px;
+    top: 150px;
+    i {
+      background: #fde8e8;
+      color: #b91c1c;
+    }
+  }
+  .novandra {
+    right: -36px;
+    top: 300px;
+    width: 236px;
+    background: ${TINTA2};
+    border-color: rgba(244, 241, 236, 0.1);
+    color: ${PAPEL};
+    span {
+      color: rgba(244, 241, 236, 0.7);
+    }
+    i {
+      background: ${MORADO_CLARO};
+      color: ${TINTA};
+    }
+    em {
+      background: ${MORADO_CLARO};
+      color: ${TINTA};
+    }
+  }
+  .venta {
+    left: -30px;
+    bottom: 70px;
+    width: 214px;
+    i {
+      background: #dcfce7;
+      color: #15803d;
+    }
   }
 `;
-
