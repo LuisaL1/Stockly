@@ -23,7 +23,7 @@ export function Landing() {
           <a href="#preguntas">Preguntas</a>
         </nav>
         <div className="acciones">
-          <a className="enlace" href="/login">
+          <a className="boton secundario" href="/login">
             Iniciar sesión
           </a>
           <a className="boton" href={HERO.ctaPrincipal.href}>
@@ -34,30 +34,33 @@ export function Landing() {
 
       <main>
         <Hero>
-          <span className="etiqueta">{HERO.etiqueta}</span>
-          <h1>
-            Tu inventario, <em>por fin en orden.</em>
-          </h1>
-          <p>{HERO.texto}</p>
-          <div className="ctas">
-            <a className="boton grande" href={HERO.ctaPrincipal.href}>
-              {HERO.ctaPrincipal.texto}
-            </a>
-            <a className="enlace grande" href="#funciones">
-              Ver cómo funciona ↓
-            </a>
+          <div className="texto">
+            <span className="etiqueta">{HERO.etiqueta}</span>
+            <h1>
+              Tu inventario, <em>por fin en orden.</em>
+            </h1>
+            <p>{HERO.texto}</p>
+            <div className="ctas">
+              <a className="boton grande" href={HERO.ctaPrincipal.href}>
+                {HERO.ctaPrincipal.texto}
+              </a>
+              <a className="boton secundario grande" href="#funciones">
+                Ver cómo funciona
+              </a>
+            </div>
+            <ul className="notas">
+              {HERO.notas.map((n) => (
+                <li key={n}>{n}</li>
+              ))}
+            </ul>
           </div>
-          <ul className="notas">
-            {HERO.notas.map((n) => (
-              <li key={n}>{n}</li>
-            ))}
-          </ul>
-          <VentanaApp aria-label="Así se ve el panel de Stockly">
+          <Flotante className="arte" src={ilustracion} alt="Persona de Stockly registrando inventario con un lector de códigos" width="1400" height="2001" fetchPriority="high" />
+          <VentanaApp className="ventana" aria-label="Así se ve el panel de Stockly">
             <div className="barra">
               <i />
               <i />
               <i />
-              <span>appstockly.com · Tienda Luisa</span>
+              <span>appstockly.com · Tienda Central</span>
             </div>
             <div className="cuerpo">
               <div className="lateral">
@@ -75,8 +78,8 @@ export function Landing() {
               </div>
               <div className="panel">
                 <div className="saludo">
-                  <strong>Buenas tardes, Luisa</strong>
-                  <span>Así va Tienda Luisa hoy.</span>
+                  <strong>Buenas tardes, Camila</strong>
+                  <span>Así va tu tienda hoy.</span>
                 </div>
                 <PanelVentas />
                 <PanelHoy />
@@ -195,14 +198,11 @@ export function Landing() {
         </Seccion>
 
         <Final>
-          <div className="texto">
-            <h2>¿Empezamos?</h2>
-            <p>Crea tu empresa gratis. En un minuto estás vendiendo.</p>
-            <a className="boton grande" href={HERO.ctaPrincipal.href}>
-              {HERO.ctaPrincipal.texto}
-            </a>
-          </div>
-          <Flotante src={ilustracion} alt="" width="420" height="600" loading="lazy" />
+          <h2>¿Empezamos?</h2>
+          <p>Crea tu empresa gratis. En un minuto estás vendiendo.</p>
+          <a className="boton grande" href={HERO.ctaPrincipal.href}>
+            {HERO.ctaPrincipal.texto}
+          </a>
         </Final>
       </main>
 
@@ -289,18 +289,6 @@ const Pagina = styled.div`
       outline-offset: 2px;
     }
   }
-  .enlace {
-    color: ${MORADO};
-    font-weight: 600;
-    text-decoration: none;
-    &:hover {
-      text-decoration: underline;
-    }
-    &.grande {
-      font-size: 1.04rem;
-      padding: 15px 8px;
-    }
-  }
   .eyebrow {
     display: inline-block;
     color: ${MORADO};
@@ -321,7 +309,7 @@ const Barra = styled.header`
   max-width: 1120px;
   margin: 0 auto;
   padding: 14px 20px;
-  background: rgba(244, 241, 236, 0.9);
+  background: rgba(244, 239, 233, 0.92);
   backdrop-filter: blur(12px);
   .marca {
     display: flex;
@@ -354,11 +342,15 @@ const Barra = styled.header`
     gap: 14px;
     white-space: nowrap;
   }
-  @media (max-width: 420px) {
+  @media (max-width: 480px) {
     padding: 12px 16px;
     gap: 10px;
+    .marca {
+      font-size: 0;
+      gap: 0;
+    }
     .acciones {
-      gap: 10px;
+      gap: 8px;
       font-size: 0.9rem;
     }
     .acciones .boton {
@@ -368,12 +360,19 @@ const Barra = styled.header`
 `;
 
 const Hero = styled.section`
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 28px;
   align-items: center;
+  padding-top: 16px;
   text-align: center;
-  gap: 18px;
-  padding-top: 40px;
+  .texto {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 18px;
+    min-width: 0;
+  }
   .etiqueta {
     padding: 6px 12px;
     border-radius: 999px;
@@ -384,25 +383,25 @@ const Hero = styled.section`
     letter-spacing: 0.03em;
   }
   h1 {
-    font-size: clamp(2.6rem, 6.4vw, 4.6rem);
+    font-size: clamp(2.6rem, 6vw, 4.4rem);
     font-weight: 800;
-    max-width: 16ch;
+    max-width: 14ch;
     em {
       font-style: normal;
       color: ${MORADO};
     }
   }
-  > p {
-    font-size: clamp(1.05rem, 1.6vw, 1.3rem);
+  .texto > p {
+    font-size: clamp(1.05rem, 1.6vw, 1.25rem);
     color: ${GRIS};
-    max-width: 48ch;
+    max-width: 44ch;
   }
   .ctas {
     display: flex;
     flex-wrap: wrap;
     justify-content: center;
     align-items: center;
-    gap: 10px 18px;
+    gap: 12px;
     margin-top: 6px;
   }
   .notas {
@@ -410,7 +409,7 @@ const Hero = styled.section`
     flex-wrap: wrap;
     justify-content: center;
     gap: 8px 18px;
-    margin: 0 0 26px;
+    margin: 0;
     padding: 0;
     list-style: none;
     color: ${GRIS};
@@ -419,6 +418,35 @@ const Hero = styled.section`
       content: "✓ ";
       color: ${MORADO};
       font-weight: 700;
+    }
+  }
+  .arte {
+    justify-self: center;
+    width: min(100%, 300px);
+    height: auto;
+  }
+  .ventana {
+    grid-column: 1 / -1;
+    margin-top: 16px;
+  }
+  @media (min-width: 880px) {
+    grid-template-columns: 1.1fr 0.9fr;
+    gap: 40px;
+    text-align: left;
+    padding-top: 32px;
+    .texto {
+      align-items: flex-start;
+    }
+    .ctas,
+    .notas {
+      justify-content: flex-start;
+    }
+    .arte {
+      justify-self: end;
+      width: min(100%, 420px);
+    }
+    .ventana {
+      margin-top: 32px;
     }
   }
 `;
@@ -629,25 +657,15 @@ const Seccion = styled.section`
 `;
 
 const Final = styled.section`
-  display: grid;
-  grid-template-columns: 1fr;
+  display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 20px;
-  padding: 44px 28px;
+  text-align: center;
+  gap: 14px;
+  padding: 56px 28px;
   border-radius: 28px;
   background: ${MORADO};
   color: #fff;
-  overflow: hidden;
-  @media (min-width: 820px) {
-    grid-template-columns: 1.3fr 0.7fr;
-    padding: 56px 60px;
-  }
-  .texto {
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
-    align-items: flex-start;
-  }
   h2 {
     font-size: clamp(1.9rem, 3.6vw, 2.8rem);
     font-weight: 800;
@@ -655,20 +673,16 @@ const Final = styled.section`
   p {
     color: rgba(255, 255, 255, 0.82);
     font-size: 1.08rem;
+    max-width: 40ch;
   }
   .boton {
+    margin-top: 8px;
     background: #fff;
     color: ${MORADO};
     border-color: #fff;
     &:hover {
       background: ${SUAVE};
     }
-  }
-  img {
-    justify-self: center;
-    width: min(100%, 300px);
-    height: auto;
-    border-radius: 24px;
   }
 `;
 
