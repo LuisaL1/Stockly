@@ -1,9 +1,8 @@
 import styled from "styled-components";
 import logo from "../assets/logo.png";
+import personaje from "../assets/personaje-stockly.webp";
 import { FAQ, FUNCIONES, HERO, PASOS, PLANES, SITIO, cop } from "./contenido";
-import inicioApp from "../assets/inicio-app.webp";
-import inicioApp2x from "../assets/inicio-app-2x.webp";
-import { Cinta, VisualBodegas, VisualCaja, VisualNovandra, VisualTelefono } from "./widgets";
+import { Cinta, PanelHoy, PanelPlan, PanelStock, PanelTicket, PanelVentas, VentanaApp, VisualBodegas, VisualCaja, VisualNovandra, VisualTelefono } from "./widgets";
 import { GRIS, LINEA, MORADO, MORADO_CLARO, PAPEL, SUAVE, TINTA, sinMovimiento } from "./tokens";
 
 // Página pública de Stockly. Titular grande, la app en una ventana, y una historia por función.
@@ -55,15 +54,41 @@ export function Landing() {
               ))}
             </ul>
           </div>
-          <figure className="app">
+          <img className="personaje" src={personaje} alt="Persona del equipo de Stockly revisando el inventario con un lector de códigos" width="1000" height="1290" fetchPriority="high" />
+          <VentanaApp className="ventana" aria-label="Así se ve el panel de Stockly">
             <div className="barra">
               <i />
               <i />
               <i />
-              <span>appstockly.com</span>
+              <span>appstockly.com · Tienda Central</span>
             </div>
-            <img src={inicioApp} srcSet={`${inicioApp} 1330w, ${inicioApp2x} 2660w`} sizes="(min-width: 960px) 760px, 100vw" width="1330" height="970" alt="Panel de inicio de Stockly: ventas del periodo, ventas de hoy, valor del inventario y productos bajo mínimo" fetchPriority="high" />
-          </figure>
+            <div className="cuerpo">
+              <div className="lateral">
+                <b>GENERAL</b>
+                <span className="activo">Inicio</span>
+                <span>Inteligencia</span>
+                <b>OPERACIÓN</b>
+                <span>Vender</span>
+                <span>Facturas</span>
+                <span>Compras</span>
+                <b>INVENTARIO</b>
+                <span>Productos</span>
+                <span>Bodegas</span>
+                <span>Reportes</span>
+              </div>
+              <div className="panel">
+                <div className="saludo">
+                  <strong>Buenas tardes, Camila</strong>
+                  <span>Así va tu tienda hoy.</span>
+                </div>
+                <PanelVentas />
+                <PanelHoy />
+                <PanelTicket />
+                <PanelStock />
+                <PanelPlan />
+              </div>
+            </div>
+          </VentanaApp>
         </Hero>
 
         <Cinta items={cinta} />
@@ -397,73 +422,43 @@ const Hero = styled.section`
       font-weight: 700;
     }
   }
-  /* La app real, en una ventana. En escritorio se asoma por el borde derecho. */
-  .app {
+  /* El personaje mira al titular (espejado) y apunta el lector a las palabras; sus pies pisan la ventana de la app */
+  .personaje {
+    position: relative;
+    z-index: 2;
+    height: 300px;
+    width: auto;
+    margin: 10px 0 -14px;
+    transform: scaleX(-1);
+  }
+  .ventana {
     position: relative;
     z-index: 1;
     width: 100%;
-    margin: 12px 0 0;
-    border-radius: 16px;
-    overflow: hidden;
-    background: ${TINTA};
-    border: 1px solid rgba(23, 19, 29, 0.1);
-    box-shadow: 0 40px 90px -40px rgba(23, 19, 29, 0.55);
-    .barra {
-      display: flex;
-      align-items: center;
-      gap: 7px;
-      padding: 10px 14px;
-      border-bottom: 1px solid rgba(244, 241, 236, 0.08);
-      i {
-        width: 9px;
-        height: 9px;
-        border-radius: 50%;
-        background: rgba(244, 241, 236, 0.18);
-      }
-      span {
-        margin-left: 8px;
-        color: rgba(244, 241, 236, 0.5);
-        font-size: 0.74rem;
-      }
-    }
-    img {
-      display: block;
-      width: 100%;
-      height: auto;
-    }
   }
   @media (min-width: 960px) {
-    display: grid;
-    grid-template-columns: minmax(0, 560px) 1fr;
-    align-items: center;
-    gap: 36px;
+    display: block;
     text-align: left;
     padding-top: 36px;
     .texto {
       align-items: flex-start;
-    }
-    h1 {
-      font-size: clamp(2.5rem, 4.3vw, 3.7rem);
-      max-width: none;
+      justify-content: center;
+      max-width: 620px;
+      min-height: 520px;
     }
     .ctas,
     .notas {
       justify-content: flex-start;
     }
-    .app {
-      width: 600px;
-      max-width: none;
-      margin: 0 -16px 0 0;
-      justify-self: end;
+    .personaje {
+      position: absolute;
+      top: -6px;
+      right: 56px;
+      height: 590px;
+      margin: 0;
     }
-  }
-  @media (min-width: 960px) and (max-width: 1239px) {
-    grid-template-columns: minmax(0, 480px) 1fr;
-  }
-  @media (min-width: 1240px) {
-    .app {
-      width: 760px;
-      margin-right: -100px;
+    .ventana {
+      margin-top: 14px;
     }
   }
 `;
