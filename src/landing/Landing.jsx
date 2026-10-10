@@ -46,11 +46,6 @@ export function Landing() {
                 Ver cómo funciona
               </a>
             </div>
-            <ul className="notas">
-              {HERO.notas.map((n) => (
-                <li key={n}>{n}</li>
-              ))}
-            </ul>
           </div>
           <Movil />
           <VentanaApp className="ventana" aria-label="Así se ve el panel de Stockly">
@@ -402,28 +397,12 @@ const Hero = styled.section`
     gap: 12px;
     margin-top: 6px;
   }
-  .notas {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 8px 18px;
-    margin: 0;
-    padding: 0;
-    list-style: none;
-    color: ${GRIS};
-    font-size: 0.9rem;
-    li::before {
-      content: "✓ ";
-      color: ${MORADO};
-      font-weight: 700;
-    }
-  }
   /* La app en el teléfono, con avisos flotantes. La ventana de escritorio solo en tablet y computador. */
   .movil-escena {
     --k: 0.6;
     position: relative;
     z-index: 2;
-    margin: 36px auto 0;
+    margin: 30px auto 0;
   }
   .ventana {
     display: none;
@@ -454,8 +433,7 @@ const Hero = styled.section`
       max-width: 620px;
       min-height: 540px;
     }
-    .ctas,
-    .notas {
+    .ctas {
       justify-content: flex-start;
     }
     .movil-escena {

@@ -21,7 +21,6 @@ export const HERO = {
   texto: "Inventario, ventas y facturas en un solo lugar. Sin cuadernos. Sin Excel. Sin complicaciones. Desde el computador, la tablet o el celular.",
   ctaPrincipal: { texto: "Empezar gratis", href: "/login?registro=1" },
   ctaSecundario: { texto: "Ver planes", href: "#planes" },
-  notas: ["Gratis para siempre", "Enterprise 7 días de prueba", "Sin tarjeta"],
 };
 
 export const FUNCIONES = [
