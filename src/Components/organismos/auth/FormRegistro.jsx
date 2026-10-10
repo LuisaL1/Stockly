@@ -326,7 +326,7 @@ export function FormRegistro({ irA, alRegistrar }) {
             tamano="lg"
             bloque
             cargando={isSubmitting}
-            icono={paso === PASOS.length - 1 ? <v.iconolisto /> : <v.iconoflechaderecha />}
+            icono={paso === PASOS.length - 1 ? <v.iconolisto /> : undefined}
           >
             {paso < PASOS.length - 1
               ? "Continuar"
