@@ -65,7 +65,7 @@ export async function TrasladarStock({ idProducto, idOrigen, idDestino, cantidad
 export async function MostrarTraslados(idEmpresa) {
   const { data, error } = await supabase
     .from("traslados")
-    .select("id, cantidad, nota, fecha, productos(descripcion), origen:bodegas!traslados_id_origen_fkey(nombre), destino:bodegas!traslados_id_destino_fkey(nombre)")
+    .select("id, cantidad, nota, fecha, productos(descripcion, nombre_completo), origen:bodegas!traslados_id_origen_fkey(nombre), destino:bodegas!traslados_id_destino_fkey(nombre)")
     .eq("id_empresa", idEmpresa)
     .order("fecha", { ascending: false })
     .limit(20);

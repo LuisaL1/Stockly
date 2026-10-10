@@ -33,11 +33,12 @@ export async function PerfilNovandra(idEmpresa) {
 export async function CatalogoNovandra(idEmpresa) {
   const { data, error } = await supabase
     .from("productos")
-    .select("id, descripcion, stock, stock_minimo, precioventa, preciocompra, codigointerno, unidad, presentacion, contenido, contenido_unidad")
+    .select("id, descripcion, nombre_completo, stock, stock_minimo, precioventa, preciocompra, codigointerno, unidad, presentacion, contenido, contenido_unidad")
     .eq("id_empresa", idEmpresa)
     .limit(5000);
   if (error) throw error;
-  return (data ?? []).map((p) => ({ ...p, nombre: p.descripcion }));
+  // "nombre" es el nombre completo (con presentación y, si hace falta, código): así Novandra siempre es específica.
+  return (data ?? []).map((p) => ({ ...p, nombre: p.nombre_completo ?? p.descripcion, descripcion: p.nombre_completo ?? p.descripcion }));
 }
 
 export const Dashboard = (idEmpresa, dias, idSucursal) =>

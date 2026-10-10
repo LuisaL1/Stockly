@@ -17,7 +17,7 @@ export function SelectorProducto({ valor, onChange }) {
 
   return (
     <Selector
-      opciones={data}
+      opciones={(data ?? []).map((p) => ({ ...p, descripcion: p.nombre_completo ?? p.descripcion }))}
       valor={valor}
       onChange={onChange}
       buscable

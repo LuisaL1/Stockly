@@ -18,7 +18,7 @@ export default function StockActualTodos() {
       archivo="stock-actual"
       query={query}
       columnas={[
-        { clave: "descripcion", titulo: "Producto", flex: 3 },
+        { clave: "nombre_completo", titulo: "Producto", flex: 3 },
         { clave: "stock_minimo", titulo: "Stock mínimo", alinear: "right", formato: formatearNumero },
         { clave: "stock", titulo: "Stock", alinear: "right", formato: formatearNumero },
       ]}

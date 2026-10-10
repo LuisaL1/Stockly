@@ -8,7 +8,7 @@ import { useProductosStore } from "../../../store/ProductosStore";
 import { useEmpresaStore } from "../../../store/EmpresaStore";
 import { confirmarEliminacion } from "../../../utils/notificaciones";
 import { formatearMoneda } from "../../../utils/conversiones";
-import { cantidadConUnidad, etiquetaPresentacion } from "../../../utils/unidades";
+import { cantidadConUnidad } from "../../../utils/unidades";
 
 export function TablaProductos({ data, editar }) {
   const navigate = useNavigate();
@@ -28,8 +28,8 @@ export function TablaProductos({ data, editar }) {
       header: "Producto",
       cell: ({ row }) => (
         <span style={{ display: "flex", flexDirection: "column" }}>
-          <span>{row.original.descripcion}</span>
-          {etiquetaPresentacion(row.original) && <small style={{ opacity: 0.65, fontWeight: 400 }}>{etiquetaPresentacion(row.original)}</small>}
+          <span>{row.original.nombre_completo ?? row.original.descripcion}</span>
+          {row.original.codigointerno && <small style={{ opacity: 0.65, fontWeight: 400 }}>{row.original.codigointerno}</small>}
         </span>
       ),
     },

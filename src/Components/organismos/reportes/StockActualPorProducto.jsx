@@ -24,7 +24,7 @@ export default function StockActualPorProducto() {
       filtros={<SelectorProducto valor={producto} onChange={setProducto} />}
       sinSeleccion={!producto && <EstadoVacio titulo="Elige un producto" mensaje="Selecciona un producto para generar el reporte." />}
       columnas={[
-        { clave: "descripcion", titulo: "Producto", flex: 3 },
+        { clave: "nombre_completo", titulo: "Producto", flex: 3 },
         { clave: "stock_minimo", titulo: "Stock mínimo", alinear: "right", formato: formatearNumero },
         { clave: "stock", titulo: "Stock", alinear: "right", formato: formatearNumero },
       ]}

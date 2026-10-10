@@ -9,7 +9,8 @@ export async function InsertarProductos(p) {
 }
 
 export async function ObtenerProducto(id) {
-  const { data, error } = await supabase.from("productos").select("id, descripcion, stock, stock_minimo, codigointerno").eq("id", id).maybeSingle();
+  const { data, error } = await supabase.from("productos").select("id, descripcion, nombre_completo, stock, stock_minimo, codigointerno, unidad, presentacion, contenido, contenido_unidad").eq("id", id).maybeSingle();
+  if (data) data.descripcion = data.nombre_completo ?? data.descripcion;
   if (error) throw error;
   return data;
 }

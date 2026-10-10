@@ -235,7 +235,7 @@ function Contenido() {
                       <v.iconokardex />
                     </span>
                     <span className="principal">
-                      <strong>{t.productos?.descripcion}</strong>
+                      <strong>{t.productos?.nombre_completo ?? t.productos?.descripcion}</strong>
                       <span>
                         {t.origen?.nombre} → {t.destino?.nombre} · {tiempoRelativo(t.fecha)}
                       </span>

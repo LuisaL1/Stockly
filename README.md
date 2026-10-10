@@ -62,6 +62,7 @@ npm run dev
    30. `20261030000000_unidades.sql`: unidades de medida por producto (und, par, caja, frasco, g, kg, ml, l, m...), activas por empresa con preajuste por sector, unidad predeterminada, y la unidad en caja, kardex, facturas, Excel, red y Novandra. (`20261008000000_importacion.sql` se actualizó para importar/exportar la columna “unidad”.)
    31. `20261031000000_red_sin_importar.sql`: se retira la importación de catálogo entre empresas; los productos de un partner entran solo con un envío recibido.
    32. `20261101000000_presentaciones.sql`: presentación (frasco, caja, bolsa...) y contenido (100 ml) separados de la unidad de medida; lo guardado como frasco/caja pasa a presentación. (`20261008000000_importacion.sql` importa/exporta “presentacion” y “contenido”.)
+   33. `20261102000000_nombre_completo.sql`: `productos.nombre_completo` (nombre + presentación y contenido; con el código entre paréntesis si otro producto se llama igual), mantenido por trigger y usado en listas, stock por bodega, kardex, reportes, rotación, panel de inicio, líneas de venta, red y Novandra.
 2. Despliega las Edge Functions y guarda la API key de Anthropic para Novandra:
 
 ```bash

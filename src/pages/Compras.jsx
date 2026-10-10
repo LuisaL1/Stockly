@@ -229,7 +229,7 @@ function NuevaOrden({ idEmpresa, dinero, onClose, onGuardado }) {
       ...items,
       {
         id_producto: p.id,
-        descripcion: p.descripcion,
+        descripcion: p.nombre_completo ?? p.descripcion,
         cantidad: Math.max(1, Number(p.stock_minimo ?? 0) * 2 - Number(p.stock ?? 0)),
         costo_unitario: Number(p.preciocompra ?? 0),
       },
