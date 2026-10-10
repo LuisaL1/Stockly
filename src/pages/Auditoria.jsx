@@ -8,6 +8,8 @@ import { EstadoVacio } from "../Components/moleculas/EstadoVacio";
 import { BloqueoPagina } from "../Components/moleculas/BloqueoPagina";
 import { BentoGrid, Tarjeta } from "../Components/moleculas/Bento";
 import { DataTable } from "../Components/organismos/tablas/DataTable";
+import { Buscador } from "../Components/organismos/Buscador";
+import { SelectFiltro } from "../Components/moleculas/Filtros";
 import { Boton } from "../Components/atomos/Boton";
 import { Etiqueta } from "../Components/atomos/Etiqueta";
 import { useEmpresaStore } from "../store/EmpresaStore";
@@ -75,6 +77,8 @@ function Contenido() {
   const [dias, setDias] = useState(30);
   const [empleado, setEmpleado] = useState(null);
   const [soloAlertas, setSoloAlertas] = useState(false);
+  const [texto, setTexto] = useState("");
+  const [accion, setAccion] = useState("");
 
   const desde = new Date(Date.now() - dias * 86_400_000).toISOString();
   const resumen = useQuery({
@@ -135,6 +139,8 @@ function Contenido() {
             <option value={30}>Últimos 30 días</option>
             <option value={90}>Últimos 90 días</option>
           </Select>
+          <Buscador setBuscador={setTexto} placeholder="Persona, producto, acción…" />
+          <SelectFiltro etiqueta="Acción" todos="Todas las acciones" valor={accion} onChange={setAccion} opciones={Object.entries(ACCIONES).map(([id, descripcion]) => ({ id, descripcion }))} />
           <label className="check">
             <input type="checkbox" checked={soloAlertas} onChange={(e) => setSoloAlertas(e.target.checked)} /> Solo alertas
           </label>
@@ -199,7 +205,12 @@ function Contenido() {
         )}
       </Encabezado>
       <DataTable
-        data={registro.data ?? []}
+        data={(registro.data ?? []).filter((r) => {
+          if (accion && r.accion !== accion) return false;
+          if (!texto.trim()) return true;
+          const t = texto.trim().toLowerCase();
+          return [r.usuario_nombre, ACCIONES[r.accion] ?? r.accion, describir(r), r.bodegas?.nombre, r.sucursales?.nombre, r.alerta].some((x) => String(x ?? "").toLowerCase().includes(t));
+        })}
         columns={columns}
         tamanoPagina={20}
         vacio={<EstadoVacio titulo="Sin movimientos registrados" mensaje="La actividad del equipo aparecerá aquí." icono={<v.iconolista />} />}

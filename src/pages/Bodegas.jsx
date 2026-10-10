@@ -13,6 +13,9 @@ import { BentoGrid, ListaTarjeta, Tarjeta } from "../Components/moleculas/Bento"
 import { BarraUso } from "../Components/moleculas/BarraUso";
 import { DataTable } from "../Components/organismos/tablas/DataTable";
 import { Selector } from "../Components/organismos/Selector";
+import { Buscador } from "../Components/organismos/Buscador";
+import { SelectFiltro, BotonLimpiar } from "../Components/moleculas/Filtros";
+import { opcionesDesde } from "../utils/filtros";
 import { ContentAccionesTabla } from "../Components/organismos/ContentAccionesTabla";
 import { InputText } from "../Components/organismos/formularios/InputText";
 import { Formulario } from "../Components/organismos/formularios/Formulario";
@@ -52,6 +55,9 @@ function Contenido() {
   const { usado, limite, alcanzado, recargar } = usePlan();
   const [seleccion, setSeleccion] = useState(null);
   const [registro, setRegistro] = useState(null);
+  const [textoStock, setTextoStock] = useState("");
+  const [categoriaStock, setCategoriaStock] = useState("");
+  const [soloStock, setSoloStock] = useState("");
   const [traslado, setTraslado] = useState(false);
 
   const bodegas = useQuery({ queryKey: ["bodegas", idEmpresa], queryFn: () => MostrarBodegas(idEmpresa), enabled: !!idEmpresa });
@@ -90,7 +96,16 @@ function Contenido() {
 
   const lista = bodegas.data ?? [];
   const actual = lista.find((b) => b.id === seleccion) ?? lista[0];
-  const filasActual = (stock.data ?? []).filter((s) => s.id_bodega === actual?.id);
+  const t = textoStock.trim().toLowerCase();
+  const filasActual = (stock.data ?? []).filter(
+    (s) =>
+      s.id_bodega === actual?.id &&
+      (!categoriaStock || s.categoria === categoriaStock) &&
+      (soloStock !== "con" || Number(s.cantidad) > 0) &&
+      (soloStock !== "sin" || Number(s.cantidad) <= 0) &&
+      (soloStock !== "bajo" || Number(s.cantidad) <= Number(s.stock_minimo ?? 0)) &&
+      (!t || s.descripcion.toLowerCase().includes(t) || String(s.codigointerno ?? "").toLowerCase().includes(t) || String(s.codigobarras ?? "") === t)
+  );
   const sinCupo = alcanzado("bodegas");
 
   const eliminar = async (b) => {
@@ -219,10 +234,26 @@ function Contenido() {
                 funcionEliminar={actual.tipo === "principal" ? undefined : () => eliminar(actual)}
               />
             </div>
+            <FiltrosStock>
+              <Buscador setBuscador={setTextoStock} placeholder="Nombre, código o código de barras…" />
+              <SelectFiltro etiqueta="Categoría" todos="Todas las categorías" valor={categoriaStock} onChange={setCategoriaStock} opciones={opcionesDesde(stock.data, "categoria")} />
+              <SelectFiltro
+                etiqueta="Existencias"
+                todos="Todas las existencias"
+                valor={soloStock}
+                onChange={setSoloStock}
+                opciones={[
+                  { id: "con", descripcion: "Con stock" },
+                  { id: "bajo", descripcion: "Bajo el mínimo" },
+                  { id: "sin", descripcion: "Sin stock" },
+                ]}
+              />
+              <BotonLimpiar visible={!!(categoriaStock || soloStock)} onClick={() => { setCategoriaStock(""); setSoloStock(""); }} />
+            </FiltrosStock>
             <DataTable
               data={filasActual}
               columns={columns}
-              vacio={<EstadoVacio titulo="Sin productos" mensaje="Esta bodega no tiene productos registrados." />}
+              vacio={<EstadoVacio titulo="Sin productos" mensaje={t || categoriaStock || soloStock ? "Ningún producto coincide con la búsqueda." : "Esta bodega no tiene productos registrados."} />}
             />
           </div>
 
@@ -554,4 +585,14 @@ const Cantidad = styled.span`
   font-weight: 600;
   font-variant-numeric: tabular-nums;
   color: ${({ theme, $cero }) => ($cero ? theme.textMuted : theme.text)};
+`;
+
+const FiltrosStock = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 12px;
+  > :first-child {
+    flex: 1 1 240px;
+  }
 `;

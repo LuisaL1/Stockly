@@ -9,6 +9,8 @@ import { ErrorMolecula } from "../Components/moleculas/ErrorMolecula";
 import { EstadoVacio } from "../Components/moleculas/EstadoVacio";
 import { Modal } from "../Components/moleculas/Modal";
 import { Selector } from "../Components/organismos/Selector";
+import { SelectFiltro, BotonLimpiar } from "../Components/moleculas/Filtros";
+import { opcionesDesde } from "../utils/filtros";
 import { RegistrarContacto } from "../Components/organismos/formularios/RegistrarContacto";
 import { Boton } from "../Components/atomos/Boton";
 import { useEmpresaStore } from "../store/EmpresaStore";
@@ -51,6 +53,8 @@ function PuntoDeVenta() {
 
   const [idBodega, setIdBodega] = useState(null);
   const [texto, setTexto] = useState("");
+  const [categoria, setCategoria] = useState("");
+  const [marca, setMarca] = useState("");
   const [carrito, setCarrito] = useState([]);
   const [cliente, setCliente] = useState(CONSUMIDOR_FINAL);
   const [pagos, setPagos] = useState([pagoVacio()]);
@@ -76,10 +80,30 @@ function PuntoDeVenta() {
   });
   const iva = ivaPct ?? Number(cfg.data?.iva_defecto ?? 0);
 
+  // Busca por nombre, código interno o código de barras; filtra por categoría y marca.
   const productos = useMemo(() => {
     const t = texto.trim().toLowerCase();
-    return (stock.data ?? []).filter((p) => !t || p.descripcion.toLowerCase().includes(t));
-  }, [stock.data, texto]);
+    return (stock.data ?? []).filter(
+      (p) =>
+        (!categoria || p.categoria === categoria) &&
+        (!marca || p.marca === marca) &&
+        (!t || p.descripcion.toLowerCase().includes(t) || String(p.codigointerno ?? "").toLowerCase().includes(t) || String(p.codigobarras ?? "") === t)
+    );
+  }, [stock.data, texto, categoria, marca]);
+
+  // Lector de barras: escribe el código y envía Enter. Si coincide exactamente con un producto, va al ticket.
+  const buscarPorCodigo = (e) => {
+    if (e.key !== "Enter") return;
+    const t = texto.trim().toLowerCase();
+    if (!t) return;
+    const exacto = (stock.data ?? []).find((p) => String(p.codigobarras ?? "") === t || String(p.codigointerno ?? "").toLowerCase() === t);
+    const candidato = exacto ?? (productos.length === 1 ? productos[0] : null);
+    if (candidato && Number(candidato.cantidad) > 0) {
+      e.preventDefault();
+      agregar(candidato);
+      setTexto("");
+    }
+  };
 
   const lineas = carrito.map((item) => {
     const bruto = item.cantidad * item.precio;
@@ -210,9 +234,11 @@ function PuntoDeVenta() {
               <v.iconobuscar />
               <input
                 type="search"
-                placeholder="Buscar producto…"
+                placeholder="Nombre, código o código de barras…"
                 value={texto}
                 onChange={(e) => setTexto(e.target.value)}
+                onKeyDown={buscarPorCodigo}
+                autoComplete="off"
                 aria-label="Buscar producto"
               />
             </label>
@@ -225,6 +251,9 @@ function PuntoDeVenta() {
                 placeholder="Bodega"
               />
             </div>
+            <SelectFiltro etiqueta="Categoría" todos="Todas las categorías" valor={categoria} onChange={setCategoria} opciones={opcionesDesde(stock.data, "categoria")} />
+            <SelectFiltro etiqueta="Marca" todos="Todas las marcas" valor={marca} onChange={setMarca} opciones={opcionesDesde(stock.data, "marca")} />
+            <BotonLimpiar visible={!!(categoria || marca)} onClick={() => { setCategoria(""); setMarca(""); }} />
           </div>
 
           {stock.isLoading ? (

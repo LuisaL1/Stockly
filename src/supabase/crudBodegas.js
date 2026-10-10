@@ -18,7 +18,7 @@ export async function MostrarBodegas(idEmpresa) {
 export async function MostrarStockBodega({ idEmpresa, idBodega, idProducto }) {
   let q = supabase
     .from("v_stock_bodega")
-    .select("id_bodega, bodega, tipo, id_producto, descripcion, cantidad, stock_minimo, precioventa, preciocompra, unidad, presentacion, contenido, contenido_unidad")
+    .select("id_bodega, bodega, tipo, id_producto, descripcion, cantidad, stock_minimo, precioventa, preciocompra, unidad, presentacion, contenido, contenido_unidad, categoria, marca, codigointerno, codigobarras")
     .eq("id_empresa", idEmpresa)
     .order("descripcion");
   if (idBodega != null) q = q.eq("id_bodega", idBodega);

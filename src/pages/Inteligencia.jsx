@@ -8,6 +8,9 @@ import { ErrorMolecula } from "../Components/moleculas/ErrorMolecula";
 import { EstadoVacio } from "../Components/moleculas/EstadoVacio";
 import { BentoGrid, Cifra, ListaTarjeta, Tarjeta } from "../Components/moleculas/Bento";
 import { DataTable } from "../Components/organismos/tablas/DataTable";
+import { Buscador } from "../Components/organismos/Buscador";
+import { SelectFiltro } from "../Components/moleculas/Filtros";
+import { opcionesDesde } from "../utils/filtros";
 import { Boton } from "../Components/atomos/Boton";
 import { Etiqueta } from "../Components/atomos/Etiqueta";
 import { useEmpresaStore } from "../store/EmpresaStore";
@@ -53,6 +56,8 @@ function Contenido() {
   const [dias, setDias] = useState(90);
   const [idSucursal, setIdSucursal] = useState("");
   const [filtro, setFiltro] = useState("todas");
+  const [texto, setTexto] = useState("");
+  const [categoria, setCategoria] = useState("");
   const [creando, setCreando] = useState(false);
 
   const sucursales = useQuery({ queryKey: ["sucursales", idEmpresa], queryFn: () => MostrarSucursales(idEmpresa), enabled: !!idEmpresa });
@@ -70,7 +75,10 @@ function Contenido() {
   const quietos = productos.filter((p) => p.alerta === "sin_movimiento");
   const capitalQuieto = quietos.reduce((a, p) => a + Number(p.capital_inmovilizado ?? 0), 0);
   const aReponer = productos.filter((p) => Number(p.sugerido_reponer) > 0);
-  const visibles = filtro === "todas" ? productos : filtro === "reponer" ? aReponer : productos.filter((p) => p.alerta === filtro);
+  const t = texto.trim().toLowerCase();
+  const visibles = (filtro === "todas" ? productos : filtro === "reponer" ? aReponer : productos.filter((p) => p.alerta === filtro)).filter(
+    (p) => (!categoria || p.categoria === categoria) && (!t || String(p.descripcion ?? "").toLowerCase().includes(t))
+  );
 
   if (rotacion.isLoading) return <SpinnerLoader />;
   if (rotacion.error) return <ErrorMolecula mensaje={rotacion.error.message} reintentar={rotacion.refetch} />;
@@ -157,6 +165,8 @@ function Contenido() {
       }
       herramientas={
         <>
+          <Buscador setBuscador={setTexto} placeholder="Buscar producto…" />
+          <SelectFiltro etiqueta="Categoría" todos="Todas las categorías" valor={categoria} onChange={setCategoria} opciones={opcionesDesde(productos, "categoria")} />
           <Select value={dias} onChange={(e) => setDias(Number(e.target.value))} aria-label="Periodo">
             <option value={30}>Últimos 30 días</option>
             <option value={90}>Últimos 90 días</option>

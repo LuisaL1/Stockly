@@ -13,6 +13,8 @@ import { DataTable } from "../Components/organismos/tablas/DataTable";
 import { Selector } from "../Components/organismos/Selector";
 import { SelectorProducto } from "../Components/organismos/reportes/SelectorProducto";
 import { Buscador } from "../Components/organismos/Buscador";
+import { SelectFiltro } from "../Components/moleculas/Filtros";
+import { opcionesDesde } from "../utils/filtros";
 import { InputText } from "../Components/organismos/formularios/InputText";
 import { Formulario } from "../Components/organismos/formularios/Formulario";
 import { Boton } from "../Components/atomos/Boton";
@@ -265,6 +267,7 @@ function Vinculos({ vinculos, admin, idEmpresa, recargar, abrir }) {
 function StockDeLaRed({ activos, idEmpresa, abrir }) {
   const [vinculo, setVinculo] = useState(null);
   const [texto, setTexto] = useState("");
+  const [categoria, setCategoria] = useState("");
   const opciones = activos.map((x) => ({ ...x, descripcion: x.otra }));
   const actual = opciones.find((x) => x.id === vinculo?.id) ?? opciones[0] ?? null;
   const stock = useQuery({
@@ -306,7 +309,8 @@ function StockDeLaRed({ activos, idEmpresa, abrir }) {
     <>
       <Filtros>
         <Selector opciones={opciones} valor={actual} onChange={setVinculo} icono={<v.iconored />} />
-        <Buscador setBuscador={setTexto} placeholder="Buscar en su inventario..." />
+        <Buscador setBuscador={setTexto} placeholder="Nombre o código…" />
+        <SelectFiltro etiqueta="Categoría" todos="Todas las categorías" valor={categoria} onChange={setCategoria} opciones={opcionesDesde(datos?.productos, "categoria")} />
         <span className="acciones">
           <Boton tamano="sm" variante="secundario" icono={<v.iconocompras />} funcion={() => abrir({ tipo: "pedir", vinculo: actual })}>
             Pedir a {actual?.otra}
@@ -318,7 +322,7 @@ function StockDeLaRed({ activos, idEmpresa, abrir }) {
       ) : datos && !datos.comparte ? (
         <EstadoVacio titulo={`${actual?.otra} no comparte su stock`} mensaje="Pídele que active “Mi stock en tiempo real” en su Red de empresas." icono={<v.iconored />} />
       ) : (
-        <DataTable data={datos?.productos ?? []} columns={columnas} tamanoPagina={25} vacio={<EstadoVacio titulo="Sin productos" mensaje="Esa empresa aún no tiene productos con ese nombre. Para traerlos a tu inventario, haz un pedido: entran cuando recibas el envío." />} />
+        <DataTable data={(datos?.productos ?? []).filter((p) => !categoria || p.categoria === categoria)} columns={columnas} tamanoPagina={25} vacio={<EstadoVacio titulo="Sin productos" mensaje="Esa empresa aún no tiene productos con ese nombre. Para traerlos a tu inventario, haz un pedido: entran cuando recibas el envío." />} />
       )}
     </>
   );
@@ -978,7 +982,7 @@ const Filtros = styled.div`
   margin-bottom: 14px;
   align-items: center;
   @media (min-width: 900px) {
-    grid-template-columns: 260px 1fr auto;
+    grid-template-columns: 240px 1fr auto auto;
   }
   .acciones {
     display: flex;
