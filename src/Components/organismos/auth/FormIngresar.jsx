@@ -31,8 +31,8 @@ export function FormIngresar({ irA, emailInicial = "" }) {
   return (
     <>
       <Encabezado>
-        <h1>Bienvenido de nuevo</h1>
-        <p>Ingresa para ver cómo va tu negocio hoy.</p>
+        <h1>Hola de nuevo.</h1>
+        <p>Entra y mira cómo va tu negocio hoy.</p>
       </Encabezado>
 
       {error && (

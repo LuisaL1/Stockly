@@ -26,7 +26,7 @@ function Contenido() {
   return (
     <CrudTemplate
       titulo="Marcas"
-      descripcion="Las marcas que comercializa tu empresa."
+      descripcion="Las marcas que vendes."
       textoNuevo="Nueva marca"
       placeholderBusqueda="Buscar marca..."
       setBuscador={setBuscador}

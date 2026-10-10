@@ -20,7 +20,7 @@ export function Clientes() {
         clave="clientes"
         useStore={useClientesStore}
         titulo="Clientes"
-        descripcion="Las personas y empresas a las que les vendes."
+        descripcion="A quienes les vendes."
         textoNuevo="Nuevo cliente"
         placeholder="Buscar por nombre, documento o correo…"
         Tabla={TablaClientes}
@@ -37,7 +37,7 @@ export function Proveedores() {
         clave="proveedores"
         useStore={useProveedoresStore}
         titulo="Proveedores"
-        descripcion="A quién le compras la mercancía."
+        descripcion="A quienes les compras."
         textoNuevo="Nuevo proveedor"
         placeholder="Buscar por nombre, NIT o contacto…"
         Tabla={TablaProveedores}

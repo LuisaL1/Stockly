@@ -62,7 +62,7 @@ function Contenido() {
   return (
     <PaginaTemplate
       titulo="Tu empresa"
-      descripcion="Estos datos aparecen en el panel, los reportes y las facturas."
+      descripcion="Lo que verán tus clientes en facturas y reportes."
       volverA={{ to: "/configurar", texto: "Configuración" }}
     >
       <LogoEmpresa />

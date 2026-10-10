@@ -119,7 +119,7 @@ function Contenido() {
   return (
     <PaginaTemplate
       titulo="Informe para el contador"
-      descripcion="Elige el periodo y envía a tu contador un Excel con ventas, IVA, cobros, cartera, compras e inventario."
+      descripcion="Elige el periodo. Tu contador recibe el Excel con ventas, IVA, cobros, cartera, compras e inventario."
     >
       <Periodo>
         <div className="chips" role="group" aria-label="Periodo">

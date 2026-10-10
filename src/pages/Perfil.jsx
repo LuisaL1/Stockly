@@ -57,7 +57,7 @@ export function Perfil() {
   const errClave = clave.formState.errors;
 
   return (
-    <PaginaTemplate titulo="Mi perfil" descripcion="Tus datos personales y la seguridad de tu cuenta.">
+    <PaginaTemplate titulo="Mi perfil" descripcion="Tus datos y la seguridad de tu cuenta.">
       <BentoGrid>
         <Tarjeta variante="tinta" col={4} colTablet={6} decoracion>
           <Identidad>

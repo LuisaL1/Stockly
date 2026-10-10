@@ -110,7 +110,7 @@ function Contenido() {
   return (
     <PaginaTemplate
       titulo="Facturas"
-      descripcion="Historial de ventas con su factura, estado de pago y estado ante la DIAN."
+      descripcion="Todas tus ventas, con su factura y su estado de pago."
       acciones={
         <Link to="/ventas" style={{ textDecoration: "none" }}>
           <Boton icono={<v.agregar />}>Nueva venta</Boton>

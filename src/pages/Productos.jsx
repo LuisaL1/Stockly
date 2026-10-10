@@ -43,7 +43,7 @@ function Contenido() {
     <>
       <CrudTemplate
         titulo="Productos"
-        descripcion="Tu catálogo con precios y niveles de stock."
+        descripcion="Tu catálogo. Precios y stock, al día."
         textoNuevo="Nuevo producto"
         placeholderBusqueda="Buscar producto..."
         setBuscador={setBuscador}

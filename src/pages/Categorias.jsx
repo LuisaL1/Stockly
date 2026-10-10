@@ -26,7 +26,7 @@ function Contenido() {
   return (
     <CrudTemplate
       titulo="Categorías"
-      descripcion="Agrupa tus productos para encontrarlos y analizarlos mejor."
+      descripcion="Agrupa tus productos. Encuéntralos más rápido."
       textoNuevo="Nueva categoría"
       placeholderBusqueda="Buscar categoría..."
       setBuscador={setBuscador}

@@ -86,7 +86,7 @@ function Contenido() {
   return (
     <PaginaTemplate
       titulo="Permisos de Novandra"
-      descripcion="Novandra solo hace lo que tú autorices. Estos permisos se aplican en el servidor, en cada conversación."
+      descripcion="Novandra hace solo lo que tú autorices. En cada conversación."
       volverA={{ to: "/configurar", texto: "Configuración" }}
     >
       <Formulario onSubmit={handleSubmit(guardar)}>

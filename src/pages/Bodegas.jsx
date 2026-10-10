@@ -125,7 +125,7 @@ function Contenido() {
   return (
     <PaginaTemplate
       titulo="Bodegas"
-      descripcion="Dónde está tu inventario: bodegas, puntos de venta y tienda online."
+      descripcion="Dónde está cada cosa. Bodegas, tiendas y tienda online."
       acciones={
         <>
           <Boton variante="secundario" icono={<v.iconokardex />} funcion={() => setTraslado(true)} disabled={lista.length < 2}>

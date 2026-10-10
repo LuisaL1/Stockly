@@ -1,13 +1,22 @@
 import styled from "styled-components";
 import logo from "../assets/logo.png";
+import ilustracion from "../assets/login-ilustracion.jpg";
 import { FAQ, FUNCIONES, HERO, PASOS, PLANES, SITIO, cop } from "./contenido";
+import { BordeVivo, Cinta, Flotante, Formas, WidgetNovandra, WidgetPagos, WidgetStock, WidgetTicket, WidgetVentas, WidgetWhatsApp } from "./widgets";
+import { GRIS, LINEA, MORADO, MORADO_CLARO, PAPEL, SUAVE, TINTA, sinMovimiento } from "./tokens";
 
-// Página pública de Stockly. Se prerenderiza al compilar (scripts/prerender.mjs) para que
-// Google la lea sin ejecutar JavaScript, y la app la muestra en "/" a quien no ha iniciado sesión.
-// No usa el tema ni el router de la app: debe poder renderizarse en el servidor.
+// Página pública de Stockly (estilo bento, con mini-widgets animados de la interfaz).
+// Se prerenderiza al compilar (scripts/prerender.mjs): solo CSS para el movimiento.
 export function Landing() {
+  const cinta = ["Caja ágil", "Bre-B", "Link de pago con Wompi", "Facturas por WhatsApp", "Bodegas y sedes", "Kardex", "Informe para tu contador", "Novandra", "Importa desde Excel", "Gratis para siempre"];
+  const iconos = ["▣", "▤", "⌂", "✆", "⇄", "▥", "◔", "✦", "☺"];
   return (
     <Pagina data-landing>
+      <Formas aria-hidden="true">
+        <span />
+        <span />
+        <span />
+      </Formas>
       <Barra>
         <a className="marca" href="/" aria-label="Stockly, inicio">
           <img src={logo} alt="" width="30" height="30" />
@@ -32,7 +41,9 @@ export function Landing() {
         <Hero>
           <div className="texto">
             <span className="etiqueta">{HERO.etiqueta}</span>
-            <h1>{HERO.titulo}</h1>
+            <h1>
+              Tu inventario, <em>por fin en orden.</em>
+            </h1>
             <p>{HERO.texto}</p>
             <div className="ctas">
               <a className="boton grande" href={HERO.ctaPrincipal.href}>
@@ -48,52 +59,64 @@ export function Landing() {
               ))}
             </ul>
           </div>
-          {/* Vista de ejemplo de la caja (ilustración hecha con HTML, liviana). */}
-          <figure className="ticket" aria-label="Ejemplo de una venta en Stockly">
-            <div className="ticket-cab">
-              <strong>Venta FV-128</strong>
-              <span>Hoy · Caja principal</span>
+          <div className="bento" aria-label="Así se ve Stockly en acción">
+            <div className="celda ventas">
+              <WidgetVentas />
             </div>
-            <ul>
-              <li>
-                <span>2 × Camiseta básica algodón</span>
-                <b>$70.000</b>
-              </li>
-              <li>
-                <span>1 × Gorra negra bordada</span>
-                <b>$39.000</b>
-              </li>
-              <li>
-                <span>3 × Medias deportivas</span>
-                <b>$27.000</b>
-              </li>
-            </ul>
-            <div className="ticket-total">
-              <span>Total</span>
-              <strong>$136.000</strong>
+            <div className="celda ticket">
+              <WidgetTicket />
             </div>
-            <div className="ticket-pagos">
-              <span>Efectivo $100.000</span>
-              <span>Bre-B $36.000</span>
+            <div className="celda wa">
+              <WidgetWhatsApp />
             </div>
-            <div className="ticket-alerta">Gorra negra bordada: quedan 4 en bodega. Novandra sugiere pedir 30.</div>
-          </figure>
+            <div className="celda stock">
+              <WidgetStock />
+            </div>
+            <div className="celda nov">
+              <WidgetNovandra />
+            </div>
+          </div>
         </Hero>
 
+        <Cinta items={cinta} />
+
         <Seccion id="funciones" aria-labelledby="titulo-funciones">
-          <h2 id="titulo-funciones">Todo lo que tu negocio necesita para vender y controlar su inventario</h2>
-          <div className="funciones">
-            {FUNCIONES.map((f) => (
-              <article key={f.titulo}>
-                <h3>{f.titulo}</h3>
-                <p>{f.texto}</p>
+          <h2 id="titulo-funciones">Todo tu negocio. Bajo un mismo techo.</h2>
+          <div className="bento-funciones">
+            <article className="grande">
+              <div className="cab">
+                <span className="icono">{iconos[0]}</span>
+                <h3>{FUNCIONES[0].titulo}</h3>
+              </div>
+              <p>{FUNCIONES[0].texto}</p>
+              <div className="demo">
+                <WidgetPagos />
+              </div>
+            </article>
+            <article className="alta">
+              <div className="cab">
+                <span className="icono">{iconos[7]}</span>
+                <h3>{FUNCIONES[7].titulo}</h3>
+              </div>
+              <p>{FUNCIONES[7].texto}</p>
+              <div className="demo">
+                <WidgetNovandra />
+              </div>
+            </article>
+            {[1, 2, 3, 4, 5, 6, 8].map((i) => (
+              <article key={FUNCIONES[i].titulo}>
+                <div className="cab">
+                  <span className="icono">{iconos[i]}</span>
+                  <h3>{FUNCIONES[i].titulo}</h3>
+                </div>
+                <p>{FUNCIONES[i].texto}</p>
               </article>
             ))}
           </div>
         </Seccion>
 
         <Seccion aria-labelledby="titulo-pasos">
-          <h2 id="titulo-pasos">Empieza hoy en tres pasos</h2>
+          <h2 id="titulo-pasos">Tres pasos. Y a vender.</h2>
           <ol className="pasos">
             {PASOS.map((p) => (
               <li key={p.titulo}>
@@ -105,38 +128,48 @@ export function Landing() {
         </Seccion>
 
         <Seccion id="planes" aria-labelledby="titulo-planes">
-          <h2 id="titulo-planes">Planes para cada etapa de tu negocio</h2>
-          <p className="intro">Precios finales en pesos colombianos. Paga mensual o anual (2 meses gratis). 50% de descuento en tu primera compra.</p>
+          <h2 id="titulo-planes">Un plan para cada momento.</h2>
+          <p className="intro">Precios finales, en pesos. Mensual o anual con 2 meses gratis. Y 50% de descuento en tu primera compra.</p>
           <div className="planes">
-            {PLANES.map((p) => (
-              <article key={p.id} className={p.destacado ? "destacado" : ""}>
-                <h3>{p.nombre}</h3>
-                <p className="detalle">{p.detalle}</p>
-                <p className="precio">
-                  {p.precio ? (
-                    <>
-                      <strong>{cop(p.precio)}</strong> <span>/ mes</span>
-                    </>
-                  ) : (
-                    <strong>Gratis</strong>
-                  )}
-                </p>
-                {p.precioAnual ? <p className="anual">o {cop(p.precioAnual)} al año</p> : <p className="anual">Para siempre</p>}
-                <ul>
-                  {p.incluye.map((i) => (
-                    <li key={i}>{i}</li>
-                  ))}
-                </ul>
-                <a className={`boton ${p.destacado ? "" : "secundario"}`} href={HERO.ctaPrincipal.href}>
-                  {p.precio ? `Elegir ${p.nombre}` : "Empezar gratis"}
-                </a>
-              </article>
-            ))}
+            {PLANES.map((p) => {
+              const tarjeta = (
+                <article className={p.destacado ? "destacado" : ""}>
+                  {p.destacado && <span className="cinta-plan">Más elegido</span>}
+                  <h3>{p.nombre}</h3>
+                  <p className="detalle">{p.detalle}</p>
+                  <p className="precio">
+                    {p.precio ? (
+                      <>
+                        <strong>{cop(p.precio)}</strong> <span>/ mes</span>
+                      </>
+                    ) : (
+                      <strong>Gratis</strong>
+                    )}
+                  </p>
+                  {p.precioAnual ? <p className="anual">o {cop(p.precioAnual)} al año</p> : <p className="anual">Para siempre</p>}
+                  <ul>
+                    {p.incluye.map((i) => (
+                      <li key={i}>{i}</li>
+                    ))}
+                  </ul>
+                  <a className={`boton ${p.destacado ? "" : "secundario"}`} href={HERO.ctaPrincipal.href}>
+                    {p.precio ? `Elegir ${p.nombre}` : "Empezar gratis"}
+                  </a>
+                </article>
+              );
+              return p.destacado ? (
+                <BordeVivo key={p.id}>
+                  <div>{tarjeta}</div>
+                </BordeVivo>
+              ) : (
+                <div key={p.id}>{tarjeta}</div>
+              );
+            })}
           </div>
         </Seccion>
 
         <Seccion id="preguntas" aria-labelledby="titulo-faq">
-          <h2 id="titulo-faq">Preguntas frecuentes</h2>
+          <h2 id="titulo-faq">Lo que todos preguntan.</h2>
           <div className="faq">
             {FAQ.map((f) => (
               <details key={f.p}>
@@ -148,11 +181,14 @@ export function Landing() {
         </Seccion>
 
         <Final>
-          <h2>Ordena tu negocio desde hoy</h2>
-          <p>Crea tu empresa gratis y empieza a vender en minutos.</p>
-          <a className="boton grande" href={HERO.ctaPrincipal.href}>
-            {HERO.ctaPrincipal.texto}
-          </a>
+          <div className="texto">
+            <h2>¿Empezamos?</h2>
+            <p>Crea tu empresa gratis. En un minuto estás vendiendo.</p>
+            <a className="boton grande" href={HERO.ctaPrincipal.href}>
+              {HERO.ctaPrincipal.texto}
+            </a>
+          </div>
+          <Flotante src={ilustracion} alt="" width="420" height="600" loading="lazy" />
         </Final>
       </main>
 
@@ -174,32 +210,30 @@ export function Landing() {
   );
 }
 
-const MORADO = "#8800B3";
-const TINTA = "#17131D";
-const GRIS = "#5E5766";
-const LINEA = "#E7E2DA";
-const FONDO = "#F4F1EC";
-const SUAVE = "#F2E7F8";
-
 const Pagina = styled.div`
+  ${sinMovimiento}
+  position: relative;
   min-height: 100vh;
-  background: ${FONDO};
+  background: ${PAPEL};
   color: ${TINTA};
   font-family: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
   line-height: 1.6;
+  overflow-x: hidden;
   main {
+    position: relative;
+    z-index: 1;
     display: flex;
     flex-direction: column;
-    gap: 72px;
-    max-width: 1120px;
+    gap: 76px;
+    max-width: 1160px;
     margin: 0 auto;
-    padding: 24px 20px 72px;
+    padding: 20px 20px 80px;
   }
   h1,
   h2,
   h3 {
     margin: 0;
-    line-height: 1.15;
+    line-height: 1.12;
     text-wrap: balance;
   }
   p {
@@ -212,16 +246,18 @@ const Pagina = styled.div`
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    padding: 10px 18px;
+    padding: 11px 18px;
     border-radius: 12px;
     background: ${MORADO};
     color: #fff;
-    font-weight: 600;
+    font-weight: 700;
     text-decoration: none;
     border: 1.5px solid ${MORADO};
-    transition: background 0.15s;
+    transition: transform 0.15s, background 0.15s, box-shadow 0.15s;
     &:hover {
       background: #6d0090;
+      transform: translateY(-1px);
+      box-shadow: 0 12px 30px -12px rgba(136, 0, 179, 0.6);
     }
     &.secundario {
       background: #fff;
@@ -231,8 +267,8 @@ const Pagina = styled.div`
       }
     }
     &.grande {
-      padding: 14px 24px;
-      font-size: 1.02rem;
+      padding: 15px 26px;
+      font-size: 1.04rem;
     }
     &:focus-visible {
       outline: 3px solid ${SUAVE};
@@ -248,10 +284,11 @@ const Barra = styled.header`
   display: flex;
   align-items: center;
   gap: 16px;
-  max-width: 1120px;
+  max-width: 1160px;
   margin: 0 auto;
   padding: 14px 20px;
-  background: ${FONDO};
+  background: rgba(244, 241, 236, 0.85);
+  backdrop-filter: blur(12px);
   .marca {
     display: flex;
     align-items: center;
@@ -306,9 +343,10 @@ const Hero = styled.section`
   grid-template-columns: 1fr;
   gap: 36px;
   align-items: center;
-  padding-top: 24px;
-  @media (min-width: 900px) {
-    grid-template-columns: 1.15fr 0.85fr;
+  padding-top: 28px;
+  @media (min-width: 960px) {
+    grid-template-columns: 0.95fr 1.05fr;
+    gap: 44px;
   }
   .texto {
     display: flex;
@@ -318,7 +356,7 @@ const Hero = styled.section`
   }
   .etiqueta {
     align-self: flex-start;
-    padding: 5px 12px;
+    padding: 6px 12px;
     border-radius: 999px;
     background: ${SUAVE};
     color: ${MORADO};
@@ -327,14 +365,18 @@ const Hero = styled.section`
     letter-spacing: 0.03em;
   }
   h1 {
-    font-size: clamp(2.1rem, 5vw, 3.4rem);
+    font-size: clamp(2.2rem, 5vw, 3.6rem);
     font-weight: 800;
-    letter-spacing: -0.02em;
+    letter-spacing: -0.025em;
+    em {
+      font-style: normal;
+      color: ${MORADO};
+    }
   }
   .texto > p {
     font-size: 1.12rem;
     color: ${GRIS};
-    max-width: 60ch;
+    max-width: 56ch;
   }
   .ctas {
     display: flex;
@@ -356,101 +398,126 @@ const Hero = styled.section`
       font-weight: 700;
     }
   }
-  .ticket {
-    margin: 0;
-    padding: 20px;
-    border-radius: 20px;
-    background: #fff;
-    border: 1px solid ${LINEA};
-    box-shadow: 0 24px 60px -30px rgba(23, 19, 29, 0.35);
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
-    font-variant-numeric: tabular-nums;
+  /* Cuadrícula bento con los widgets */
+  .bento {
+    display: grid;
+    gap: 12px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-auto-rows: auto;
     min-width: 0;
-    ul {
-      margin: 0;
-      padding: 0;
-      list-style: none;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-    li {
-      display: flex;
-      justify-content: space-between;
-      gap: 12px;
-      font-size: 0.92rem;
+    @media (min-width: 560px) {
+      grid-template-columns: repeat(6, minmax(0, 1fr));
     }
   }
-  .ticket-cab {
+  .celda {
+    min-width: 0;
     display: flex;
-    justify-content: space-between;
-    gap: 10px;
-    flex-wrap: wrap;
-    span {
-      color: ${GRIS};
-      font-size: 0.85rem;
+    > * {
+      flex: 1;
     }
   }
-  .ticket-total {
-    display: flex;
-    justify-content: space-between;
-    padding-top: 12px;
-    border-top: 1px solid ${LINEA};
-    font-size: 1.1rem;
-    strong {
-      color: ${MORADO};
+  .ventas {
+    grid-column: span 2;
+    @media (min-width: 560px) {
+      grid-column: span 3;
     }
   }
-  .ticket-pagos {
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
-    span {
-      padding: 4px 10px;
-      border-radius: 999px;
-      background: ${FONDO};
-      font-size: 0.8rem;
-      font-weight: 600;
+  .ticket {
+    grid-column: span 2;
+    @media (min-width: 560px) {
+      grid-column: span 3;
+      grid-row: span 2;
     }
   }
-  .ticket-alerta {
-    padding: 10px 12px;
-    border-radius: 12px;
-    background: ${SUAVE};
-    color: ${TINTA};
-    font-size: 0.85rem;
+  .wa {
+    grid-column: span 2;
+    @media (min-width: 560px) {
+      grid-column: span 3;
+    }
+  }
+  .stock {
+    grid-column: span 2;
+    @media (min-width: 560px) {
+      grid-column: span 3;
+    }
+  }
+  .nov {
+    grid-column: span 2;
+    @media (min-width: 560px) {
+      grid-column: span 3;
+    }
   }
 `;
 
 const Seccion = styled.section`
   display: flex;
   flex-direction: column;
-  gap: 22px;
-  scroll-margin-top: 80px;
+  gap: 24px;
+  scroll-margin-top: 84px;
   h2 {
-    font-size: clamp(1.6rem, 3.4vw, 2.2rem);
+    font-size: clamp(1.7rem, 3.4vw, 2.3rem);
     font-weight: 800;
-    letter-spacing: -0.01em;
+    letter-spacing: -0.015em;
     max-width: 26ch;
   }
   .intro {
     color: ${GRIS};
     max-width: 65ch;
   }
-  .funciones {
+  .bento-funciones {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-    gap: 16px;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 14px;
+    grid-auto-flow: dense;
     article {
-      padding: 20px;
-      border-radius: 16px;
+      min-width: 0;
+      padding: 22px;
+      border-radius: 20px;
       background: #fff;
       border: 1px solid ${LINEA};
       display: flex;
       flex-direction: column;
-      gap: 8px;
+      gap: 10px;
+      transition: transform 0.2s, box-shadow 0.2s;
+      &:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 24px 50px -30px rgba(23, 19, 29, 0.35);
+      }
+    }
+    .grande {
+      grid-column: span 2;
+      @media (max-width: 560px) {
+        grid-column: span 1;
+      }
+    }
+    .alta {
+      grid-row: span 2;
+      background: ${TINTA};
+      color: ${PAPEL};
+      border: none;
+      p {
+        color: rgba(244, 241, 236, 0.72);
+      }
+      .icono {
+        background: rgba(226, 164, 255, 0.16);
+        color: ${MORADO_CLARO};
+      }
+    }
+    .cab {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .icono {
+      width: 36px;
+      height: 36px;
+      border-radius: 11px;
+      display: grid;
+      place-items: center;
+      background: ${SUAVE};
+      color: ${MORADO};
+      font-size: 1rem;
+      flex: none;
     }
     h3 {
       font-size: 1.05rem;
@@ -459,11 +526,18 @@ const Seccion = styled.section`
       color: ${GRIS};
       font-size: 0.95rem;
     }
+    .demo {
+      margin-top: auto;
+      display: flex;
+      > * {
+        flex: 1;
+      }
+    }
   }
   .pasos {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 16px;
+    gap: 14px;
     margin: 0;
     padding: 0;
     list-style: none;
@@ -473,8 +547,8 @@ const Seccion = styled.section`
       display: flex;
       flex-direction: column;
       gap: 6px;
-      padding: 20px;
-      border-radius: 16px;
+      padding: 22px;
+      border-radius: 20px;
       border: 1px dashed ${MORADO};
       background: #fff;
     }
@@ -482,11 +556,11 @@ const Seccion = styled.section`
       content: counter(paso);
       display: grid;
       place-items: center;
-      width: 30px;
-      height: 30px;
-      border-radius: 9px;
-      background: ${SUAVE};
-      color: ${MORADO};
+      width: 32px;
+      height: 32px;
+      border-radius: 10px;
+      background: ${MORADO};
+      color: #fff;
       font-weight: 800;
     }
     p {
@@ -496,27 +570,46 @@ const Seccion = styled.section`
   .planes {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-    gap: 16px;
+    gap: 14px;
     align-items: stretch;
+    > div {
+      display: flex;
+      min-width: 0;
+    }
     article {
+      position: relative;
+      flex: 1;
       display: flex;
       flex-direction: column;
       gap: 10px;
-      padding: 22px;
-      border-radius: 18px;
+      padding: 24px;
+      border-radius: 20px;
       background: #fff;
       border: 1px solid ${LINEA};
+      min-width: 0;
     }
     article.destacado {
-      border: 2px solid ${MORADO};
+      border: none;
+    }
+    .cinta-plan {
+      position: absolute;
+      top: -12px;
+      left: 20px;
+      background: ${MORADO};
+      color: #fff;
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 999px;
     }
     .detalle {
       color: ${GRIS};
       font-size: 0.92rem;
     }
     .precio strong {
-      font-size: 1.9rem;
+      font-size: 2rem;
       font-weight: 800;
+      letter-spacing: -0.02em;
     }
     .precio span,
     .anual {
@@ -555,30 +648,60 @@ const Seccion = styled.section`
 `;
 
 const Final = styled.section`
-  display: flex;
-  flex-direction: column;
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr;
   align-items: center;
-  gap: 14px;
-  text-align: center;
-  padding: 40px 20px;
-  border-radius: 24px;
-  background: ${TINTA};
+  gap: 20px;
+  padding: 44px 28px;
+  border-radius: 28px;
+  background: radial-gradient(ellipse at 20% 20%, #a51bd1 0%, ${MORADO} 40%, #4b0063 100%);
   color: #fff;
+  overflow: hidden;
+  @media (min-width: 820px) {
+    grid-template-columns: 1.3fr 0.7fr;
+    padding: 56px 60px;
+  }
+  .texto {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    align-items: flex-start;
+    position: relative;
+    z-index: 1;
+  }
   h2 {
-    font-size: clamp(1.6rem, 3.4vw, 2.2rem);
+    font-size: clamp(1.7rem, 3.4vw, 2.4rem);
     font-weight: 800;
   }
   p {
-    color: rgba(255, 255, 255, 0.75);
+    color: rgba(255, 255, 255, 0.8);
+  }
+  .boton {
+    background: #fff;
+    color: ${MORADO};
+    border-color: #fff;
+    &:hover {
+      background: ${SUAVE};
+    }
+  }
+  img {
+    justify-self: center;
+    width: min(100%, 320px);
+    height: auto;
+    border-radius: 24px;
+    box-shadow: 0 40px 80px -40px rgba(0, 0, 0, 0.6);
   }
 `;
 
 const Pie = styled.footer`
+  position: relative;
+  z-index: 1;
   display: flex;
   flex-wrap: wrap;
   justify-content: space-between;
   gap: 12px;
-  max-width: 1120px;
+  max-width: 1160px;
   margin: 0 auto;
   padding: 24px 20px 40px;
   border-top: 1px solid ${LINEA};

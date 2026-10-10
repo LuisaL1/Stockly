@@ -117,7 +117,7 @@ function Contenido() {
   return (
     <PaginaTemplate
       titulo="Auditoría"
-      descripcion="Registro inalterable de cada movimiento: quién lo hizo realmente, cuándo y dónde. Solo lo ven el dueño y los administradores."
+      descripcion="Cada movimiento, con nombre, fecha y lugar. Solo para el dueño y los administradores."
       acciones={
         <Boton
           icono={<v.icononovandra />}

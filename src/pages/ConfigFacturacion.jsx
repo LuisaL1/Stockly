@@ -166,7 +166,7 @@ function Contenido() {
   return (
     <PaginaTemplate
       titulo="Facturación"
-      descripcion="Datos del emisor, numeración e impuestos de tus facturas."
+      descripcion="Tus datos, la numeración y los impuestos de cada factura."
       volverA={{ to: "/configurar", texto: "Configuración" }}
     >
       <Formulario onSubmit={handleSubmit(guardar)}>

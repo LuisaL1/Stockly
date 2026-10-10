@@ -149,7 +149,7 @@ function Contenido() {
   return (
     <PaginaTemplate
       titulo="Inteligencia de inventario"
-      descripcion="Stockly aprende el ritmo de tu negocio y te dice qué reponer, qué se detuvo y qué está quieto."
+      descripcion="Stockly aprende el ritmo de tu negocio. Te dice qué reponer y qué está quieto."
       acciones={
         <Boton icono={<v.icononovandra />} funcion={() => abrirNovandra("Analiza la rotación de mis productos y dime qué priorizar esta semana")}>
           Analizar con Novandra

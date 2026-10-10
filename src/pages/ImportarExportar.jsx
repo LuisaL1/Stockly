@@ -133,7 +133,7 @@ function Contenido() {
   return (
     <PaginaTemplate
       titulo="Importar y exportar"
-      descripcion="Sube tus productos desde Excel en minutos y deja la app lista para vender. También puedes descargar una copia de tus datos."
+      descripcion="Sube tus productos desde Excel y empieza a vender. O descarga una copia de todo."
       volverA={{ to: "/configurar", texto: "Configuración" }}
     >
       <Inicio>

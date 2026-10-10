@@ -71,7 +71,7 @@ function Contenido() {
   return (
     <PaginaTemplate
       titulo="Sucursales"
-      descripcion="Tus sedes, cuánto vende cada una y las bodegas que maneja."
+      descripcion="Tus sedes. Cuánto vende cada una y qué bodegas maneja."
       acciones={
         admin && (
           <Boton

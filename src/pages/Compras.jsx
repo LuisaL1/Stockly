@@ -105,7 +105,7 @@ function Contenido() {
   return (
     <PaginaTemplate
       titulo="Compras"
-      descripcion="Órdenes de compra a tus proveedores. Al recibirlas, el inventario se actualiza solo."
+      descripcion="Pide a tus proveedores. Al recibir, el inventario se suma solo."
       acciones={
         <>
           <Boton

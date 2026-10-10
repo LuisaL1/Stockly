@@ -39,7 +39,7 @@ export function Ayuda() {
     : CATEGORIAS_GUIAS.map((c) => [c, visibles.filter((g) => g.categoria === c)]).filter(([, gs]) => gs.length);
 
   return (
-    <PaginaTemplate titulo="Centro de ayuda" descripcion="Guías paso a paso de todo lo que puedes hacer en Stockly.">
+    <PaginaTemplate titulo="Centro de ayuda" descripcion="Todo lo que puedes hacer en Stockly, paso a paso.">
       <Buscador>
         <v.iconobuscar />
         <input

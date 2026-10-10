@@ -133,8 +133,8 @@ export function FormRegistro({ irA, alRegistrar }) {
   return (
     <>
       <Encabezado>
-        <h1>Crea tu empresa en Stockly</h1>
-        <p>Tres pasos y tendrás inventario, ventas y facturación en un solo lugar.</p>
+        <h1>Tu empresa, en Stockly.</h1>
+        <p>Tres pasos. Y tu inventario, tus ventas y tus facturas en un solo lugar.</p>
       </Encabezado>
 
       <Pasos aria-label={`Paso ${paso + 1} de ${PASOS.length}`}>

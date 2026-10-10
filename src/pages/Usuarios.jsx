@@ -29,7 +29,7 @@ function Contenido() {
   return (
     <CrudTemplate
       titulo="Personal"
-      descripcion="Las personas que usan Stockly en tu empresa y sus permisos."
+      descripcion="Quiénes usan Stockly en tu empresa y qué pueden hacer."
       textoNuevo="Nuevo usuario"
       placeholderBusqueda="Buscar por nombre..."
       setBuscador={setBuscador}

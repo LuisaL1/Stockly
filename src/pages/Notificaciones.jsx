@@ -47,7 +47,7 @@ export function Notificaciones() {
   return (
     <PaginaTemplate
       titulo="Notificaciones"
-      descripcion="Ventas, alertas de stock, compras recibidas y sugerencias de Novandra."
+      descripcion="Ventas, alertas de stock, compras y sugerencias de Novandra. Todo lo que pasa."
       acciones={
         noLeidas > 0 && (
           <Boton variante="secundario" icono={<v.iconolisto />} funcion={() => marcar(lista.filter((n) => !n.leida).map((n) => n.id))}>

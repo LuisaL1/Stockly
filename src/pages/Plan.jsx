@@ -305,7 +305,7 @@ function Contenido() {
   return (
     <PaginaTemplate
       titulo="Plan y suscripción"
-      descripcion="Paga solo cuando quieras más. Tus datos siempre se conservan."
+      descripcion="Paga solo cuando quieras más. Tus datos, siempre contigo."
       volverA={{ to: "/configurar", texto: "Configuración" }}
     >
       <BentoGrid>

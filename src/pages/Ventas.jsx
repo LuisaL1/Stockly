@@ -179,7 +179,7 @@ function PuntoDeVenta() {
   return (
     <PaginaTemplate
       titulo="Vender"
-      descripcion="Agrega productos al ticket, elige cómo te pagan y cobra."
+      descripcion="Agrega al ticket. Elige cómo te pagan. Cobra."
       acciones={
         <Link to="/ventas/facturas" style={{ textDecoration: "none" }}>
           <Boton variante="secundario" icono={<v.iconofacturas />}>
