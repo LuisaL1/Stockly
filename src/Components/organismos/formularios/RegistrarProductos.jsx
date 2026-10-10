@@ -23,6 +23,10 @@ const numero = (mensaje) => ({
   min: { value: 0, message: "No puede ser negativo" },
 });
 
+// El código de barras es opcional: no todos los negocios lo usan. Se guarda como texto para
+// conservar ceros a la izquierda y códigos largos (EAN-13, EAN-14).
+const codigoBarras = (t) => String(t ?? "").trim() || null;
+
 export function RegistrarProductos({ onClose, dataSelect = {}, accion }) {
   const editando = accion === "Editar";
   const { Insertar, Editar } = useProductosStore();
@@ -60,7 +64,7 @@ export function RegistrarProductos({ onClose, dataSelect = {}, accion }) {
           descripcion: dataSelect.descripcion,
           stock: dataSelect.stock,
           stockminimo: dataSelect.stock_minimo,
-          codigobarras: dataSelect.codigobarras,
+          codigobarras: dataSelect.codigobarras ?? "",
           codigointerno: dataSelect.codigointerno,
           precioventa: dataSelect.precioventa,
           preciocompra: dataSelect.preciocompra,
@@ -76,7 +80,7 @@ export function RegistrarProductos({ onClose, dataSelect = {}, accion }) {
           descripcion: CovertirCapitalize(data.descripcion),
           idmarca: marcaActual.id,
           stock_minimo: data.stockminimo,
-          codigobarras: data.codigobarras,
+          codigobarras: codigoBarras(data.codigobarras),
           codigointerno: data.codigointerno,
           precioventa: data.precioventa,
           preciocompra: data.preciocompra,
@@ -88,7 +92,7 @@ export function RegistrarProductos({ onClose, dataSelect = {}, accion }) {
           _idmarca: marcaActual.id,
           _stock: data.stock,
           _stock_minimo: data.stockminimo,
-          _codigobarras: data.codigobarras,
+          _codigobarras: codigoBarras(data.codigobarras),
           _codigointerno: data.codigointerno,
           _precioventa: data.precioventa,
           _preciocompra: data.preciocompra,
@@ -185,8 +189,8 @@ export function RegistrarProductos({ onClose, dataSelect = {}, accion }) {
           </InputText>
 
           <span className="titulo-seccion completo">Códigos</span>
-          <InputText label="Código de barras" icono={<v.iconocodigobarras />} error={errors.codigobarras?.message}>
-            <input type="number" {...register("codigobarras", numero("Indica el código de barras"))} />
+          <InputText label="Código de barras (opcional)" icono={<v.iconocodigobarras />} error={errors.codigobarras?.message}>
+            <input inputMode="numeric" autoComplete="off" placeholder="Escanéalo o déjalo vacío" {...register("codigobarras", { pattern: { value: /^[0-9A-Za-z-]*$/, message: "Solo números, letras o guiones" } })} />
           </InputText>
           <InputText label="Código interno" icono={<v.iconocodigointerno />} error={errors.codigointerno?.message}>
             <input {...register("codigointerno", { validate: (t) => !!String(t ?? "").trim() || "Indica el código interno" })} />
