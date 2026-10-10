@@ -30,6 +30,9 @@ language plpgsql security definer set search_path = public
 as $$
 declare
   _unidad text;
+  _pres text;
+  _cont numeric;
+  _cont_u text;
   _usuario bigint := public.stockly_id_usuario();
   _plan public.stockly_planes;
   _res jsonb := '{}'::jsonb;
@@ -201,9 +204,14 @@ begin
     _ci := nullif(btrim(_f->>'codigo_interno'), '');
     _cb := nullif(regexp_replace(coalesce(_f->>'codigo_barras', ''), '\D', '', 'g'), '');
     _unidad := public.stockly_unidad_id(_f->>'unidad');
-    if nullif(btrim(_f->>'unidad'), '') is not null and _unidad is null then
-      raise exception 'Producto "%": la unidad "%" no existe. Usa una de las unidades de Stockly (und, par, caja, g, kg, ml, l, m...).', _nombre, _f->>'unidad';
+    _pres := coalesce(public.stockly_presentacion_id(_f->>'presentacion'), public.stockly_presentacion_id(_f->>'unidad'));
+    if nullif(btrim(_f->>'unidad'), '') is not null and _unidad is null and _pres is null then
+      raise exception 'Producto "%": la unidad "%" no existe. Usa una unidad de medida (und, par, docena, g, kg, lb, ml, l, galon, cm, m, m2) o una presentación (frasco, botella, caja, paquete, bolsa, sobre, lata, tarro, tubo, blister, rollo, bulto, kit).', _nombre, _f->>'unidad';
     end if;
+    if nullif(btrim(_f->>'presentacion'), '') is not null and _pres is null then
+      raise exception 'Producto "%": la presentación "%" no existe (frasco, botella, caja, paquete, bolsa, sobre, lata, tarro, tubo, blister, rollo, bulto, kit).', _nombre, _f->>'presentacion';
+    end if;
+    select cantidad, unidad into _cont, _cont_u from public.stockly_parsear_contenido(_f->>'contenido');
 
     _cat := null;
     if nullif(btrim(_f->>'categoria'), '') is not null then
@@ -242,10 +250,10 @@ begin
       execute format(
         'select public.insertarproductos(_descripcion := %L, _idmarca := %L, _stock := 0, _stock_minimo := %L,
            _codigobarras := %L, _codigointerno := %L, _precioventa := %L, _preciocompra := %L,
-           _id_categoria := %L, _id_empresa := %L, _unidad := %L)',
+           _id_categoria := %L, _id_empresa := %L, _unidad := %L, _presentacion := %L, _contenido := %L, _contenido_unidad := %L)',
         _nombre, _marca, coalesce(nullif(_f->>'stock_minimo', '')::numeric, 0), _cb, _ci,
         coalesce(nullif(_f->>'precio_venta', '')::numeric, 0), coalesce(nullif(_f->>'precio_compra', '')::numeric, 0),
-        _cat, _id_empresa, _unidad);
+        _cat, _id_empresa, _unidad, _pres, _cont, _cont_u);
       select id into _id from productos where id_empresa = _id_empresa and stockly_norm(descripcion) = stockly_norm(_nombre)
        order by id desc limit 1;
       _creados := _creados + 1;
@@ -259,7 +267,10 @@ begin
              precioventa = coalesce(nullif(_f->>'precio_venta', '')::numeric, precioventa),
              preciocompra = coalesce(nullif(_f->>'precio_compra', '')::numeric, preciocompra),
              stock_minimo = coalesce(nullif(_f->>'stock_minimo', '')::numeric, stock_minimo),
-             unidad = coalesce(_unidad, unidad)
+             unidad = coalesce(_unidad, unidad),
+             presentacion = coalesce(_pres, presentacion),
+             contenido = coalesce(_cont, contenido),
+             contenido_unidad = coalesce(_cont_u, contenido_unidad)
        where id = _id;
       _actualizados := _actualizados + 1;
     end if;
@@ -427,7 +438,7 @@ begin
                                                              'direccion', b.direccion, 'responsable', b.responsable) order by b.tipo <> 'principal', b.id)
                            from bodegas b left join sucursales s on s.id = b.id_sucursal where b.id_empresa = _id_empresa), '[]'),
     'productos', coalesce((select jsonb_agg(jsonb_build_object(
-                             'nombre', p.descripcion, 'codigo_interno', p.codigointerno, 'codigo_barras', p.codigobarras::text, 'unidad', p.unidad,
+                             'nombre', p.descripcion, 'codigo_interno', p.codigointerno, 'codigo_barras', p.codigobarras::text, 'unidad', p.unidad, 'presentacion', p.presentacion, 'contenido', case when p.contenido is not null then trim_scale(p.contenido)::text || ' ' || coalesce(p.contenido_unidad, 'und') end,
                              'categoria', c.descripcion, 'marca', m.descripcion, 'precio_compra', p.preciocompra,
                              'precio_venta', p.precioventa, 'stock_minimo', p.stock_minimo,
                              'stock', public.stockly_disponible(_principal, p.id), 'stock_total', p.stock) order by p.descripcion)

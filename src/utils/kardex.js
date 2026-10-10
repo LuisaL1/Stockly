@@ -58,7 +58,7 @@ export async function exportarKardexExcel(filas, archivo = "kardex.xlsx") {
       etiquetaOrigen(f),
       f.origen === "ajuste" ? f.nota ?? "" : f.detalle ?? "",
       Number(f.tipo === "Salida" ? -f.cantidad : f.cantidad),
-      f.unidad ?? "und",
+      f.presentacion ?? f.unidad ?? "und",
       Number(f.saldo),
       f.usuario ?? "",
       f.estado === "anulado" ? "Anulado" : "",

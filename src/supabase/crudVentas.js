@@ -5,7 +5,7 @@ import { notificarExito } from "../utils/notificaciones";
 const SELECT_VENTA =
   "id, prefijo, numero, fecha, canal, metodo_pago, subtotal, descuento, impuesto, total, estado, nota, " +
   "clientes(id, nombre, tipo_documento, documento, email, telefono, direccion), bodegas(id, nombre), " +
-  "facturas(id, tipo, estado, estado_dian, cufe), detalle_venta(id, descripcion, cantidad, unidad, precio_unitario, descuento, iva, total), " +
+  "facturas(id, tipo, estado, estado_dian, cufe), detalle_venta(id, descripcion, cantidad, unidad, presentacion, precio_unitario, descuento, iva, total), " +
   "pagos_venta(id, metodo, monto, recibido, cambio, referencia, franquicia, banco, estado, link_url, created_at, confirmado_en)";
 
 // Devuelve { id, prefijo, numero, total } o null si falló.

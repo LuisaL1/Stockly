@@ -20,7 +20,7 @@ import { GUIAS, buscarGuias } from "../guias";
 
 const n = (x, d = 0) => formatearNumero(Number(x ?? 0), d);
 // Cantidad en la unidad del producto: "3 frascos", "250 g".
-const und = (x, p) => cantidadEnPalabras(x, p?.unidad);
+const und = (x, p) => (p ? cantidadEnPalabras(x, p) : cantidadEnPalabras(x, "und"));
 const lista = (items) => items.map((i) => `- ${i}`).join("\n");
 const tabla = (encabezados, filas) =>
   [`| ${encabezados.join(" | ")} |`, `| ${encabezados.map(() => "---").join(" | ")} |`, ...filas.map((f) => `| ${f.join(" | ")} |`)].join("\n");

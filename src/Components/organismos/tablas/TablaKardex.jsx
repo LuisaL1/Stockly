@@ -67,7 +67,7 @@ export function TablaKardex({ data, alCambiar }) {
       cell: ({ row }) => (
         <Cantidad $salida={row.original.tipo === "Salida"}>
           {row.original.tipo === "Salida" ? "−" : "+"}
-          {cantidadConUnidad(row.original.cantidad, row.original.unidad)}
+          {cantidadConUnidad(row.original.cantidad, row.original)}
         </Cantidad>
       ),
     },
@@ -75,7 +75,7 @@ export function TablaKardex({ data, alCambiar }) {
       accessorKey: "saldo",
       header: "Saldo",
       meta: { align: "right" },
-      cell: ({ row }) => <strong>{cantidadConUnidad(row.original.saldo, row.original.unidad)}</strong>,
+      cell: ({ row }) => <strong>{cantidadConUnidad(row.original.saldo, row.original)}</strong>,
     },
     { accessorKey: "usuario", header: "Usuario" },
     {

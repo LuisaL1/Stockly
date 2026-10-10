@@ -119,7 +119,7 @@ export function RegistrarAjuste({ onClose, onGuardado, productoInicial = null })
           label="Cantidad"
           icono={<v.iconocalculadora />}
           error={errors.cantidad?.message}
-          ayuda={producto && cantidad > 0 && !errors.cantidad ? `Quedarán ${cantidadConUnidad(resultante, producto.unidad)} en ${bodegaActual?.nombre ?? "la bodega"}.` : producto ? `Cantidad en ${cantidadConUnidad(1, producto.unidad).replace(/^1 /, "")}.` : undefined}
+          ayuda={producto && cantidad > 0 && !errors.cantidad ? `Quedarán ${cantidadConUnidad(resultante, producto)} en ${bodegaActual?.nombre ?? "la bodega"}.` : producto ? `Se cuenta en ${cantidadConUnidad(2, producto).replace(/^2 /, "")}.` : undefined}
         >
           <input
             type="number"

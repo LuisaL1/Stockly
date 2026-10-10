@@ -8,7 +8,7 @@ import { useProductosStore } from "../../../store/ProductosStore";
 import { useEmpresaStore } from "../../../store/EmpresaStore";
 import { confirmarEliminacion } from "../../../utils/notificaciones";
 import { formatearMoneda } from "../../../utils/conversiones";
-import { cantidadConUnidad } from "../../../utils/unidades";
+import { cantidadConUnidad, etiquetaPresentacion } from "../../../utils/unidades";
 
 export function TablaProductos({ data, editar }) {
   const navigate = useNavigate();
@@ -23,17 +23,26 @@ export function TablaProductos({ data, editar }) {
   };
 
   const columns = [
-    { accessorKey: "descripcion", header: "Producto" },
+    {
+      accessorKey: "descripcion",
+      header: "Producto",
+      cell: ({ row }) => (
+        <span style={{ display: "flex", flexDirection: "column" }}>
+          <span>{row.original.descripcion}</span>
+          {etiquetaPresentacion(row.original) && <small style={{ opacity: 0.65, fontWeight: 400 }}>{etiquetaPresentacion(row.original)}</small>}
+        </span>
+      ),
+    },
     {
       accessorKey: "stock",
       header: "Stock",
       meta: { align: "right" },
       cell: ({ row }) => {
-        const { stock, stock_minimo, unidad } = row.original;
+        const { stock, stock_minimo } = row.original;
         const bajo = Number(stock) <= Number(stock_minimo);
         return (
-          <Stock $bajo={bajo} title={bajo ? `Mínimo: ${cantidadConUnidad(stock_minimo, unidad)}` : undefined}>
-            {cantidadConUnidad(stock, unidad)}
+          <Stock $bajo={bajo} title={bajo ? `Mínimo: ${cantidadConUnidad(stock_minimo, row.original)}` : undefined}>
+            {cantidadConUnidad(stock, row.original)}
           </Stock>
         );
       },

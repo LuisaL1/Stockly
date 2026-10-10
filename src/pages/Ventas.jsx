@@ -16,7 +16,7 @@ import { MostrarBodegas, MostrarStockBodega } from "../supabase/crudBodegas";
 import { crudClientes } from "../supabase/crudContactos";
 import { MostrarConfigFacturacion } from "../supabase/crudFacturacion";
 import { RegistrarVenta } from "../supabase/crudVentas";
-import { abrev, cantidadConUnidad, permiteDecimales } from "../utils/unidades";
+import { abrev, cantidadConUnidad, contenidoTexto, permiteDecimales } from "../utils/unidades";
 import { usePlan } from "../hooks/usePlan";
 import { Canales, TiposBodega } from "../utils/dataEstatica";
 import { normalizarPagos, pagoVacio, validarPagos } from "../utils/pagos";
@@ -116,6 +116,9 @@ function PuntoDeVenta() {
           cantidad: 1,
           disponible: Number(p.cantidad),
           unidad: p.unidad,
+          presentacion: p.presentacion,
+          contenido: p.contenido,
+          contenido_unidad: p.contenido_unidad,
         },
       ];
     });
@@ -245,7 +248,7 @@ function PuntoDeVenta() {
                     <strong>{p.descripcion}</strong>
                     <span className="precio">{dinero(p.precioventa)}</span>
                     <span className={`stock ${bajo ? "bajo" : ""}`}>
-                      {agotado && !enCarrito ? "Agotado" : `${cantidadConUnidad(p.cantidad, p.unidad)} disponibles`}
+                      {agotado && !enCarrito ? "Agotado" : `${cantidadConUnidad(p.cantidad, p)} disponibles`}
                     </span>
                   </button>
                 );
@@ -296,7 +299,7 @@ function PuntoDeVenta() {
                   <div className="info">
                     <strong>{l.descripcion}</strong>
                     <span>
-                      {dinero(l.precio)} por {abrev(l.unidad)} · máx. {cantidadConUnidad(l.disponible, l.unidad)}
+                      {dinero(l.precio)} por {l.presentacion ? cantidadConUnidad(1, l).replace(/^1 /, "") : abrev(l.unidad)}{l.contenido ? ` (${contenidoTexto(l.contenido, l.contenido_unidad)})` : ""} · máx. {cantidadConUnidad(l.disponible, l)}
                     </span>
                   </div>
                   <div className="cantidad">

@@ -236,35 +236,7 @@ as $$
    limit 1
 $$;
 
--- Crea el producto en la empresa (stock 0) con categoría y marca por nombre; devuelve su id.
-create or replace function public.stockly_red_crear_producto(_id_empresa bigint, _descripcion text, _codigointerno text, _codigobarras text,
-  _precioventa numeric, _preciocompra numeric, _categoria text, _marca text, _stock_minimo numeric default 0, _unidad text default null)
-returns bigint language plpgsql security definer set search_path = public
-as $$
-declare
-  _cat bigint;
-  _mar bigint;
-  _id bigint;
-  _desc text := btrim(_descripcion);
-begin
-  select id into _cat from categorias where id_empresa = _id_empresa and public.stockly_norm(descripcion) = public.stockly_norm(coalesce(nullif(btrim(_categoria), ''), 'General')) limit 1;
-  if _cat is null then
-    insert into categorias (descripcion, color, id_empresa) values (coalesce(nullif(btrim(_categoria), ''), 'General'), '#8800B3', _id_empresa) returning id into _cat;
-  end if;
-  select id into _mar from marca where id_empresa = _id_empresa and public.stockly_norm(descripcion) = public.stockly_norm(coalesce(nullif(btrim(_marca), ''), 'Genérica')) limit 1;
-  if _mar is null then
-    insert into marca (descripcion, id_empresa) values (coalesce(nullif(btrim(_marca), ''), 'Genérica'), _id_empresa) returning id into _mar;
-  end if;
-  -- Si el nombre ya existe con otro código, se distingue con el código.
-  if exists (select 1 from productos where id_empresa = _id_empresa and descripcion = _desc) then
-    _desc := _desc || ' (' || coalesce(nullif(btrim(_codigointerno), ''), nullif(btrim(_codigobarras), ''), 'red') || ')';
-  end if;
-  insert into productos (descripcion, idmarca, stock, stock_minimo, codigobarras, codigointerno, precioventa, preciocompra, id_categoria, id_empresa, unidad)
-  values (_desc, _mar, 0, coalesce(_stock_minimo, 0), nullif(btrim(_codigobarras), ''), nullif(btrim(_codigointerno), ''),
-          coalesce(_precioventa, 0), coalesce(_preciocompra, 0), _cat, _id_empresa, coalesce(_unidad, 'und'))
-  returning id into _id;
-  return _id;
-end $$;
+-- stockly_red_crear_producto se define en 20261030000000_unidades.sql / 20261101000000_presentaciones.sql.
 
 -- ---------------------------------------------------------------- 4. Vínculos
 create or replace function public.stockly_red_invitar(_id_empresa bigint, _nota text default null)
@@ -399,7 +371,7 @@ begin
   return jsonb_build_object('comparte', true, 'costos', coalesce((_cfg->>'costos')::boolean, false),
     'catalogo', coalesce((_cfg->>'catalogo')::boolean, false),
     'productos', coalesce((select jsonb_agg(to_jsonb(x) order by x.descripcion) from (
-      select p.id, p.descripcion, p.codigointerno, p.codigobarras, p.stock, p.stock_minimo, p.precioventa, p.unidad,
+      select p.id, p.descripcion, p.codigointerno, p.codigobarras, p.stock, p.stock_minimo, p.precioventa, p.unidad, p.presentacion, p.contenido, p.contenido_unidad,
              case when coalesce((_cfg->>'costos')::boolean, false) then p.preciocompra end as preciocompra,
              c.descripcion as categoria, m.descripcion as marca,
              (select jsonb_agg(jsonb_build_object('bodega', vb.bodega, 'cantidad', vb.cantidad) order by vb.bodega)
@@ -413,37 +385,6 @@ begin
        limit 2000) x), '[]'::jsonb));
 end $$;
 
-create or replace function public.stockly_red_importar_catalogo(_id_vinculo bigint, _id_empresa bigint, _ids bigint[] default null)
-returns jsonb language plpgsql security definer set search_path = public
-as $$
-declare
-  _v public.red_vinculos;
-  _otra bigint;
-  _cfg jsonb;
-  _p record;
-  _creados int := 0;
-  _existentes int := 0;
-begin
-  if not public.stockly_es_admin(_id_empresa) then raise exception 'Solo el dueño o un administrador puede importar el catálogo'; end if;
-  _v := public.stockly_red_vinculo(_id_vinculo, _id_empresa);
-  _otra := public.stockly_red_otra(_v, _id_empresa);
-  _cfg := public.stockly_red_config(_v, _otra);
-  if coalesce((_cfg->>'catalogo')::boolean, false) is not true then raise exception 'Esa empresa no comparte su catálogo'; end if;
-  for _p in
-    select p.*, c.descripcion as categoria, m.descripcion as marca
-      from productos p left join categorias c on c.id = p.id_categoria left join marca m on m.id = p.idmarca
-     where p.id_empresa = _otra and (_ids is null or p.id = any(_ids))
-  loop
-    if public.stockly_red_buscar_producto(_id_empresa, _p.codigointerno::text, _p.codigobarras::text, _p.descripcion) is not null then
-      _existentes := _existentes + 1;
-    else
-      perform public.stockly_red_crear_producto(_id_empresa, _p.descripcion, _p.codigointerno::text, _p.codigobarras::text, _p.precioventa,
-        case when coalesce((_cfg->>'costos')::boolean, false) then _p.preciocompra end, _p.categoria, _p.marca, _p.stock_minimo, _p.unidad);
-      _creados := _creados + 1;
-    end if;
-  end loop;
-  return jsonb_build_object('creados', _creados, 'existentes', _existentes);
-end $$;
 
 -- ---------------------------------------------------------------- 6. Envíos de mercancía
 -- _items: [{ id_producto, cantidad }]
@@ -490,10 +431,10 @@ begin
     if public.stockly_disponible(_bodega, _p.id) < _cant then
       raise exception 'Stock insuficiente de % en esta bodega (disponible: %)', _p.descripcion, trim_scale(public.stockly_disponible(_bodega, _p.id));
     end if;
-    insert into red_envios_detalle (id_envio, id_producto_origen, descripcion, codigointerno, codigobarras, cantidad, costo_unitario, precio_venta, categoria, marca, stock_minimo, unidad)
+    insert into red_envios_detalle (id_envio, id_producto_origen, descripcion, codigointerno, codigobarras, cantidad, costo_unitario, precio_venta, categoria, marca, stock_minimo, unidad, presentacion, contenido, contenido_unidad)
     values (_id, _p.id, _p.descripcion, _p.codigointerno::text, _p.codigobarras::text, _cant,
             case when coalesce((_cfg->>'costos')::boolean, false) then _p.preciocompra end, _p.precioventa,
-            (select descripcion from categorias where id = _p.id_categoria), (select descripcion from marca where id = _p.idmarca), _p.stock_minimo, _p.unidad);
+            (select descripcion from categorias where id = _p.id_categoria), (select descripcion from marca where id = _p.idmarca), _p.stock_minimo, _p.unidad, _p.presentacion, _p.contenido, _p.contenido_unidad);
     insert into kardex (tipo, cantidad, detalle, id_empresa, id_producto, id_bodega, origen, referencia, nota)
     values ('Salida', _cant, 'Envío a ' || _otro_nombre || ' RED-' || _numero, _id_empresa, _p.id, _bodega, 'red', _id, nullif(btrim(_nota), ''));
     _unidades := _unidades + _cant;
@@ -534,7 +475,7 @@ begin
   for _d in select * from red_envios_detalle where id_envio = _id_envio loop
     _idp := public.stockly_red_buscar_producto(_id_empresa, _d.codigointerno, _d.codigobarras, _d.descripcion);
     if _idp is null then
-      _idp := public.stockly_red_crear_producto(_id_empresa, _d.descripcion, _d.codigointerno, _d.codigobarras, _d.precio_venta, _d.costo_unitario, _d.categoria, _d.marca, _d.stock_minimo, _d.unidad);
+      _idp := public.stockly_red_crear_producto(_id_empresa, _d.descripcion, _d.codigointerno, _d.codigobarras, _d.precio_venta, _d.costo_unitario, _d.categoria, _d.marca, _d.stock_minimo, _d.unidad, _d.presentacion, _d.contenido, _d.contenido_unidad);
       _creados := _creados + 1;
     end if;
     update red_envios_detalle set id_producto_destino = _idp where id = _d.id;
@@ -714,7 +655,6 @@ grant execute on function public.stockly_red_cancelar(bigint, bigint) to authent
 grant execute on function public.stockly_red_configurar(bigint, bigint, jsonb) to authenticated;
 grant execute on function public.stockly_red_mis_vinculos(bigint) to authenticated;
 grant execute on function public.stockly_red_stock(bigint, bigint, text) to authenticated;
-grant execute on function public.stockly_red_importar_catalogo(bigint, bigint, bigint[]) to authenticated;
 grant execute on function public.stockly_red_enviar(bigint, bigint, bigint, jsonb, text, bigint) to authenticated;
 grant execute on function public.stockly_red_recibir(bigint, bigint, bigint) to authenticated;
 grant execute on function public.stockly_red_rechazar(bigint, bigint, text) to authenticated;

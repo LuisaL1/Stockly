@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useEmpresaStore } from "../store/EmpresaStore";
 import { UnidadesEmpresa } from "../supabase/crudUnidades";
-import { UNIDADES } from "../utils/unidades";
+import { PRESENTACIONES, UNIDADES } from "../utils/unidades";
 
 // Unidades que la empresa usa en su inventario y la predeterminada para productos nuevos.
 export function useUnidades() {
@@ -13,6 +13,7 @@ export function useUnidades() {
     cargando: q.isLoading,
     activas: activas.map((u) => ({ ...u, descripcion: `${u.nombre} (${u.abrev})` })),
     predeterminada: q.data?.predeterminada ?? "und",
+    presentaciones: PRESENTACIONES.map((p) => ({ ...p, descripcion: p.nombre })),
     personalizadas: q.data?.personalizadas ?? false,
     recargar: q.refetch,
   };

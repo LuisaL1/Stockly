@@ -39,7 +39,7 @@ import {
 import { MODULOS, esAdmin } from "../utils/permisos";
 import { confirmarEliminacion } from "../utils/notificaciones";
 import { formatearFechaHora, formatearMoneda, formatearNumero } from "../utils/conversiones";
-import { cantidadConUnidad } from "../utils/unidades";
+import { cantidadConUnidad, etiquetaPresentacion } from "../utils/unidades";
 import { v } from "../styles/variables";
 
 // Red de empresas: partners y franquicias vinculados. Stock en tiempo real, catálogo, envíos y pedidos.
@@ -284,11 +284,11 @@ function StockDeLaRed({ activos, idEmpresa, abrir }) {
       cell: ({ row }) => (
         <span style={{ display: "flex", flexDirection: "column" }}>
           <strong>{row.original.descripcion}</strong>
-          <small style={{ opacity: 0.7 }}>{[row.original.codigointerno, row.original.categoria].filter(Boolean).join(" · ")}</small>
+          <small style={{ opacity: 0.7 }}>{[row.original.codigointerno, etiquetaPresentacion(row.original), row.original.categoria].filter(Boolean).join(" · ")}</small>
         </span>
       ),
     },
-    { accessorKey: "stock", header: "Stock", meta: { align: "right" }, cell: ({ row }) => <strong>{cantidadConUnidad(row.original.stock, row.original.unidad)}</strong> },
+    { accessorKey: "stock", header: "Stock", meta: { align: "right" }, cell: ({ row }) => <strong>{cantidadConUnidad(row.original.stock, row.original)}</strong> },
     {
       id: "bodegas",
       header: "Por bodega",

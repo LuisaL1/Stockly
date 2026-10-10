@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useUnidades } from "../../../hooks/useUnidades";
-import { permiteDecimales } from "../../../utils/unidades";
+import { UNIDADES, admitePresentacion, permiteDecimales } from "../../../utils/unidades";
 import { useForm } from "react-hook-form";
 import { useQuery } from "@tanstack/react-query";
 import { Modal } from "../../moleculas/Modal";
@@ -59,6 +59,13 @@ export function RegistrarProductos({ onClose, dataSelect = {}, accion }) {
   const [unidad, setUnidad] = useState(null);
   const unidadActual = unidad ?? unidades.activas.find((u) => u.id === (editando ? dataSelect.unidad : unidades.predeterminada)) ?? unidades.activas[0] ?? null;
   const conDecimales = permiteDecimales(unidadActual?.id);
+  const SIN_PRESENTACION = { id: null, descripcion: "Sin presentación (se cuenta suelto)" };
+  const opcionesPresentacion = [SIN_PRESENTACION, ...unidades.presentaciones];
+  const [presentacion, setPresentacion] = useState(undefined);
+  const presentacionActual = presentacion !== undefined ? presentacion : opcionesPresentacion.find((p) => p.id === (dataSelect.presentacion ?? null)) ?? SIN_PRESENTACION;
+  const unidadesContenido = UNIDADES.map((u) => ({ ...u, descripcion: `${u.plural} (${u.abrev})` }));
+  const [contenidoUnidad, setContenidoUnidad] = useState(null);
+  const contenidoUnidadActual = contenidoUnidad ?? unidadesContenido.find((u) => u.id === (dataSelect.contenido_unidad ?? "ml")) ?? unidadesContenido[0];
 
   const {
     register,
@@ -74,6 +81,7 @@ export function RegistrarProductos({ onClose, dataSelect = {}, accion }) {
           codigointerno: dataSelect.codigointerno,
           precioventa: dataSelect.precioventa,
           preciocompra: dataSelect.preciocompra,
+          contenido: dataSelect.contenido ?? "",
         }
       : {},
   });
@@ -93,6 +101,9 @@ export function RegistrarProductos({ onClose, dataSelect = {}, accion }) {
           id_categoria: categoriaActual.id,
           id_empresa: idEmpresa,
           unidad: unidadActual?.id ?? "und",
+          presentacion: admitePresentacion(unidadActual?.id) ? presentacionActual?.id ?? null : null,
+          contenido: admitePresentacion(unidadActual?.id) && presentacionActual?.id && data.contenido ? Number(data.contenido) : null,
+          contenido_unidad: admitePresentacion(unidadActual?.id) && presentacionActual?.id && data.contenido ? contenidoUnidadActual.id : null,
         })
       : await Insertar({
           _descripcion: CovertirCapitalize(data.descripcion),
@@ -106,6 +117,9 @@ export function RegistrarProductos({ onClose, dataSelect = {}, accion }) {
           _id_categoria: categoriaActual.id,
           _id_empresa: idEmpresa,
           _unidad: unidadActual?.id ?? "und",
+          _presentacion: admitePresentacion(unidadActual?.id) ? presentacionActual?.id ?? null : null,
+          _contenido: admitePresentacion(unidadActual?.id) && presentacionActual?.id && data.contenido ? Number(data.contenido) : null,
+          _contenido_unidad: admitePresentacion(unidadActual?.id) && presentacionActual?.id && data.contenido ? contenidoUnidadActual.id : null,
         });
     if (ok) onClose();
   }
@@ -177,14 +191,38 @@ export function RegistrarProductos({ onClose, dataSelect = {}, accion }) {
 
           <span className="titulo-seccion completo">Inventario</span>
           <div>
-            <span className="etiqueta">Unidad de medida</span>
+            <span className="etiqueta">¿Cómo lo cuentas?</span>
             <div style={{ marginTop: 6 }}>
-              <Selector opciones={unidades.activas} valor={unidadActual} onChange={setUnidad} icono={<v.iconostock />} placeholder="Unidad" />
+              <Selector opciones={unidades.activas} valor={unidadActual} onChange={setUnidad} icono={<v.iconostock />} placeholder="Unidad de medida" />
             </div>
             <small style={{ display: "block", marginTop: 4, opacity: 0.7 }}>
-              {conDecimales ? "Admite decimales (por ejemplo 250 g o 1,5 l)." : "Se cuenta por piezas enteras."} Las unidades se configuran en Tu empresa.
+              {conDecimales ? "A granel: el stock admite decimales (250 g, 1,5 l)." : "Por piezas enteras."} Las unidades se configuran en Tu empresa.
             </small>
           </div>
+          {admitePresentacion(unidadActual?.id) && (
+            <div>
+              <span className="etiqueta">Presentación</span>
+              <div style={{ marginTop: 6 }}>
+                <Selector opciones={opcionesPresentacion} valor={presentacionActual} onChange={setPresentacion} icono={<v.iconotodos />} />
+              </div>
+              {presentacionActual?.id && (
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginTop: 8 }}>
+                  <InputText label="Contenido" icono={<v.iconocalculadora />} error={errors.contenido?.message}>
+                    <input type="number" step="any" min="0" placeholder="Ej. 100" {...register("contenido", { min: { value: 0, message: "No puede ser negativo" } })} />
+                  </InputText>
+                  <div>
+                    <span className="etiqueta">Medida del contenido</span>
+                    <div style={{ marginTop: 6 }}>
+                      <Selector opciones={unidadesContenido} valor={contenidoUnidadActual} onChange={setContenidoUnidad} />
+                    </div>
+                  </div>
+                </div>
+              )}
+              <small style={{ display: "block", marginTop: 4, opacity: 0.7 }}>
+                Cómo viene el producto: un frasco de 100 ml, una caja de 12 und. El stock se cuenta en {presentacionActual?.id ? presentacionActual.plural?.toLowerCase() ?? "piezas" : "piezas"}.
+              </small>
+            </div>
+          )}
           <InputText
             label="Stock inicial"
             icono={<v.iconostock />}

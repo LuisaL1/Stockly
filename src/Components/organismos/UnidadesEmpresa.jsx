@@ -36,8 +36,8 @@ export function UnidadesEmpresa() {
     if (r) queryClient.invalidateQueries({ queryKey: ["unidades empresa"] });
   };
   const grupos = [
-    ["Por pieza", UNIDADES.filter((u) => !u.decimales)],
-    ["Peso, volumen y medida (admiten decimales)", UNIDADES.filter((u) => u.decimales)],
+    ["Por piezas", UNIDADES.filter((u) => !u.decimales)],
+    ["A granel: peso, volumen y medida (admiten decimales)", UNIDADES.filter((u) => u.decimales)],
   ];
 
   return (
@@ -47,8 +47,8 @@ export function UnidadesEmpresa() {
         <div>
           <strong>Unidades de tu inventario</strong>
           <small>
-            Elige cómo cuentas lo que vendes: por unidad, par, frasco, gramos, mililitros, metros... Cada producto usa una de estas unidades
-            y así se ve en la caja, el kardex, las facturas y Novandra.
+            Elige cómo cuentas o mides lo que vendes: por unidad, par, docena o a granel en gramos, mililitros, metros... La presentación
+            (frasco, caja, bolsa...) y su contenido se eligen en cada producto. Así se ve en la caja, el kardex, las facturas y Novandra.
             {!personalizadas && dataempresa?.sector ? ` Preajustadas para “${dataempresa.sector}”.` : ""}
           </small>
         </div>

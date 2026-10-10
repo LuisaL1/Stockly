@@ -265,34 +265,7 @@ begin
   return _res;
 end $$;
 
--- Red: el producto creado al recibir conserva la unidad.
-create or replace function public.stockly_red_crear_producto(_id_empresa bigint, _descripcion text, _codigointerno text, _codigobarras text,
-  _precioventa numeric, _preciocompra numeric, _categoria text, _marca text, _stock_minimo numeric default 0, _unidad text default null)
-returns bigint language plpgsql security definer set search_path = public
-as $$
-declare
-  _cat bigint;
-  _mar bigint;
-  _id bigint;
-  _desc text := btrim(_descripcion);
-begin
-  select id into _cat from categorias where id_empresa = _id_empresa and public.stockly_norm(descripcion) = public.stockly_norm(coalesce(nullif(btrim(_categoria), ''), 'General')) limit 1;
-  if _cat is null then
-    insert into categorias (descripcion, color, id_empresa) values (coalesce(nullif(btrim(_categoria), ''), 'General'), '#8800B3', _id_empresa) returning id into _cat;
-  end if;
-  select id into _mar from marca where id_empresa = _id_empresa and public.stockly_norm(descripcion) = public.stockly_norm(coalesce(nullif(btrim(_marca), ''), 'Genérica')) limit 1;
-  if _mar is null then
-    insert into marca (descripcion, id_empresa) values (coalesce(nullif(btrim(_marca), ''), 'Genérica'), _id_empresa) returning id into _mar;
-  end if;
-  if exists (select 1 from productos where id_empresa = _id_empresa and descripcion = _desc) then
-    _desc := _desc || ' (' || coalesce(nullif(btrim(_codigointerno), ''), nullif(btrim(_codigobarras), ''), 'red') || ')';
-  end if;
-  insert into productos (descripcion, idmarca, stock, stock_minimo, codigobarras, codigointerno, precioventa, preciocompra, id_categoria, id_empresa, unidad)
-  values (_desc, _mar, 0, coalesce(_stock_minimo, 0), nullif(btrim(_codigobarras), ''), nullif(btrim(_codigointerno), ''),
-          coalesce(_precioventa, 0), coalesce(_preciocompra, 0), _cat, _id_empresa, coalesce(public.stockly_unidad_id(_unidad), 'und'))
-  returning id into _id;
-  return _id;
-end $$;
+-- stockly_red_crear_producto se define en 20261101000000_presentaciones.sql.
 
 grant execute on function public.stockly_unidades() to authenticated;
 grant execute on function public.stockly_unidades_empresa(bigint) to authenticated;

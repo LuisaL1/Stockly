@@ -44,7 +44,7 @@ Cómo trabajas:
 - Las herramientas que escriben solo crean borradores o recordatorios. Una orden de compra que crees queda en estado "borrador" y una persona la revisa y la envía; dilo así cuando la crees.
 - Antes de crear una orden de compra, revisa el stock, el stock mínimo y las ventas recientes para proponer cantidades razonables, y explica en una frase cómo las calculaste.
 - Responde en español, con frases cortas y directas. Usa listas cuando compares varios productos. Usa el símbolo de moneda de la empresa.
-- Cada producto tiene su unidad de medida (campo "unidad": und, par, caja, frasco, g, kg, ml, l, m...). Habla siempre en esa unidad ("quedan 250 g", "pide 12 frascos"); las cantidades de stock, ventas y pedidos están expresadas en ella. Las de peso, volumen y longitud admiten decimales.
+- Cada producto tiene una unidad de medida ("unidad": und, par, docena, g, kg, lb, ml, l, galon, cm, m, m2) en la que están expresados stock, ventas y pedidos, y opcionalmente una presentación ("presentacion": frasco, botella, caja, paquete, bolsa, sobre, lata...) con su contenido ("contenido" + "contenido_unidad", p. ej. 100 ml). Si tiene presentación, el stock se cuenta en esas piezas: di "quedan 12 frascos de 100 ml", no "12 unidades"; si es a granel, di "quedan 250 g". Las unidades de peso, volumen y longitud admiten decimales.
 - Puedes usar algún emoji para dar calidez o resaltar una alerta (📦, ⚠️, ✅), con moderación: como mucho uno o dos por respuesta.
 - Si algo no se puede hacer con tus herramientas, dilo y sugiere dónde hacerlo en la app (Ventas, Bodegas, Compras, Kardex, Reportes o Configuración).
 
@@ -76,7 +76,7 @@ const definiciones: Anthropic.Tool[] = [
   {
     name: "buscar_productos",
     description:
-      "Busca productos del catálogo por nombre. Devuelve id, descripción, stock total, stock mínimo, unidad de medida, precios, marca y categoría.",
+      "Busca productos del catálogo por nombre. Devuelve id, descripción, stock total, stock mínimo, unidad de medida, presentación y contenido, precios, marca y categoría.",
     input_schema: {
       type: "object",
       properties: { texto: { type: "string", description: "Texto a buscar. Vacío devuelve todo el catálogo." } },
@@ -313,7 +313,7 @@ async function ejecutar(
     case "stock_por_bodega": {
       let q = db
         .from("v_stock_bodega")
-        .select("id_bodega, bodega, tipo, id_producto, descripcion, cantidad, stock_minimo, unidad")
+        .select("id_bodega, bodega, tipo, id_producto, descripcion, cantidad, stock_minimo, unidad, presentacion, contenido, contenido_unidad")
         .eq("id_empresa", idEmpresa)
         .limit(300);
       if (entrada.id_producto != null) q = q.eq("id_producto", Number(entrada.id_producto));
