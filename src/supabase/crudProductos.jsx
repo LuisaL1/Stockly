@@ -8,6 +8,12 @@ export async function InsertarProductos(p) {
   return ok;
 }
 
+export async function ObtenerProducto(id) {
+  const { data, error } = await supabase.from("productos").select("id, descripcion, stock, stock_minimo, codigointerno").eq("id", id).maybeSingle();
+  if (error) throw error;
+  return data;
+}
+
 export async function MostrarProductos(p) {
   const { data, error } = await supabase.rpc("mostrarproductos", p);
   if (error) throw error;

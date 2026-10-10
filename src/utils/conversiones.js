@@ -27,6 +27,14 @@ export function formatearFecha(valor) {
   });
 }
 
+// "10 oct, 14:32"
+export function formatearFechaHora(valor) {
+  if (!valor) return "";
+  const fecha = new Date(valor);
+  if (Number.isNaN(fecha.getTime())) return String(valor);
+  return fecha.toLocaleString("es-CO", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit", hour12: false });
+}
+
 const relativo = new Intl.RelativeTimeFormat("es-CO", { numeric: "auto" });
 
 // "hace 5 minutos", "ayer"...

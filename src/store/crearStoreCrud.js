@@ -1,4 +1,4 @@
-// Fábrica para los stores de catálogos (marca, categorías, productos, kardex).
+// Fábrica para los stores de catálogos (marca, categorías, productos).
 // Guarda la lista actual, el texto del buscador y la empresa activa, y recarga
 // la lista automáticamente después de insertar, editar o eliminar.
 export function crearStoreCrud({ mostrar, buscar, insertar, editar, eliminar }) {

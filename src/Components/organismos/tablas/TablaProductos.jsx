@@ -1,4 +1,5 @@
 import styled from "styled-components";
+import { useNavigate } from "react-router-dom";
 import { DataTable } from "./DataTable";
 import { ContentAccionesTabla } from "../ContentAccionesTabla";
 import { EstadoVacio } from "../../moleculas/EstadoVacio";
@@ -9,6 +10,7 @@ import { confirmarEliminacion } from "../../../utils/notificaciones";
 import { formatearMoneda, formatearNumero } from "../../../utils/conversiones";
 
 export function TablaProductos({ data, editar }) {
+  const navigate = useNavigate();
   const { Eliminar } = useProductosStore();
   const { dataempresa } = useEmpresaStore();
   const moneda = dataempresa?.simbolomoneda ?? "$";
@@ -62,6 +64,7 @@ export function TablaProductos({ data, editar }) {
       meta: { align: "right" },
       cell: ({ row }) => (
         <ContentAccionesTabla
+          funcionMovimientos={() => navigate(`/kardex?producto=${row.original.id}`)}
           funcionEditar={() => editar(row.original)}
           funcionEliminar={() => eliminar(row.original)}
         />

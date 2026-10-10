@@ -2,9 +2,10 @@ import styled from "styled-components";
 import { AccionTabla } from "../atomos/AccionTabla";
 import { v } from "../../styles/variables";
 
-export function ContentAccionesTabla({ funcionEditar, funcionEliminar, etiquetaEliminar = "Eliminar" }) {
+export function ContentAccionesTabla({ funcionMovimientos, funcionEditar, funcionEliminar, etiquetaEliminar = "Eliminar" }) {
   return (
     <Container>
+      {funcionMovimientos && <AccionTabla funcion={funcionMovimientos} icono={<v.iconokardex />} etiqueta="Ver movimientos" />}
       {funcionEditar && (
         <AccionTabla funcion={funcionEditar} icono={<v.iconeditarTabla />} etiqueta="Editar" />
       )}

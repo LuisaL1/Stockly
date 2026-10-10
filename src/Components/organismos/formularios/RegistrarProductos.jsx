@@ -172,7 +172,7 @@ export function RegistrarProductos({ onClose, dataSelect = {}, accion }) {
             label="Stock inicial"
             icono={<v.iconostock />}
             error={errors.stock?.message}
-            ayuda={editando ? "Para ajustar el stock registra una entrada o salida en Kardex." : undefined}
+            ayuda={editando ? "Para cambiar el stock registra un ajuste de inventario en Kardex: así queda el historial." : undefined}
           >
             <input type="number" step="any" readOnly={editando} {...register("stock", numero("Indica el stock"))} />
           </InputText>

@@ -32,14 +32,14 @@ export function notificarAviso(mensaje, detalle) {
   });
 }
 
-export async function confirmarEliminacion(texto = "Esta acción no se puede deshacer.") {
+export async function confirmarEliminacion(texto = "Esta acción no se puede deshacer.", titulo = "¿Eliminar registro?", confirmar = "Sí, eliminar") {
   const { isConfirmed } = await Swal.fire({
     icon: "warning",
-    title: "¿Eliminar registro?",
+    title: titulo,
     text: texto,
     showCancelButton: true,
     confirmButtonColor: "#DC2626",
-    confirmButtonText: "Sí, eliminar",
+    confirmButtonText: confirmar,
     cancelButtonText: "Cancelar",
     reverseButtons: true,
     focusCancel: true,

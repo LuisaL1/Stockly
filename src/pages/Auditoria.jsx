@@ -143,7 +143,7 @@ function Contenido() {
         <Tarjeta variante="tinta" col={4} colTablet={6} titulo="Cómo funciona" icono={<v.iconoauditoria />}>
           <Explicacion>
             <li>Cada venta, anulación, salida manual, traslado y cambio de precio queda registrado con el usuario que realmente lo hizo.</li>
-            <li>Si alguien registra un movimiento a nombre de otro, lo borra o cambia el stock sin kardex, se marca como alerta.</li>
+            <li>Si alguien registra un ajuste a nombre de otro, anula ajustes o cambia el stock sin kardex, se marca como alerta.</li>
             <li>Nadie puede editar ni borrar este registro, ni siquiera desde la base de datos de la app.</li>
           </Explicacion>
           <p className="muted" style={{ fontSize: "0.85rem" }}>
