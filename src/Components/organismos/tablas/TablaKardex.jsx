@@ -125,7 +125,7 @@ const Origen = styled.span`
   }
   small {
     color: ${({ theme }) => theme.textMuted};
-    max-width: 260px;
+    max-width: 220px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;

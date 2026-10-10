@@ -45,7 +45,7 @@ export function DataTable({ data, columns, vacio, tamanoPagina = 10 }) {
                   <th
                     key={header.id}
                     className={`align-${header.column.columnDef.meta?.align ?? "left"}${header.column.columnDef.header === "" ? " acciones" : ""}`}
-                    style={header.column.columnDef.meta?.width ? { width: header.column.columnDef.meta.width } : undefined}
+                    style={header.column.columnDef.meta?.width ? { width: header.column.columnDef.meta.width, minWidth: header.column.columnDef.meta.width } : undefined}
                     aria-sort={orden ? (orden === "asc" ? "ascending" : "descending") : undefined}
                   >
                     {puedeOrdenar ? (
@@ -72,6 +72,7 @@ export function DataTable({ data, columns, vacio, tamanoPagina = 10 }) {
                     key={cell.id}
                     data-title={typeof encabezado === "string" ? encabezado : ""}
                     className={`align-${cell.column.columnDef.meta?.align ?? "left"}${cell.column.columnDef.meta?.nowrap ? " nowrap" : ""}${encabezado === "" ? " acciones" : ""}`}
+                    style={cell.column.columnDef.meta?.width ? { minWidth: cell.column.columnDef.meta.width } : undefined}
                   >
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
                   </td>
