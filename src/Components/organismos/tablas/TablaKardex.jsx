@@ -28,7 +28,7 @@ export function TablaKardex({ data, alCambiar }) {
     {
       accessorKey: "producto",
       header: "Producto",
-      meta: { width: "240px" },
+      meta: { width: "200px" },
       cell: ({ row }) => (
         <Producto $anulado={row.original.estado === "anulado"}>
           <strong>{row.original.producto}</strong>
@@ -76,7 +76,7 @@ export function TablaKardex({ data, alCambiar }) {
       meta: { align: "right" },
       cell: (info) => <strong>{formatearNumero(info.getValue())}</strong>,
     },
-    { accessorKey: "usuario", header: "Usuario", meta: { nowrap: true } },
+    { accessorKey: "usuario", header: "Usuario" },
     {
       id: "acciones",
       header: "",
@@ -125,7 +125,7 @@ const Origen = styled.span`
   }
   small {
     color: ${({ theme }) => theme.textMuted};
-    max-width: 220px;
+    max-width: 190px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
