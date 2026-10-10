@@ -218,7 +218,7 @@ export function PanelVentas() {
       </div>
       <Cifra>$ 17.740.282</Cifra>
       <span className="muted">54 ventas</span>
-      <Grafica viewBox="0 0 320 70" aria-hidden="true">
+      <Grafica viewBox="0 0 320 70" preserveAspectRatio="none" aria-hidden="true">
         <defs>
           <linearGradient id="gv" x1="0" x2="0" y1="0" y2="1">
             <stop offset="0" stopColor={MORADO_CLARO} stopOpacity="0.4" />
@@ -860,7 +860,7 @@ const Novandra = styled.div`
 const ESC_ANCHO = 560;
 const ESC_ALTO = 620;
 const NOTIFICACIONES = [
-  ["▣", "Nueva venta #1042", "3 productos · $ 116.620 · Bre-B", ""],
+  ["$", "Pago recibido FV-1042", "Wompi · Nequi · $ 116.620", "pago"],
   ["⚠", "Stock bajo: Gorra negra bordada", "Quedan 4 unidades", "aviso"],
   ["▤", "Llegó el pedido del proveedor", "120 unidades · Bodega principal", ""],
   ["✦", "Novandra sugiere reabastecer", "Gorra negra antes del viernes", ""],
@@ -1042,6 +1042,10 @@ const Escena = styled.div`
     &.aviso i {
       color: #b7791f;
       background: #fdf0d8;
+    }
+    &.pago i {
+      color: #15803d;
+      background: #dcfce7;
     }
   }
   /* Novandra: abajo a la izquierda */
