@@ -418,22 +418,31 @@ const Hero = styled.section`
       font-weight: 700;
     }
   }
-  /* La app en el teléfono, con avisos flotantes; abajo, la ventana de escritorio */
+  /* La app en el teléfono, con avisos flotantes. La ventana de escritorio solo en tablet y computador. */
   .movil-escena {
     --k: 0.6;
     position: relative;
     z-index: 2;
-    margin: 10px auto -6px;
+    margin: 10px auto 0;
+  }
+  .ventana {
+    display: none;
+    position: relative;
+    z-index: 1;
+    width: 100%;
   }
   @media (min-width: 480px) {
     .movil-escena {
       --k: 0.78;
     }
   }
-  .ventana {
-    position: relative;
-    z-index: 1;
-    width: 100%;
+  @media (min-width: 720px) {
+    .movil-escena {
+      margin-bottom: -6px;
+    }
+    .ventana {
+      display: block;
+    }
   }
   @media (min-width: 960px) {
     display: block;
