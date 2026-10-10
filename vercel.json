@@ -20,6 +20,10 @@
   ],
   "headers": [
     {
+      "source": "/(login|restablecer)",
+      "headers": [{ "key": "X-Robots-Tag", "value": "noindex, follow" }]
+    },
+    {
       "source": "/(.*)",
       "headers": [
         {

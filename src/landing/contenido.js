@@ -86,6 +86,15 @@ export function datosEstructurados() {
   return [
     {
       "@context": "https://schema.org",
+      "@type": "WebSite",
+      name: SITIO.nombre,
+      alternateName: ["Stockly Colombia", "appstockly", "Stockly app"],
+      url: SITIO.url,
+      inLanguage: "es-CO",
+      publisher: { "@type": "Organization", name: SITIO.empresa, url: SITIO.empresaUrl },
+    },
+    {
+      "@context": "https://schema.org",
       "@type": "Organization",
       name: SITIO.empresa,
       url: SITIO.empresaUrl,
@@ -97,7 +106,10 @@ export function datosEstructurados() {
       "@context": "https://schema.org",
       "@type": "SoftwareApplication",
       name: SITIO.nombre,
+      alternateName: "Stockly Colombia",
       url: SITIO.url,
+      image: `${SITIO.url}/og-stockly.png`,
+      screenshot: `${SITIO.url}/og-stockly.png`,
       description: SITIO.descripcion,
       applicationCategory: "BusinessApplication",
       operatingSystem: "Web, Android, iOS, Windows, macOS",
