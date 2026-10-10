@@ -22,11 +22,13 @@ export function TablaKardex({ data, alCambiar }) {
     {
       accessorKey: "creado_en",
       header: "Fecha",
+      meta: { nowrap: true },
       cell: (info) => <Fecha>{formatearFechaHora(info.getValue())}</Fecha>,
     },
     {
       accessorKey: "producto",
       header: "Producto",
+      meta: { width: "26%" },
       cell: ({ row }) => (
         <Producto $anulado={row.original.estado === "anulado"}>
           <strong>{row.original.producto}</strong>
@@ -74,7 +76,7 @@ export function TablaKardex({ data, alCambiar }) {
       meta: { align: "right" },
       cell: (info) => <strong>{formatearNumero(info.getValue())}</strong>,
     },
-    { accessorKey: "usuario", header: "Usuario" },
+    { accessorKey: "usuario", header: "Usuario", meta: { nowrap: true } },
     {
       id: "acciones",
       header: "",

@@ -71,7 +71,7 @@ function Contenido() {
 
   const columns = [
     { accessorKey: "numero", header: "Orden", cell: (i) => <strong>OC-{i.getValue()}</strong> },
-    { accessorKey: "fecha", header: "Fecha", cell: (i) => formatearFecha(i.getValue()) },
+    { accessorKey: "fecha", header: "Fecha", meta: { nowrap: true }, cell: (i) => formatearFecha(i.getValue()) },
     { id: "proveedor", header: "Proveedor", accessorFn: (o) => o.proveedores?.nombre ?? "Sin proveedor" },
     { id: "bodega", header: "Recibe en", accessorFn: (o) => o.bodegas?.nombre },
     { accessorKey: "total", header: "Total", meta: { align: "right" }, cell: (i) => dinero(i.getValue()) },

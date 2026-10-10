@@ -23,12 +23,13 @@ export function crearTablaContactos({ tipo, useStore }) {
         ? {
             id: "documento",
             header: "Documento",
+            meta: { nowrap: true },
             accessorFn: (f) => (f.documento ? `${f.tipo_documento} ${f.documento}` : ""),
             cell: (i) => conGuion(i.getValue()),
           }
-        : { accessorKey: "nit", header: "NIT", cell: (i) => conGuion(i.getValue()) },
+        : { accessorKey: "nit", header: "NIT", meta: { nowrap: true }, cell: (i) => conGuion(i.getValue()) },
       ...(esCliente ? [] : [{ accessorKey: "contacto", header: "Contacto", cell: (i) => conGuion(i.getValue()) }]),
-      { accessorKey: "telefono", header: "Teléfono", cell: (i) => conGuion(i.getValue()) },
+      { accessorKey: "telefono", header: "Teléfono", meta: { nowrap: true }, cell: (i) => conGuion(i.getValue()) },
       { accessorKey: "email", header: "Correo", cell: (i) => conGuion(i.getValue()) },
       {
         id: "acciones",

@@ -13,7 +13,7 @@ import { EstadoVacio } from "../../moleculas/EstadoVacio";
 
 // Tabla genérica: ordenamiento, paginación y vista de tarjetas en móvil.
 // En las columnas, "cell" devuelve solo el contenido (sin <td>).
-// meta.align: "left" | "center" | "right"
+// meta.align: "left" | "center" | "right" · meta.nowrap: no parte el texto · meta.width: ancho fijo (ej. "120px")
 export function DataTable({ data, columns, vacio, tamanoPagina = 10 }) {
   const [sorting, setSorting] = useState([]);
   const table = useReactTable({
@@ -33,7 +33,8 @@ export function DataTable({ data, columns, vacio, tamanoPagina = 10 }) {
 
   return (
     <Container>
-      <table>
+      <div className="desplazable">
+        <table>
         <thead>
           {table.getHeaderGroups().map((headerGroup) => (
             <tr key={headerGroup.id}>
@@ -43,7 +44,8 @@ export function DataTable({ data, columns, vacio, tamanoPagina = 10 }) {
                 return (
                   <th
                     key={header.id}
-                    className={`align-${header.column.columnDef.meta?.align ?? "left"}`}
+                    className={`align-${header.column.columnDef.meta?.align ?? "left"}${header.column.columnDef.header === "" ? " acciones" : ""}`}
+                    style={header.column.columnDef.meta?.width ? { width: header.column.columnDef.meta.width } : undefined}
                     aria-sort={orden ? (orden === "asc" ? "ascending" : "descending") : undefined}
                   >
                     {puedeOrdenar ? (
@@ -69,7 +71,7 @@ export function DataTable({ data, columns, vacio, tamanoPagina = 10 }) {
                   <td
                     key={cell.id}
                     data-title={typeof encabezado === "string" ? encabezado : ""}
-                    className={`align-${cell.column.columnDef.meta?.align ?? "left"}`}
+                    className={`align-${cell.column.columnDef.meta?.align ?? "left"}${cell.column.columnDef.meta?.nowrap ? " nowrap" : ""}${encabezado === "" ? " acciones" : ""}`}
                   >
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
                   </td>
@@ -78,7 +80,8 @@ export function DataTable({ data, columns, vacio, tamanoPagina = 10 }) {
             </tr>
           ))}
         </tbody>
-      </table>
+        </table>
+      </div>
       {table.getPageCount() > 1 && (
         <Paginacion
           table={table}
@@ -98,39 +101,69 @@ const Container = styled.div`
   box-shadow: ${({ theme }) => theme.shadow};
   overflow: hidden;
 
+  .desplazable {
+    overflow-x: auto;
+  }
   table {
     width: 100%;
     border-collapse: collapse;
+    font-variant-numeric: tabular-nums;
+  }
+  /* Encabezado y celdas comparten alineación: a la izquierda salvo que la columna diga otra cosa */
+  th,
+  td {
+    text-align: left;
+    vertical-align: middle;
   }
   th {
     background: ${({ theme }) => theme.surfaceAlt};
     color: ${({ theme }) => theme.textMuted};
-    font-size: 0.78rem;
+    font-size: 0.72rem;
     font-weight: 600;
     text-transform: uppercase;
-    letter-spacing: 0.04em;
-    padding: 12px 16px;
+    letter-spacing: 0.06em;
+    padding: 0 16px;
+    height: 44px;
     white-space: nowrap;
+    border-bottom: 1px solid ${({ theme }) => theme.border};
     button {
       display: inline-flex;
       align-items: center;
-      gap: 6px;
+      gap: 5px;
       border: none;
       background: none;
       cursor: pointer;
+      padding: 0;
       font: inherit;
       color: inherit;
       text-transform: inherit;
       letter-spacing: inherit;
+      svg {
+        width: 13px;
+        height: 13px;
+      }
     }
     .tenue {
-      opacity: 0.4;
+      opacity: 0.35;
+    }
+    &.align-right button {
+      width: 100%;
+      justify-content: flex-end;
     }
   }
   td {
-    padding: 12px 16px;
+    padding: 0 16px;
+    height: 58px;
     border-top: 1px solid ${({ theme }) => theme.border};
-    vertical-align: middle;
+    line-height: 1.35;
+  }
+  tbody tr:first-child td {
+    border-top: none;
+  }
+  /* La primera columna es la identidad de la fila */
+  tbody td:first-child {
+    font-weight: 500;
+    color: ${({ theme }) => theme.text};
   }
   tbody tr {
     transition: background 0.1s;
@@ -143,6 +176,23 @@ const Container = styled.div`
   }
   .align-right {
     text-align: right;
+    white-space: nowrap;
+  }
+  .nowrap {
+    white-space: nowrap;
+  }
+  /* Acciones: columna estrecha, pegada a la derecha, visible del todo al pasar el cursor */
+  .acciones {
+    width: 1%;
+    white-space: nowrap;
+    padding-left: 8px;
+  }
+  tbody td.acciones > * {
+    opacity: 0.6;
+    transition: opacity 0.15s;
+  }
+  tbody tr:hover td.acciones > * {
+    opacity: 1;
   }
 
   /* Móvil: cada fila se convierte en una tarjeta */
@@ -150,6 +200,9 @@ const Container = styled.div`
     background: transparent;
     border: none;
     box-shadow: none;
+    .desplazable {
+      overflow: visible;
+    }
     thead {
       display: none;
     }
@@ -159,6 +212,7 @@ const Container = styled.div`
     td {
       display: block;
       width: 100%;
+      height: auto;
     }
     tbody tr {
       background: ${({ theme }) => theme.surface};
@@ -178,9 +232,10 @@ const Container = styled.div`
       border: none;
       padding: 8px 16px;
       text-align: right;
+      white-space: normal;
       &[data-title]:not([data-title=""])::before {
         content: attr(data-title);
-        font-size: 0.8rem;
+        font-size: 0.78rem;
         font-weight: 600;
         color: ${({ theme }) => theme.textMuted};
         text-align: left;
@@ -194,11 +249,15 @@ const Container = styled.div`
           display: none;
         }
       }
-      &[data-title=""] {
+      &.acciones {
+        width: 100%;
         justify-content: flex-end;
         border-top: 1px solid ${({ theme }) => theme.border};
         margin-top: 4px;
       }
+    }
+    tbody tr td.acciones > * {
+      opacity: 1;
     }
   }
 `;

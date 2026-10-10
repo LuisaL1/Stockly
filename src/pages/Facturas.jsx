@@ -36,7 +36,7 @@ const PERIODOS = [
 ];
 
 const fechaHora = (iso) =>
-  new Date(iso).toLocaleString("es-CO", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" });
+  new Date(iso).toLocaleString("es-CO", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit", hour12: false });
 const facturaDe = (venta) => (Array.isArray(venta.facturas) ? venta.facturas[0] : venta.facturas);
 
 export function Facturas() {
@@ -79,7 +79,7 @@ function Contenido() {
       accessorFn: (f) => `${f.prefijo}-${f.numero}`,
       cell: ({ row }) => <strong>{`${row.original.prefijo}-${row.original.numero}`}</strong>,
     },
-    { accessorKey: "fecha", header: "Fecha", cell: (i) => fechaHora(i.getValue()) },
+    { accessorKey: "fecha", header: "Fecha", meta: { nowrap: true }, cell: (i) => fechaHora(i.getValue()) },
     { id: "cliente", header: "Cliente", accessorFn: (f) => f.clientes?.nombre ?? "Consumidor final" },
     {
       accessorKey: "metodo_pago",
