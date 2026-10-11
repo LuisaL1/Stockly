@@ -9,6 +9,7 @@ import { ErrorMolecula } from "../Components/moleculas/ErrorMolecula";
 import { EstadoVacio } from "../Components/moleculas/EstadoVacio";
 import { Modal } from "../Components/moleculas/Modal";
 import { Selector } from "../Components/organismos/Selector";
+import { ConsultaStock } from "../Components/organismos/ConsultaStock";
 import { SelectFiltro, BotonLimpiar } from "../Components/moleculas/Filtros";
 import { opcionesDesde } from "../utils/filtros";
 import { RegistrarContacto } from "../Components/organismos/formularios/RegistrarContacto";
@@ -53,6 +54,7 @@ function PuntoDeVenta() {
 
   const [idBodega, setIdBodega] = useState(null);
   const [texto, setTexto] = useState("");
+  const [consulta, setConsulta] = useState(false);
   const [categoria, setCategoria] = useState("");
   const [marca, setMarca] = useState("");
   const [carrito, setCarrito] = useState([]);
@@ -210,11 +212,16 @@ function PuntoDeVenta() {
       titulo="Vender"
       descripcion="Agrega al ticket. Elige cómo te pagan. Cobra."
       acciones={
-        <Link to="/ventas/facturas" style={{ textDecoration: "none" }}>
-          <Boton variante="secundario" icono={<v.iconofacturas />}>
-            Ver facturas
+        <>
+          <Boton variante="secundario" icono={<v.iconobodegas />} funcion={() => setConsulta(true)}>
+            Stock en otras bodegas
           </Boton>
-        </Link>
+          <Link to="/ventas/facturas" style={{ textDecoration: "none" }}>
+            <Boton variante="secundario" icono={<v.iconofacturas />}>
+              Ver facturas
+            </Boton>
+          </Link>
+        </>
       }
     >
       {limiteVentas && (
@@ -482,6 +489,7 @@ function PuntoDeVenta() {
           </Exito>
         </Modal>
       )}
+      {consulta && <ConsultaStock onClose={() => setConsulta(false)} />}
     </PaginaTemplate>
   );
 }

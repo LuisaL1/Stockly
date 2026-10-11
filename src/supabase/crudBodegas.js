@@ -2,6 +2,20 @@ import { supabase } from "./supabase.config";
 import { manejarError } from "./manejarError";
 import { notificarExito } from "../utils/notificaciones";
 
+// Stock de un producto en todas las bodegas y sedes de la empresa (solo lectura).
+export async function StockEmpresa(idEmpresa, texto) {
+  const { data, error } = await supabase.rpc("stockly_stock_empresa", { _id_empresa: idEmpresa, _texto: texto || null });
+  if (error) throw error;
+  return data ?? [];
+}
+
+// Todas las bodegas de la empresa como posibles destinos de un traslado (incluye las de otras sedes).
+export async function MostrarBodegasDestino(idEmpresa) {
+  const { data, error } = await supabase.rpc("stockly_bodegas_destino", { _id_empresa: idEmpresa });
+  if (error) throw error;
+  return data ?? [];
+}
+
 export async function MostrarBodegas(idEmpresa) {
   const { data, error } = await supabase
     .from("bodegas")

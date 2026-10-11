@@ -64,6 +64,7 @@ npm run dev
    32. `20261101000000_presentaciones.sql`: presentación (frasco, caja, bolsa...) y contenido (100 ml) separados de la unidad de medida; lo guardado como frasco/caja pasa a presentación. (`20261008000000_importacion.sql` importa/exporta “presentacion” y “contenido”.)
    33. `20261102000000_nombre_completo.sql`: `productos.nombre_completo` (nombre + presentación y contenido; con el código entre paréntesis si otro producto se llama igual), mantenido por trigger y usado en listas, stock por bodega, kardex, reportes, rotación, panel de inicio, líneas de venta, red y Novandra.
    34. `20261104000000_encargado_sede.sql`: encargado de sede: `asignarempresa.id_sucursal`, rol “encargado”, RLS y triggers que acotan ventas, kardex, compras, traslados, bodegas, stock y auditoría a la sede del usuario; inicio, inteligencia y patrones forzados a su sede. (`20261103000000_stock_bodega_filtros.sql`: la vista de stock por bodega incluye categoría, marca y códigos.)
+   35. `20261105000000_traslados_entre_sedes.sql`: un encargado puede trasladar desde su sede a cualquier bodega (origen validado); `stockly_bodegas_destino` y `stockly_stock_empresa` (consulta de stock en toda la empresa, solo lectura).
 2. Despliega las Edge Functions y guarda la API key de Anthropic para Novandra:
 
 ```bash

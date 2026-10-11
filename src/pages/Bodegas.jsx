@@ -13,6 +13,7 @@ import { BentoGrid, ListaTarjeta, Tarjeta } from "../Components/moleculas/Bento"
 import { BarraUso } from "../Components/moleculas/BarraUso";
 import { DataTable } from "../Components/organismos/tablas/DataTable";
 import { Selector } from "../Components/organismos/Selector";
+import { ConsultaStock } from "../Components/organismos/ConsultaStock";
 import { Buscador } from "../Components/organismos/Buscador";
 import { SelectFiltro, BotonLimpiar } from "../Components/moleculas/Filtros";
 import { opcionesDesde } from "../utils/filtros";
@@ -28,6 +29,7 @@ import {
   InsertarBodega,
   MostrarBodegas,
   MostrarStockBodega,
+  MostrarBodegasDestino,
   MostrarTraslados,
   TrasladarStock,
 } from "../supabase/crudBodegas";
@@ -59,6 +61,7 @@ function Contenido() {
   const [categoriaStock, setCategoriaStock] = useState("");
   const [soloStock, setSoloStock] = useState("");
   const [traslado, setTraslado] = useState(false);
+  const [consulta, setConsulta] = useState(false);
 
   const bodegas = useQuery({ queryKey: ["bodegas", idEmpresa], queryFn: () => MostrarBodegas(idEmpresa), enabled: !!idEmpresa });
   const stock = useQuery({
@@ -143,7 +146,10 @@ function Contenido() {
       descripcion="Dónde está cada cosa. Bodegas, tiendas y tienda online."
       acciones={
         <>
-          <Boton variante="secundario" icono={<v.iconokardex />} funcion={() => setTraslado(true)} disabled={lista.length < 2}>
+          <Boton variante="secundario" icono={<v.iconobuscar />} funcion={() => setConsulta(true)}>
+            Stock en toda la empresa
+          </Boton>
+          <Boton variante="secundario" icono={<v.iconokardex />} funcion={() => setTraslado(true)} disabled={lista.length < 1}>
             Trasladar stock
           </Boton>
           <Boton
@@ -291,11 +297,13 @@ function Contenido() {
           onGuardado={recargarTodo}
         />
       )}
+      {consulta && <ConsultaStock onClose={() => setConsulta(false)} />}
       {traslado && (
         <ModalTraslado
           bodegas={lista}
           stock={stock.data ?? []}
           origenInicial={actual}
+          idEmpresa={idEmpresa}
           onClose={() => setTraslado(false)}
           onGuardado={recargarTodo}
         />
@@ -384,10 +392,14 @@ function RegistrarBodega({ accion, dataSelect, idEmpresa, sucursales, onClose, o
   );
 }
 
-function ModalTraslado({ bodegas, stock, origenInicial, onClose, onGuardado }) {
+function ModalTraslado({ bodegas, stock, origenInicial, idEmpresa, onClose, onGuardado }) {
+  // Origen: las bodegas que el usuario maneja. Destino: cualquier bodega de la empresa (también la principal u otra sede).
   const opciones = bodegas.map((b) => ({ ...b, descripcion: b.nombre }));
+  const destinos = useQuery({ queryKey: ["bodegas destino", idEmpresa], queryFn: () => MostrarBodegasDestino(idEmpresa), enabled: !!idEmpresa });
+  const opcionesDestino = (destinos.data ?? []).filter((b) => b.activa !== false).map((b) => ({ ...b, descripcion: b.sucursal ? `${b.nombre} · ${b.sucursal}` : b.nombre }));
   const [origen, setOrigen] = useState(opciones.find((b) => b.id === origenInicial?.id) ?? opciones[0]);
-  const [destino, setDestino] = useState(opciones.find((b) => b.id !== (origenInicial?.id ?? opciones[0]?.id)));
+  const [destinoElegido, setDestino] = useState(null);
+  const destino = destinoElegido ?? opcionesDestino.find((b) => b.id !== origen?.id) ?? null;
   const [producto, setProducto] = useState(null);
   const [intento, setIntento] = useState(false);
   const productos = stock
@@ -443,7 +455,7 @@ function ModalTraslado({ bodegas, stock, origenInicial, onClose, onGuardado }) {
             <span className="etiqueta">Hacia</span>
             <div style={{ marginTop: 6 }}>
               <Selector
-                opciones={opciones.filter((b) => b.id !== origen?.id)}
+                opciones={opcionesDestino.filter((b) => b.id !== origen?.id)}
                 valor={destino?.id === origen?.id ? null : destino}
                 onChange={setDestino}
                 icono={<v.iconobodegas />}
