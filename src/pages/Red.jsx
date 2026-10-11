@@ -26,6 +26,12 @@ import { MostrarBodegas } from "../supabase/crudBodegas";
 import {
   AceptarVinculo,
   CambiarPedido,
+  ConfigurarReposicion,
+  ConfirmarPedido,
+  ConsignacionRed,
+  LiquidarConsignacion,
+  MarcarLiquidacionPagada,
+  ReposicionRed,
   CancelarVinculo,
   ConfigurarVinculo,
   EnviarMercancia,
@@ -54,7 +60,7 @@ export function Red() {
 }
 
 const ESTADO_ENVIO = { enviado: ["warning", "En camino"], recibido: ["success", "Recibido"], rechazado: ["danger", "Rechazado"] };
-const ESTADO_PEDIDO = { pendiente: ["warning", "Pendiente"], despachado: ["success", "Despachado"], rechazado: ["danger", "Rechazado"], cancelado: ["neutro", "Cancelado"] };
+const ESTADO_PEDIDO = { borrador: ["info", "Borrador"], pendiente: ["warning", "Pendiente"], despachado: ["success", "Despachado"], rechazado: ["danger", "Rechazado"], cancelado: ["neutro", "Cancelado"] };
 
 function Contenido() {
   const { dataempresa } = useEmpresaStore();
@@ -68,6 +74,7 @@ function Contenido() {
   const red = useQuery({ queryKey: ["red vinculos", idEmpresa], queryFn: () => MisVinculos(idEmpresa), enabled: !!idEmpresa });
   const envios = useQuery({ queryKey: ["red envios", idEmpresa], queryFn: () => EnviosRed(idEmpresa), enabled: !!idEmpresa });
   const pedidos = useQuery({ queryKey: ["red pedidos", idEmpresa], queryFn: () => PedidosRed(idEmpresa), enabled: !!idEmpresa });
+  const consignacion = useQuery({ queryKey: ["red consignacion", idEmpresa], queryFn: () => ConsignacionRed(idEmpresa), enabled: !!idEmpresa });
   const bodegas = useQuery({ queryKey: ["bodegas", idEmpresa], queryFn: () => MostrarBodegas(idEmpresa), enabled: !!idEmpresa });
   const recargar = () => {
     queryClient.invalidateQueries();
@@ -80,7 +87,8 @@ function Contenido() {
   const { limite = 0, usados = 0, vinculos = [] } = red.data ?? {};
   const activos = vinculos.filter((x) => x.estado === "activo");
   const porRecibir = (envios.data ?? []).filter((e) => e.direccion === "recibido" && e.estado === "enviado").length;
-  const porAtender = (pedidos.data ?? []).filter((p) => p.direccion === "recibido" && p.estado === "pendiente").length;
+  const porAtender = (pedidos.data ?? []).filter((p) => p.direccion === "recibido" && p.estado === "pendiente").length + (pedidos.data ?? []).filter((p) => p.estado === "borrador").length;
+  const porLiquidar = (consignacion.data?.por_liquidar ?? []).length + (consignacion.data?.liquidaciones ?? []).filter((l) => l.estado === "pendiente" && l.mi_rol === "matriz").length;
   const opcionesBodega = (bodegas.data ?? []).map((b) => ({ ...b, descripcion: b.nombre }));
 
   const pestanas = [
@@ -88,12 +96,14 @@ function Contenido() {
     ["stock", "Stock de la red"],
     ["envios", "Envíos", porRecibir],
     ["pedidos", "Pedidos", porAtender],
+    ["consignacion", "Consignación", porLiquidar],
+    ["reposicion", "Reposición automática"],
   ];
 
   return (
     <PaginaTemplate
       titulo="Red de empresas"
-      descripcion="Tus partners y franquicias: stock en tiempo real, envíos de mercancía y pedidos entre empresas."
+      descripcion="Para empresas independientes que trabajan juntas: franquicias, distribuidores y socios. Cada una con su catálogo, su facturación y su plan."
       acciones={
         admin && (
           <>
@@ -132,6 +142,10 @@ function Contenido() {
           Con el <b>plan Partner</b> invitas a tus franquicias o socios y ves su stock en tiempo real. Si ya te invitaron, usa <b>Tengo un código</b>.
         </Aviso>
       )}
+      <Nota>
+        ¿Es una sede de tu propia empresa (mismo NIT)? Eso no va aquí: créala en <Link to="/sucursales">Sucursales</Link> y asigna un encargado en Personal. La red es
+        para pedidos, consignación y reposición entre empresas distintas; el plan Partner beneficia solo a la matriz, cada partner conserva su plan.
+      </Nota>
 
       <Pestanas role="tablist">
         {pestanas.map(([id, texto, n]) => (
@@ -150,6 +164,8 @@ function Contenido() {
         <Envios lista={envios.data ?? []} idEmpresa={idEmpresa} opcionesBodega={opcionesBodega} recargar={recargar} abrir={setModal} />
       )}
       {pestana === "pedidos" && <Pedidos lista={pedidos.data ?? []} idEmpresa={idEmpresa} activos={activos} recargar={recargar} abrir={setModal} />}
+      {pestana === "consignacion" && <Consignacion datos={consignacion.data} idEmpresa={idEmpresa} admin={admin} recargar={recargar} />}
+      {pestana === "reposicion" && <Reposicion activos={activos} idEmpresa={idEmpresa} admin={admin} recargar={recargar} />}
 
       {modal?.tipo === "invitar" && <ModalInvitar idEmpresa={idEmpresa} onClose={() => setModal(null)} recargar={recargar} />}
       {modal?.tipo === "codigo" && <ModalCodigo idEmpresa={idEmpresa} onClose={() => setModal(null)} recargar={recargar} />}
@@ -352,7 +368,10 @@ function Envios({ lista, idEmpresa, recargar, abrir }) {
       cell: ({ row }) => (
         <span style={{ display: "flex", flexDirection: "column" }}>
           <strong>RED-{row.original.numero}</strong>
-          <small style={{ opacity: 0.7 }}>{row.original.direccion === "enviado" ? `Para ${row.original.otra}` : `De ${row.original.otra}`}</small>
+          <small style={{ opacity: 0.7 }}>
+            {row.original.direccion === "enviado" ? `Para ${row.original.otra}` : `De ${row.original.otra}`}
+            {row.original.modalidad === "consignacion" ? " · consignación" : ""}
+          </small>
         </span>
       ),
     },
@@ -424,7 +443,10 @@ function Pedidos({ lista, idEmpresa, recargar, abrir }) {
       cell: ({ row }) => (
         <span style={{ display: "flex", flexDirection: "column" }}>
           <strong>RED-{row.original.numero}</strong>
-          <small style={{ opacity: 0.7 }}>{row.original.direccion === "hecho" ? `A ${row.original.otra}` : `De ${row.original.otra}`}</small>
+          <small style={{ opacity: 0.7 }}>
+            {row.original.direccion === "hecho" ? `A ${row.original.otra}` : `De ${row.original.otra}`}
+            {row.original.origen === "automatico" ? " · automático" : ""}
+          </small>
         </span>
       ),
     },
@@ -465,9 +487,14 @@ function Pedidos({ lista, idEmpresa, recargar, abrir }) {
                 </Boton>
               </>
             )}
-            {p.direccion === "hecho" && p.estado === "pendiente" && (
+            {p.direccion === "hecho" && p.estado === "borrador" && (
+              <Boton tamano="sm" variante="exito" funcion={async () => (await ConfirmarPedido(p.id, idEmpresa)) && recargar()}>
+                Confirmar pedido
+              </Boton>
+            )}
+            {p.direccion === "hecho" && ["pendiente", "borrador"].includes(p.estado) && (
               <Boton tamano="sm" variante="fantasma" funcion={() => responder(p, "cancelado")}>
-                Cancelar
+                {p.estado === "borrador" ? "Descartar" : "Cancelar"}
               </Boton>
             )}
           </Acciones>
@@ -476,6 +503,163 @@ function Pedidos({ lista, idEmpresa, recargar, abrir }) {
     },
   ];
   return <DataTable data={lista} columns={columnas} tamanoPagina={20} vacio={<EstadoVacio titulo="Sin pedidos" mensaje="Pide mercancía a tu red o atiende los pedidos que te hagan." icono={<v.iconocompras />} />} />;
+}
+
+// ------------------------------------------------------------------ Consignación
+function Consignacion({ datos, idEmpresa, admin, recargar }) {
+  if (!datos) return <SpinnerLoader />;
+  const { productos = [], por_liquidar: porLiquidar = [], liquidaciones = [] } = datos;
+  const liquidar = async (x) => {
+    const { value, isConfirmed } = await Swal.fire({
+      title: `Liquidar a ${x.otra}`,
+      text: `${formatearNumero(x.unidades)} unidades vendidas en consignación por ${formatearMoneda(x.total)}. Se enviará la liquidación; la matriz la marca pagada cuando reciba el dinero.`,
+      input: "text",
+      inputPlaceholder: "Nota (ej. transferencia, fecha)",
+      showCancelButton: true,
+      confirmButtonText: "Liquidar",
+      cancelButtonText: "Volver",
+      reverseButtons: true,
+    });
+    if (isConfirmed && (await LiquidarConsignacion(x.id_vinculo, idEmpresa, value))) recargar();
+  };
+  const columnas = [
+    { accessorKey: "descripcion", header: "Producto", meta: { width: "220px" } },
+    { accessorKey: "otra", header: "Con", cell: ({ row }) => `${row.original.otra} · ${row.original.mi_rol === "partner" ? "me la consignó" : "le consigné"}` },
+    { accessorKey: "precio_red", header: "Precio de red", meta: { align: "right" }, cell: (i) => formatearMoneda(i.getValue()) },
+    { accessorKey: "recibida", header: "Recibida", meta: { align: "right" }, cell: (i) => formatearNumero(i.getValue()) },
+    { accessorKey: "vendida", header: "Vendida", meta: { align: "right" }, cell: (i) => formatearNumero(i.getValue()) },
+    { accessorKey: "disponible", header: "Disponible", meta: { align: "right" }, cell: (i) => <strong>{formatearNumero(i.getValue())}</strong> },
+    { accessorKey: "por_liquidar", header: "Por liquidar", meta: { align: "right" }, cell: (i) => (Number(i.getValue()) ? <strong>{formatearMoneda(i.getValue())}</strong> : "—") },
+  ];
+  return (
+    <>
+      {porLiquidar.length > 0 && (
+        <Tarjetas style={{ marginBottom: 14 }}>
+          {porLiquidar.map((x) => (
+            <TarjetaVinculo key={x.id_vinculo}>
+              <header>
+                <div>
+                  <strong>{x.mi_rol === "partner" ? `Debes liquidar a ${x.otra}` : `${x.otra} te debe liquidar`}</strong>
+                  <small>
+                    {formatearNumero(x.unidades)} unidades vendidas en {x.ventas} venta(s)
+                  </small>
+                </div>
+                <Etiqueta tono="warning">{formatearMoneda(x.total)}</Etiqueta>
+              </header>
+              {x.mi_rol === "partner" && admin && (
+                <footer>
+                  <Boton tamano="sm" funcion={() => liquidar(x)}>
+                    Liquidar ahora
+                  </Boton>
+                </footer>
+              )}
+            </TarjetaVinculo>
+          ))}
+        </Tarjetas>
+      )}
+      <DataTable
+        data={productos}
+        columns={columnas}
+        tamanoPagina={20}
+        vacio={<EstadoVacio titulo="Sin mercancía en consignación" mensaje="Envía o recibe un envío en modalidad consignación: la mercancía sigue siendo de quien la envía hasta que se venda." icono={<v.iconocompras />} />}
+      />
+      {liquidaciones.length > 0 && (
+        <div style={{ marginTop: 18 }}>
+          <h3 style={{ margin: "0 0 10px" }}>Liquidaciones</h3>
+          <DataTable
+            data={liquidaciones}
+            columns={[
+              { accessorKey: "created_at", header: "Fecha", meta: { nowrap: true }, cell: (i) => formatearFechaHora(i.getValue()) },
+              { id: "numero", header: "Liquidación", cell: ({ row }) => <strong>LIQ-{row.original.numero}</strong> },
+              { accessorKey: "otra", header: "Con", cell: ({ row }) => `${row.original.mi_rol === "partner" ? "A" : "De"} ${row.original.otra}` },
+              { accessorKey: "unidades", header: "Unidades", meta: { align: "right" }, cell: (i) => formatearNumero(i.getValue()) },
+              { accessorKey: "total", header: "Total", meta: { align: "right" }, cell: (i) => <strong>{formatearMoneda(i.getValue())}</strong> },
+              { accessorKey: "nota", header: "Nota", cell: (i) => i.getValue() ?? "—" },
+              { accessorKey: "estado", header: "Estado", cell: (i) => <Etiqueta tono={i.getValue() === "pagada" ? "success" : "warning"}>{i.getValue() === "pagada" ? "Pagada" : "Pendiente de pago"}</Etiqueta> },
+              {
+                id: "acciones",
+                header: "",
+                enableSorting: false,
+                meta: { align: "right" },
+                cell: ({ row }) =>
+                  row.original.mi_rol === "matriz" && row.original.estado === "pendiente" && admin ? (
+                    <Boton tamano="sm" variante="exito" funcion={async () => (await MarcarLiquidacionPagada(row.original.id, idEmpresa)) && recargar()}>
+                      Marcar pagada
+                    </Boton>
+                  ) : null,
+              },
+            ]}
+            tamanoPagina={10}
+          />
+        </div>
+      )}
+    </>
+  );
+}
+
+// ------------------------------------------------------------------ Reposición automática
+function Reposicion({ activos, idEmpresa, admin, recargar }) {
+  const opciones = activos.map((x) => ({ ...x, descripcion: x.otra }));
+  const [vinculo, setVinculo] = useState(null);
+  const actual = opciones.find((x) => x.id === vinculo?.id) ?? opciones[0] ?? null;
+  const [texto, setTexto] = useState("");
+  const lista = useQuery({ queryKey: ["red reposicion", idEmpresa, actual?.id], queryFn: () => ReposicionRed(idEmpresa, actual.id), enabled: !!actual });
+  if (!activos.length) return <EstadoVacio titulo="Sin empresas vinculadas" mensaje="La reposición automática pide a una empresa de tu red cuando un producto baja del mínimo." icono={<v.iconored />} />;
+  const guardar = async (p, activo, cantidad) => {
+    if (!(Number(cantidad) > 0)) return;
+    if (await ConfigurarReposicion({ idVinculo: actual.id, idEmpresa, idProducto: p.id_producto, activo, cantidad: Number(cantidad) })) {
+      lista.refetch();
+      recargar();
+    }
+  };
+  const t = texto.trim().toLowerCase();
+  const filas = (lista.data ?? []).filter((p) => !t || p.descripcion.toLowerCase().includes(t));
+  const columnas = [
+    { accessorKey: "descripcion", header: "Producto", meta: { width: "220px" } },
+    { accessorKey: "stock", header: "Stock", meta: { align: "right" }, cell: ({ row }) => cantidadConUnidad(row.original.stock, row.original) },
+    { accessorKey: "stock_minimo", header: "Mínimo", meta: { align: "right" }, cell: ({ row }) => cantidadConUnidad(row.original.stock_minimo, row.original) },
+    {
+      id: "auto",
+      header: "Pedir solo",
+      cell: ({ row }) => {
+        const p = row.original;
+        return (
+          <FilaReposicion>
+            <label>
+              <input type="checkbox" checked={!!p.activo} disabled={!admin} onChange={(e) => guardar(p, e.target.checked, p.cantidad ?? Math.max(1, Number(p.stock_minimo || 0) * 2))} />
+              {p.activo ? "Activo" : "Apagado"}
+            </label>
+            <input
+              type="number"
+              min="0"
+              step="any"
+              defaultValue={p.cantidad ?? ""}
+              placeholder="Cantidad"
+              disabled={!admin}
+              aria-label="Cantidad a pedir"
+              onBlur={(e) => Number(e.target.value) > 0 && Number(e.target.value) !== Number(p.cantidad) && guardar(p, p.activo ?? true, e.target.value)}
+            />
+            {p.pedido_abierto && <Etiqueta tono="info">Pedido abierto</Etiqueta>}
+          </FilaReposicion>
+        );
+      },
+    },
+  ];
+  return (
+    <>
+      <Aviso>
+        Cuando el stock de un producto marcado baje de su mínimo, Stockly crea un <b>pedido en borrador</b> a {actual?.otra ?? "la empresa elegida"} con la cantidad indicada.
+        No toca el stock: lo confirmas en Pedidos, la otra empresa lo despacha y las unidades entran cuando las recibes.
+      </Aviso>
+      <Filtros>
+        <Selector opciones={opciones} valor={actual} onChange={setVinculo} icono={<v.iconored />} />
+        <Buscador setBuscador={setTexto} placeholder="Buscar producto…" />
+        <span />
+        <span />
+      </Filtros>
+      {lista.isLoading ? <SpinnerLoader /> : <DataTable data={filas} columns={columnas} tamanoPagina={25} vacio={<EstadoVacio titulo="Sin productos" mensaje="Crea productos para configurar su reposición." />} />}
+    </>
+  );
 }
 
 // ------------------------------------------------------------------ Modales
@@ -565,7 +749,7 @@ function ModalCodigo({ idEmpresa, onClose, recargar }) {
 }
 
 // Constructor de líneas (producto + cantidad). conTextoLibre permite pedir productos que no tengo.
-function ListaItems({ items, setItems, conTextoLibre = false }) {
+function ListaItems({ items, setItems, conTextoLibre = false, conPrecioRed = false }) {
   const [producto, setProducto] = useState(null);
   const [texto, setTexto] = useState("");
   const [cantidad, setCantidad] = useState("");
@@ -573,7 +757,7 @@ function ListaItems({ items, setItems, conTextoLibre = false }) {
     const n = Number(cantidad);
     if (!(n > 0)) return;
     if (producto) {
-      setItems([...items.filter((i) => i.id_producto !== producto.id), { id_producto: producto.id, descripcion: producto.descripcion, codigointerno: producto.codigointerno, codigobarras: producto.codigobarras, cantidad: n, disponible: producto.stock }]);
+      setItems([...items.filter((i) => i.id_producto !== producto.id), { id_producto: producto.id, descripcion: producto.descripcion, codigointerno: producto.codigointerno, codigobarras: producto.codigobarras, cantidad: n, disponible: producto.stock, precio_red: Number(producto.precioventa ?? 0) }]);
     } else if (conTextoLibre && texto.trim()) {
       setItems([...items, { descripcion: texto.trim(), cantidad: n }]);
     } else return;
@@ -604,6 +788,18 @@ function ListaItems({ items, setItems, conTextoLibre = false }) {
                 {i.disponible != null && <small> · disponible {formatearNumero(i.disponible)}</small>}
               </span>
               <b>{formatearNumero(i.cantidad)}</b>
+              {conPrecioRed && (
+                <input
+                  className="precio"
+                  type="number"
+                  min="0"
+                  step="any"
+                  value={i.precio_red ?? ""}
+                  aria-label="Precio de red"
+                  title="Precio de red por unidad"
+                  onChange={(e) => setItems(items.map((x, j) => (j === k ? { ...x, precio_red: Number(e.target.value) } : x)))}
+                />
+              )}
               <button type="button" aria-label="Quitar" onClick={() => setItems(items.filter((_, j) => j !== k))}>
                 ×
               </button>
@@ -623,6 +819,7 @@ function ModalEnviar({ idEmpresa, activos, vinculoInicial, pedido, opcionesBodeg
     (pedido?.items ?? []).filter((i) => i.id_producto).map((i) => ({ id_producto: i.id_producto, descripcion: i.descripcion, cantidad: Number(i.cantidad) }))
   );
   const [nota, setNota] = useState(pedido ? `Pedido RED-${pedido.numero}` : "");
+  const [modalidad, setModalidad] = useState("traslado");
   const [cargando, setCargando] = useState(false);
   const faltantes = (pedido?.items ?? []).filter((i) => !i.id_producto);
   const enviar = async () => {
@@ -632,9 +829,10 @@ function ModalEnviar({ idEmpresa, activos, vinculoInicial, pedido, opcionesBodeg
       idVinculo: vinculo.id,
       idEmpresa,
       idBodega: bodega?.id ?? null,
-      items: items.map((i) => ({ id_producto: i.id_producto, cantidad: i.cantidad })),
+      items: items.map((i) => ({ id_producto: i.id_producto, cantidad: i.cantidad, precio_red: modalidad === "consignacion" ? i.precio_red ?? null : null })),
       nota,
       idPedido: pedido?.id ?? null,
+      modalidad,
     });
     setCargando(false);
     if (r) {
@@ -670,8 +868,24 @@ function ModalEnviar({ idEmpresa, activos, vinculoInicial, pedido, opcionesBodeg
           </Aviso>
         )}
         <div>
+          <span className="etiqueta">Modalidad</span>
+          <Elegir>
+            <label className={modalidad === "traslado" ? "si" : ""}>
+              <input type="radio" name="modalidad" checked={modalidad === "traslado"} onChange={() => setModalidad("traslado")} /> Entrega directa
+            </label>
+            <label className={modalidad === "consignacion" ? "si" : ""}>
+              <input type="radio" name="modalidad" checked={modalidad === "consignacion"} onChange={() => setModalidad("consignacion")} /> Consignación
+            </label>
+          </Elegir>
+          <small style={{ display: "block", marginTop: 4, opacity: 0.7 }}>
+            {modalidad === "consignacion"
+              ? "La mercancía sigue siendo tuya hasta que la otra empresa la venda. Cada venta suya queda separada como “por liquidar” al precio de red que fijes aquí."
+              : "La mercancía pasa a ser de la otra empresa cuando la reciba."}
+          </small>
+        </div>
+        <div>
           <span className="etiqueta">Productos</span>
-          <ListaItems items={items} setItems={setItems} />
+          <ListaItems items={items} setItems={setItems} conPrecioRed={modalidad === "consignacion"} />
         </div>
         <InputText label="Nota (opcional)" icono={<v.iconotodos />}>
           <input value={nota} onChange={(e) => setNota(e.target.value)} maxLength={200} placeholder="Ej. Guía de transporte 12345" />
@@ -681,7 +895,7 @@ function ModalEnviar({ idEmpresa, activos, vinculoInicial, pedido, opcionesBodeg
             Cancelar
           </Boton>
           <Boton type="submit" cargando={cargando} disabled={!items.length || !vinculo} icono={<v.iconoenviar />}>
-            Enviar {items.length ? `${formatearNumero(items.reduce((s, i) => s + i.cantidad, 0))} und` : ""}
+            {modalidad === "consignacion" ? "Enviar en consignación" : "Enviar"} {items.length ? `${formatearNumero(items.reduce((s, i) => s + i.cantidad, 0))} und` : ""}
           </Boton>
         </div>
       </Formulario>
@@ -845,6 +1059,36 @@ const Aviso = styled.div`
   a {
     color: ${({ theme }) => theme.primary};
     font-weight: 600;
+  }
+`;
+const Nota = styled.p`
+  margin: 0 0 14px;
+  font-size: 0.86rem;
+  color: ${({ theme }) => theme.textMuted};
+  a {
+    color: ${({ theme }) => theme.primary};
+    font-weight: 600;
+  }
+`;
+const FilaReposicion = styled.span`
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  label {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  input[type="number"] {
+    width: 96px;
+    padding: 6px 8px;
+    border-radius: 8px;
+    border: 1px solid ${({ theme }) => theme.border};
+    background: ${({ theme }) => theme.surface};
+    color: ${({ theme }) => theme.text};
+    font: inherit;
   }
 `;
 const Pestanas = styled.div`
@@ -1057,7 +1301,11 @@ const Items = styled.div`
   }
   li {
     display: grid;
-    grid-template-columns: 1fr auto auto;
+    grid-template-columns: 1fr auto auto auto;
+    .precio {
+      width: 110px;
+      padding: 5px 8px;
+    }
     gap: 10px;
     align-items: center;
     padding: 8px 12px;

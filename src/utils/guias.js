@@ -367,9 +367,12 @@ export const GUIAS = [
       "Cada una decide qué comparte: stock en tiempo real y costos. Se cambia cuando quieras en la tarjeta del vínculo.",
       "Para enviar mercancía: Enviar mercancía, eliges bodega y productos. Sale de tu inventario; cuando la otra empresa la recibe, entra al suyo (y se crean los productos que no tenga).",
       "Para pedir: Pedir, eliges una o varias empresas y los productos. Quien recibe el pedido lo despacha con un clic. Los productos que no tenías se crean en tu catálogo al recibir el envío; nada se agrega sin mercancía de por medio.",
+      "Reposición automática: en la pestaña Reposición marcas qué productos se piden solos y cuánto. Cuando bajen del mínimo se crea un pedido en borrador (no toca stock); lo confirmas, la otra empresa lo despacha y las unidades entran al recibir.",
+      "Consignación: al enviar eliges “Consignación” y un precio de red por producto. La mercancía sigue siendo de quien la envía; cada venta del partner queda separada como “por liquidar”. El partner liquida en bloque y la matriz marca el pago.",
     ],
     consejos: [
-      "Un partner no necesita el plan Partner: solo la matriz que invita.",
+      "Un partner no necesita el plan Partner: solo la matriz que invita, y los límites del plan Partner son solo para la matriz.",
+      "Si la otra tienda es una sede de tu misma empresa (mismo NIT), no uses la red: créala en Sucursales y asigna un encargado.",
       "Si recibes un envío que no corresponde, recházalo: la mercancía vuelve al inventario de quien la envió.",
       "Todo queda en el kardex de ambas empresas con origen Red.",
     ],
