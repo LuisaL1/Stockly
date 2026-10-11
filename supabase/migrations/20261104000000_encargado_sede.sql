@@ -89,10 +89,12 @@ $$;
 grant execute on function public.stockly_mi_sede(bigint) to authenticated;
 
 -- ---------------------------------------------------------------- Permisos por sede (RLS)
+-- Al crear o editar una bodega la fila aún no existe (o cambia), así que la sede se evalúa sobre la fila misma:
+-- sin sede asignada se puede todo; con sede, solo bodegas de esa sede.
 drop policy if exists "miembros bodegas" on public.bodegas;
 create policy "miembros bodegas" on public.bodegas for all
-  using (public.stockly_es_miembro(id_empresa) and public.stockly_bodega_permitida(id))
-  with check (public.stockly_es_miembro(id_empresa) and public.stockly_bodega_permitida(id));
+  using (public.stockly_es_miembro(id_empresa) and (public.stockly_mi_sucursal(id_empresa) is null or id_sucursal = public.stockly_mi_sucursal(id_empresa)))
+  with check (public.stockly_es_miembro(id_empresa) and (public.stockly_mi_sucursal(id_empresa) is null or id_sucursal = public.stockly_mi_sucursal(id_empresa)));
 drop policy if exists "admins sucursales" on public.sucursales;
 create policy "admins sucursales" on public.sucursales for all
   using (public.stockly_es_admin(id_empresa) and public.stockly_mi_sucursal(id_empresa) is null)
