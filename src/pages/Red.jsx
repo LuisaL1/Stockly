@@ -908,10 +908,32 @@ function ModalPedir({ idEmpresa, activos, vinculoInicial, onClose, recargar }) {
   const [items, setItems] = useState([]);
   const [nota, setNota] = useState("");
   const [cargando, setCargando] = useState(false);
+  const [catalogoDe, setCatalogoDe] = useState(null);
+  const [texto, setTexto] = useState("");
+  const [cantidades, setCantidades] = useState({});
   const alternar = (id) => {
     const s = new Set(elegidos);
     s.has(id) ? s.delete(id) : s.add(id);
     setElegidos(s);
+  };
+  // Los productos se eligen del catálogo y el stock de la otra empresa (no del mío).
+  const elegidasLista = activos.filter((x) => elegidos.has(x.id));
+  const fuente = elegidasLista.find((x) => x.id === catalogoDe?.id) ?? elegidasLista[0] ?? null;
+  const catalogo = useQuery({
+    queryKey: ["red stock pedir", idEmpresa, fuente?.id, texto],
+    queryFn: () => StockRed(fuente.id, idEmpresa, texto),
+    enabled: !!fuente,
+    placeholderData: (previo) => previo,
+  });
+  const productos = catalogo.data?.productos ?? [];
+  const agregar = (p) => {
+    const n = Number(cantidades[p.id] ?? "");
+    if (!(n > 0)) return;
+    setItems([
+      ...items.filter((i) => i.clave !== `${fuente.id}-${p.id}`),
+      { clave: `${fuente.id}-${p.id}`, id_producto: p.mi_producto ?? null, descripcion: p.descripcion, codigointerno: p.codigointerno, codigobarras: p.codigobarras, cantidad: n, disponible: Number(p.stock), de: fuente.otra },
+    ]);
+    setCantidades({ ...cantidades, [p.id]: "" });
   };
   const pedir = async () => {
     if (!elegidos.size || !items.length) return;
@@ -929,7 +951,7 @@ function ModalPedir({ idEmpresa, activos, vinculoInicial, onClose, recargar }) {
     }
   };
   return (
-    <Modal titulo="Pedir mercancía" subtitulo="El pedido llega a cada empresa elegida; cuando lo despachen, lo recibes en Envíos." onClose={onClose} ancho="600px">
+    <Modal titulo="Pedir mercancía" subtitulo="Eliges del catálogo y el stock de la otra empresa. Cuando despache, lo recibes en Envíos." onClose={onClose} ancho="680px">
       <Formulario
         onSubmit={(e) => {
           e.preventDefault();
@@ -953,9 +975,71 @@ function ModalPedir({ idEmpresa, activos, vinculoInicial, onClose, recargar }) {
           </Elegir>
         </div>
         <div>
-          <span className="etiqueta">Productos</span>
-          <ListaItems items={items} setItems={setItems} conTextoLibre />
+          <span className="etiqueta">Productos de {fuente?.otra ?? "la empresa"}</span>
+          <Catalogo>
+            <div className="barra">
+              {elegidasLista.length > 1 && <Selector opciones={elegidasLista.map((x) => ({ ...x, descripcion: `Catálogo de ${x.otra}` }))} valor={fuente ? { ...fuente, descripcion: `Catálogo de ${fuente.otra}` } : null} onChange={setCatalogoDe} icono={<v.iconored />} />}
+              <Buscador setBuscador={setTexto} placeholder="Busca en su inventario…" retraso={250} />
+            </div>
+            {!fuente ? (
+              <small className="aviso">Elige al menos una empresa.</small>
+            ) : catalogo.data && !catalogo.data.comparte ? (
+              <small className="aviso">{fuente.otra} no comparte su stock. Pídele que lo active en su Red de empresas para ver qué tiene.</small>
+            ) : catalogo.isLoading ? (
+              <SpinnerLoader />
+            ) : (
+              <ul className="lista">
+                {productos.slice(0, 40).map((p) => (
+                  <li key={p.id} className={Number(p.stock) <= 0 ? "agotado" : ""}>
+                    <span className="nombre">
+                      {p.descripcion}
+                      <small>
+                        {cantidadConUnidad(p.stock, p)} disponibles{p.precioventa ? ` · ${formatearMoneda(p.precioventa)}` : ""}
+                        {p.mi_producto ? " · lo tienes" : " · nuevo para ti"}
+                      </small>
+                    </span>
+                    <input
+                      type="number"
+                      min="0"
+                      step="any"
+                      placeholder="Cant."
+                      value={cantidades[p.id] ?? ""}
+                      aria-label={`Cantidad de ${p.descripcion}`}
+                      onChange={(e) => setCantidades({ ...cantidades, [p.id]: e.target.value })}
+                      onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), agregar(p))}
+                    />
+                    <Boton type="button" tamano="sm" variante="secundario" funcion={() => agregar(p)} disabled={!(Number(cantidades[p.id]) > 0)}>
+                      Agregar
+                    </Boton>
+                  </li>
+                ))}
+                {!productos.length && <li className="vacio">Sin productos con ese nombre.</li>}
+              </ul>
+            )}
+          </Catalogo>
         </div>
+        {items.length > 0 && (
+          <div>
+            <span className="etiqueta">Tu pedido</span>
+            <Items>
+              <ul>
+                {items.map((i, k) => (
+                  <li key={i.clave}>
+                    <span>
+                      {i.descripcion}
+                      <small> · de {i.de}</small>
+                    </span>
+                    <b>{formatearNumero(i.cantidad)}</b>
+                    <button type="button" aria-label="Quitar" onClick={() => setItems(items.filter((_, j) => j !== k))}>
+                      ×
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </Items>
+            {elegidos.size > 1 && <small style={{ display: "block", marginTop: 6, opacity: 0.7 }}>El mismo pedido se envía a cada empresa elegida; cada una lo atiende con lo que tenga.</small>}
+          </div>
+        )}
         <InputText label="Nota (opcional)" icono={<v.iconotodos />}>
           <input value={nota} onChange={(e) => setNota(e.target.value)} maxLength={200} placeholder="Ej. Para la temporada de diciembre" />
         </InputText>
@@ -1059,6 +1143,71 @@ const Aviso = styled.div`
   a {
     color: ${({ theme }) => theme.primary};
     font-weight: 600;
+  }
+`;
+const Catalogo = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 6px;
+  .barra {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 8px;
+    @media (min-width: 640px) {
+      grid-template-columns: minmax(0, 220px) 1fr;
+    }
+    > :only-child {
+      grid-column: 1 / -1;
+    }
+  }
+  .aviso {
+    color: ${({ theme }) => theme.textMuted};
+  }
+  .lista {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    max-height: 240px;
+    overflow: auto;
+    border: 1px solid ${({ theme }) => theme.border};
+    border-radius: ${({ theme }) => theme.radiusSm};
+  }
+  .lista li {
+    display: grid;
+    grid-template-columns: 1fr 84px auto;
+    gap: 8px;
+    align-items: center;
+    padding: 8px 12px;
+    border-top: 1px solid ${({ theme }) => theme.border};
+    font-size: 0.92rem;
+    &:first-child {
+      border-top: none;
+    }
+    &.agotado .nombre {
+      opacity: 0.55;
+    }
+    &.vacio {
+      display: block;
+      color: ${({ theme }) => theme.textMuted};
+    }
+    .nombre {
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+      small {
+        color: ${({ theme }) => theme.textMuted};
+      }
+    }
+    input {
+      padding: 6px 8px;
+      border-radius: 8px;
+      border: 1px solid ${({ theme }) => theme.border};
+      background: ${({ theme }) => theme.surface};
+      color: ${({ theme }) => theme.text};
+      font: inherit;
+      width: 84px;
+    }
   }
 `;
 const Nota = styled.p`
