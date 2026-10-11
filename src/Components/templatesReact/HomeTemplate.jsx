@@ -26,7 +26,7 @@ const PERIODOS = [7, 30, 90];
 const fechaCorta = (iso) =>
   new Date(`${iso}T12:00:00`).toLocaleDateString("es-CO", { day: "numeric", month: "short" });
 
-export function HomeTemplate({ empresa, dashboard, bajoMinimo, dias, setDias, sucursales, idSucursal, setIdSucursal }) {
+export function HomeTemplate({ empresa, dashboard, bajoMinimo, dias, setDias, sucursales, idSucursal, setIdSucursal, sede }) {
   const { datausuario } = useUsuariosStore();
   const abrirNovandra = useNovandraStore((s) => s.abrir);
   const { plan, usado, limite } = usePlan();
@@ -48,7 +48,7 @@ export function HomeTemplate({ empresa, dashboard, bajoMinimo, dias, setDias, su
   return (
     <PaginaTemplate
       titulo={`${saludo()}${nombre ? `, ${nombre}` : ""}`}
-      descripcion={`Así va ${empresa?.nombre ?? "tu negocio"} hoy.`}
+      descripcion={sede ? `Así va la sede ${sede.nombre} hoy.` : `Así va ${empresa?.nombre ?? "tu negocio"} hoy.`}
       acciones={
         <>
         {sucursales.length > 1 && (

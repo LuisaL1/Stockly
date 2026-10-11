@@ -376,6 +376,24 @@ export const GUIAS = [
     ir: { texto: "Ir a Red de empresas", a: "/red" },
   },
   {
+    id: "encargado-sede",
+    categoria: "Equipo",
+    titulo: "Encargado de sede: una persona por sucursal",
+    resumen: "Asigna a un usuario a una sede y verá solo lo de esa sucursal: su caja, sus bodegas, sus ventas, compras, kardex e inteligencia.",
+    rutas: ["/configurar/usuarios", "/sucursales"],
+    claves: "sede sucursal encargado responsable administrador de sede usuario por sede ver solo su sede",
+    pasos: [
+      "Crea la sucursal en Sucursales y asígnale sus bodegas en Bodegas.",
+      "En Personal, al invitar o editar a la persona, elige su Sede. El rol Encargado le da facultades de administrador dentro de su sede.",
+      "Desde ese momento solo ve y opera las bodegas de su sede: caja, facturas, compras, traslados, kardex, inicio, inteligencia y auditoría. El dueño y los usuarios sin sede siguen viendo toda la empresa.",
+    ],
+    consejos: [
+      "Esto es dentro de tu misma empresa (mismo catálogo, misma facturación). Si la otra sede es un negocio independiente, usa Red de empresas.",
+      "La restricción se aplica en el servidor: aunque alguien manipule la app, no puede vender ni mover stock de otra sede.",
+    ],
+    ir: { texto: "Ir a Personal", a: "/configurar/usuarios" },
+  },
+  {
     id: "bodegas-traslados",
     categoria: "Inventario",
     titulo: "Crear bodegas y trasladar stock",

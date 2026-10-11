@@ -47,6 +47,12 @@ export async function BuscarUsuarios(p) {
   return data ?? [];
 }
 
+// Sede del usuario (null = toda la empresa)
+export async function AsignarSede({ idEmpresa, idUsuario, idSucursal }) {
+  const { error } = await supabase.rpc("stockly_asignar_sede", { _id_empresa: idEmpresa, _id_usuario: idUsuario, _id_sucursal: idSucursal ?? null });
+  return !manejarError(error, "No se pudo asignar la sede");
+}
+
 // tabla asignarempresa
 export async function InsertarAsignaciones(p) {
   const { error } = await supabase.from("asignarempresa").insert(p);

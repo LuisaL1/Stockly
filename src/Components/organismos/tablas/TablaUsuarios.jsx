@@ -39,6 +39,7 @@ export function TablaUsuarios({ data, editar }) {
       header: "Rol",
       cell: (info) => <span style={{ textTransform: "capitalize" }}>{info.getValue()}</span>,
     },
+    { accessorKey: "sucursal", header: "Sede", cell: (i) => i.getValue() ?? <span style={{ opacity: 0.6 }}>Toda la empresa</span> },
     {
       accessorKey: "estado",
       header: "Estado",

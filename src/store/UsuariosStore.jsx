@@ -11,6 +11,7 @@ import {
   MostrarModulos,
   MostrarPermisos,
   MostrarUsuarios,
+  AsignarSede,
   MostrarUsuariosTodos,
 } from "../supabase/crudUsuarios";
 
@@ -89,6 +90,7 @@ export const useUsuariosStore = create((set, get) => ({
         telefono: p.telefono,
         direccion: p.direccion,
         tipouser: p.tipouser,
+        id_sucursal: p.id_sucursal ?? null,
         modulos: modulos.filter((m) => m.check).map((m) => m.id),
       });
     } catch (e) {
@@ -100,9 +102,10 @@ export const useUsuariosStore = create((set, get) => ({
     return true;
   },
 
-  Editar: async (p, modulos) => {
+  Editar: async ({ id_sucursal, id_empresa, ...p }, modulos) => {
     const ok = await EditarUsuarios(p);
     if (!ok) return false;
+    if (id_empresa) await AsignarSede({ idEmpresa: id_empresa, idUsuario: p.id, idSucursal: id_sucursal ?? null });
     await EliminarPermisos({ id_usuario: p.id });
     const permisos = permisosSeleccionados(p.id, modulos);
     if (permisos.length) await InsertarPermisos(permisos);

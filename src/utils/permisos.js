@@ -19,7 +19,7 @@ export const MODULOS = {
 
 // Dueño o administrador de la empresa (la auditoría y los permisos de Novandra son solo para ellos).
 export function esAdmin(usuario) {
-  return ["dueño", "administrador", "admin"].includes((usuario?.tipouser ?? "").toLowerCase());
+  return ["dueño", "administrador", "admin", "encargado"].includes((usuario?.tipouser ?? "").toLowerCase());
 }
 
 export function tienePermiso(datapermisos, modulo) {

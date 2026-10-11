@@ -8,6 +8,7 @@ import { ErrorMolecula } from "../Components/moleculas/ErrorMolecula";
 import { EstadoVacio } from "../Components/moleculas/EstadoVacio";
 import { BentoGrid, Cifra, ListaTarjeta, Tarjeta } from "../Components/moleculas/Bento";
 import { DataTable } from "../Components/organismos/tablas/DataTable";
+import { useSede } from "../hooks/useSede";
 import { Buscador } from "../Components/organismos/Buscador";
 import { SelectFiltro } from "../Components/moleculas/Filtros";
 import { opcionesDesde } from "../utils/filtros";
@@ -61,6 +62,7 @@ function Contenido() {
   const [creando, setCreando] = useState(false);
 
   const sucursales = useQuery({ queryKey: ["sucursales", idEmpresa], queryFn: () => MostrarSucursales(idEmpresa), enabled: !!idEmpresa });
+  const { sede } = useSede();
   const rotacion = useQuery({
     queryKey: ["rotacion", idEmpresa, dias, idSucursal],
     queryFn: () => MostrarRotacion({ idEmpresa, dias, idSucursal: idSucursal || null }),
@@ -157,7 +159,7 @@ function Contenido() {
   return (
     <PaginaTemplate
       titulo="Inteligencia de inventario"
-      descripcion="Stockly aprende el ritmo de tu negocio. Te dice qué reponer y qué está quieto."
+      descripcion={sede ? `Sede ${sede.nombre}. Stockly aprende su ritmo y te dice qué reponer y qué está quieto.` : "Stockly aprende el ritmo de tu negocio. Te dice qué reponer y qué está quieto."}
       acciones={
         <Boton icono={<v.icononovandra />} funcion={() => abrirNovandra("Analiza la rotación de mis productos y dime qué priorizar esta semana")}>
           Analizar con Novandra
@@ -172,7 +174,7 @@ function Contenido() {
             <option value={90}>Últimos 90 días</option>
             <option value={180}>Últimos 6 meses</option>
           </Select>
-          {(sucursales.data?.length ?? 0) > 1 && (
+          {!sede && (sucursales.data?.length ?? 0) > 1 && (
             <Select value={idSucursal} onChange={(e) => setIdSucursal(e.target.value)} aria-label="Sucursal">
               <option value="">Todas las sucursales</option>
               {sucursales.data.map((s) => (

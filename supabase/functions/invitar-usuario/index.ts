@@ -71,7 +71,12 @@ Deno.serve(async (req) => {
 
   const nombres = texto(c.nombres, 120);
   if (!nombres) return responder({ error: "Escribe el nombre de la persona" }, 400);
-  const tipouser = c.tipouser === "administrador" ? "administrador" : "empleado";
+  const tipouser = c.tipouser === "administrador" ? "administrador" : c.tipouser === "encargado" ? "encargado" : "empleado";
+  const idSucursal = Number.isInteger(Number(c.id_sucursal)) && Number(c.id_sucursal) > 0 ? Number(c.id_sucursal) : null;
+  if (idSucursal) {
+    const { data: sede } = await admin.from("sucursales").select("id").eq("id", idSucursal).eq("id_empresa", idEmpresa).maybeSingle();
+    if (!sede) return responder({ error: "La sede no existe en tu empresa" }, 400);
+  }
   const modulos = Array.isArray(c.modulos) ? c.modulos.map(Number).filter(Number.isInteger) : [];
 
   const { data: existente } = await admin.from("Usuarios").select("id").eq("email", email).maybeSingle();
@@ -110,7 +115,7 @@ Deno.serve(async (req) => {
     console.error("[invitar-usuario]", errorUsuario);
     return responder({ error: "No se pudo registrar a la persona en tu empresa" }, 500);
   }
-  await admin.from("asignarempresa").insert({ id_empresa: idEmpresa, id_usuario: nuevo.id });
+  await admin.from("asignarempresa").insert({ id_empresa: idEmpresa, id_usuario: nuevo.id, id_sucursal: idSucursal });
   if (modulos.length) await admin.from("permisos").insert(modulos.map((idmodulo: number) => ({ id_usuario: nuevo.id, idmodulo })));
 
   return responder({ ok: true, id: nuevo.id });

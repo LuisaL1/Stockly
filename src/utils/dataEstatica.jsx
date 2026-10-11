@@ -117,8 +117,9 @@ export const DataModulosConfiguracion = [
 ];
 
 export const TipouserData = [
-  { id: "empleado", descripcion: "empleado", icono: <v.iconoUser /> },
-  { id: "administrador", descripcion: "administrador", icono: <v.iconoplan /> },
+  { id: "empleado", descripcion: "empleado", icono: <v.iconoUser />, ayuda: "Hace lo que le permitan sus módulos." },
+  { id: "encargado", descripcion: "encargado", icono: <v.iconosucursales />, ayuda: "Administra su sede: ve y maneja solo lo de esa sucursal." },
+  { id: "administrador", descripcion: "administrador", icono: <v.iconoplan />, ayuda: "Administra toda la empresa." },
 ];
 
 export const TiposBodega = {

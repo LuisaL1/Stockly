@@ -5,11 +5,13 @@ import { useEmpresaStore } from "../store/EmpresaStore";
 import { ReportStockBajoMinimo } from "../supabase/crudProductos";
 import { MostrarDashboard } from "../supabase/crudDashboard";
 import { MostrarSucursales } from "../supabase/crudSucursales";
+import { useSede } from "../hooks/useSede";
 
 export function Home() {
   const { dataempresa } = useEmpresaStore();
   const [dias, setDias] = useState(30);
   const [idSucursal, setIdSucursal] = useState("");
+  const { sede } = useSede();
   const id = dataempresa?.id;
   const enabled = id != null;
 
@@ -33,9 +35,10 @@ export function Home() {
       bajoMinimo={bajoMinimo}
       dias={dias}
       setDias={setDias}
-      sucursales={sucursales.data ?? []}
+      sucursales={sede ? [] : sucursales.data ?? []}
       idSucursal={idSucursal}
       setIdSucursal={setIdSucursal}
+      sede={sede}
     />
   );
 }

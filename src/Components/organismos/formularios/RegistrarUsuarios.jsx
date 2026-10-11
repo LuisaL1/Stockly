@@ -13,6 +13,7 @@ import { useUsuariosStore } from "../../../store/UsuariosStore";
 import { useEmpresaStore } from "../../../store/EmpresaStore";
 import { TipouserData } from "../../../utils/dataEstatica";
 import { ReenviarAcceso } from "../../../supabase/crudUsuarios";
+import { MostrarSucursales } from "../../../supabase/crudSucursales";
 import { notificarError, notificarExito } from "../../../utils/notificaciones";
 import { v } from "../../../styles/variables";
 
@@ -26,6 +27,12 @@ export function RegistrarUsuarios({ onClose, dataSelect = {}, accion }) {
     TipouserData.find((t) => t.descripcion === dataSelect.tipouser) ?? TipouserData[0]
   );
   const [checkboxs, setcheckboxs] = useState([]);
+  const TODA = { id: null, descripcion: "Toda la empresa" };
+  const sucursales = useQuery({ queryKey: ["sucursales", dataempresa?.id], queryFn: () => MostrarSucursales(dataempresa.id), enabled: !!dataempresa?.id });
+  const opcionesSede = [TODA, ...(sucursales.data ?? []).map((s) => ({ id: s.id, descripcion: s.nombre }))];
+  const [sede, setSede] = useState(undefined);
+  const sedeActual = sede !== undefined ? sede : opcionesSede.find((o) => o.id === (dataSelect.id_sucursal ?? null)) ?? TODA;
+  const esDueno = (dataSelect.tipouser ?? "").toLowerCase() === "dueño";
 
   const modulos = useQuery({ queryKey: ["modulos"], queryFn: MostrarModulos, staleTime: Infinity });
   const permisos = useQuery({
@@ -64,9 +71,10 @@ export function RegistrarUsuarios({ onClose, dataSelect = {}, accion }) {
       direccion: data.direccion,
       tipouser: tipouser.descripcion,
     };
+    const id_sucursal = esDueno ? null : sedeActual?.id ?? null;
     const ok = editando
-      ? await Editar({ id: dataSelect.id, ...datos }, checkboxs)
-      : await Insertar({ ...datos, email: data.email.trim().toLowerCase(), id_empresa: dataempresa.id }, checkboxs);
+      ? await Editar({ id: dataSelect.id, ...datos, id_sucursal, id_empresa: dataempresa.id }, checkboxs)
+      : await Insertar({ ...datos, email: data.email.trim().toLowerCase(), id_empresa: dataempresa.id, id_sucursal }, checkboxs);
     if (ok) onClose();
   }
 
@@ -142,9 +150,19 @@ export function RegistrarUsuarios({ onClose, dataSelect = {}, accion }) {
                   <>
                     <span>{o.icono}</span>
                     <span style={{ textTransform: "capitalize" }}>{o.descripcion}</span>
+                    {o.ayuda && <small style={{ opacity: 0.7, marginLeft: 6 }}>{o.ayuda}</small>}
                   </>
                 )}
               />
+              {!esDueno && (sucursales.data?.length ?? 0) > 0 && (
+                <>
+                  <span className="titulo-seccion">Sede</span>
+                  <Selector opciones={opcionesSede} valor={sedeActual} onChange={setSede} icono={<v.iconosucursales />} />
+                  <small style={{ opacity: 0.7, display: "block", marginTop: 4 }}>
+                    {sedeActual?.id ? "Solo verá y manejará las bodegas, ventas, compras y movimientos de esa sede." : "Ve toda la empresa."}
+                  </small>
+                </>
+              )}
               <span className="titulo-seccion" style={{ display: "flex", gap: 8, alignItems: "center" }}>
                 <LuKeyRound /> Permisos por módulo
               </span>
